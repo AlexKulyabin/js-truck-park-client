@@ -1,0 +1,64 @@
+import '/backend/api_requests/api_calls.dart';
+import '/create_parking2/create_parking_dialog2/create_parking_dialog2_widget.dart';
+import '/flutter_flow/flutter_flow_theme.dart';
+import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/flutter_flow_widgets.dart';
+import '/parkings_details/parkings_details/parkings_details_widget.dart';
+import 'dart:ui';
+import '/custom_code/widgets/index.dart' as custom_widgets;
+import '/flutter_flow/custom_functions.dart' as functions;
+import 'select_parking_widget.dart' show SelectParkingWidget;
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+class SelectParkingModel extends FlutterFlowModel<SelectParkingWidget> {
+  ///  Local state fields for this page.
+
+  bool isMapLocked = true;
+
+  dynamic parkingsOnMap;
+
+  int? requests;
+
+  List<dynamic> searchResults = [];
+  void addToSearchResults(dynamic item) => searchResults.add(item);
+  void removeFromSearchResults(dynamic item) => searchResults.remove(item);
+  void removeAtIndexFromSearchResults(int index) =>
+      searchResults.removeAt(index);
+  void insertAtIndexInSearchResults(int index, dynamic item) =>
+      searchResults.insert(index, item);
+  void updateSearchResultsAtIndex(int index, Function(dynamic) updateFn) =>
+      searchResults[index] = updateFn(searchResults[index]);
+
+  LatLng? searchCoord;
+
+  bool isSearching = false;
+
+  double? latMin;
+
+  double? latMax;
+
+  double? lngMin;
+
+  double? lngMax;
+
+  double? currentZoom;
+
+  bool isHinitShow = true;
+
+  ///  State fields for stateful widgets in this page.
+
+  // Stores action output result for [Backend Call - API (GetAddressFromCoords)] action in CustomGoogleMap widget.
+  ApiCallResponse? getAddressFromCoordsRes;
+  // Stores action output result for [Alert Dialog - Custom Dialog] action in CustomGoogleMap widget.
+  bool? closeCreateParkingDialogOut;
+  // Stores action output result for [Backend Call - API (GetFilteredParkings)] action in CustomGoogleMap widget.
+  ApiCallResponse? getFilteredParkings;
+
+  @override
+  void initState(BuildContext context) {}
+
+  @override
+  void dispose() {}
+}
