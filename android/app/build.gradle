@@ -59,6 +59,12 @@ android {
         targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        manifestPlaceholders = [
+            appName: "JS Truck Park",
+            deepLinkScheme: "jstrackpark",
+            deepLinkHost: "js-truck-park.web.app",
+            flutterDeepLinkingEnabled: "true"
+        ]
     }
 
    signingConfigs {
@@ -71,6 +77,26 @@ android {
    }
 
     buildTypes {
+        debug {
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+            manifestPlaceholders = [
+                appName: "JS Truck Park Dev",
+                deepLinkScheme: "jstrackpark-dev",
+                deepLinkHost: "integration.invalid",
+                flutterDeepLinkingEnabled: "false"
+            ]
+        }
+        profile {
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+            manifestPlaceholders = [
+                appName: "JS Truck Park Dev",
+                deepLinkScheme: "jstrackpark-dev",
+                deepLinkHost: "integration.invalid",
+                flutterDeepLinkingEnabled: "false"
+            ]
+        }
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.

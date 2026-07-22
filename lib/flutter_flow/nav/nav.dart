@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import '/backend/schema/structs/index.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
+import '/app/router/integration_route_guard.dart';
+import '/core/config/app_config.dart';
 
 import '/auth/base_auth_user_provider.dart';
 
@@ -85,6 +87,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
+      redirect: (context, state) => integrationReadOnlyRedirect(
+        enabled: AppConfig.current.integrationReadOnly,
+        loggedIn: appStateNotifier.loggedIn,
+        requestedPath: state.uri.path,
+      ),
       errorBuilder: (context, state) =>
           appStateNotifier.loggedIn ? SplashWidget() : SplashWidget(),
       routes: [

@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:replace="android:maxSdkVersion"/>
     <uses-permission android:name="android.permission."/>
     <application
-        android:label="JS Truck Park"
+        android:label="${appName}"
         tools:replace="android:label"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">
@@ -44,12 +44,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
             <!-- Deep linking -->
-            <meta-data android:name="flutter_deeplinking_enabled" android:value="true" />
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="${flutterDeepLinkingEnabled}" />
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="jstrackpark" android:host="js-truck-park.web.app" />
+                <data android:scheme="${deepLinkScheme}" android:host="${deepLinkHost}" />
             </intent-filter>
 
         </activity>

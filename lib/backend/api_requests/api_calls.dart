@@ -4,6 +4,7 @@ import '../schema/structs/index.dart';
 
 import 'package:flutter/foundation.dart';
 
+import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import 'api_manager.dart';
 
@@ -19,6 +20,7 @@ class GetParkingsByViewportCall {
     double? maxLng,
     double? zoom,
   }) async {
+    final config = AppConfig.current;
     final ffApiRequestBody = '''
 {
   "min_lng": ${minLng},
@@ -29,13 +31,10 @@ class GetParkingsByViewportCall {
 }''';
     return ApiManager.instance.makeApiCall(
       callName: 'GetParkingsByViewport',
-      apiUrl:
-          'https://jckksrcdmhtafwbimzov.supabase.co/rest/v1/rpc/get_parkings_by_viewport',
+      apiUrl: config.supabaseRpcUrl('get_parkings_by_viewport'),
       callType: ApiCallType.POST,
       headers: {
-        'apikey': 'sb_publishable__gyAUoNllJyqH-Tt9LthBA_FPlvIogS',
-        'Authorization':
-            'Bearer sb_publishable__gyAUoNllJyqH-Tt9LthBA_FPlvIogS',
+        ...config.anonymousSupabaseHeaders,
         'Content-Type': 'application/json',
       },
       params: {},
@@ -141,6 +140,7 @@ class GetFilteredParkingsCall {
     double? zoom,
     String? searchQuery = '',
   }) async {
+    final config = AppConfig.current;
     final ffApiRequestBody = '''
 {
   "center_lat": ${lat},
@@ -164,14 +164,11 @@ class GetFilteredParkingsCall {
 }''';
     return ApiManager.instance.makeApiCall(
       callName: 'GetFilteredParkings',
-      apiUrl:
-          'https://jckksrcdmhtafwbimzov.supabase.co/rest/v1/rpc/get_filtered_parkings',
+      apiUrl: config.supabaseRpcUrl('get_filtered_parkings'),
       callType: ApiCallType.POST,
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'sb_publishable__gyAUoNllJyqH-Tt9LthBA_FPlvIogS',
-        'Authorization':
-            'Bearer sb_publishable__gyAUoNllJyqH-Tt9LthBA_FPlvIogS',
+        ...config.anonymousSupabaseHeaders,
       },
       params: {},
       body: ffApiRequestBody,
@@ -190,18 +187,18 @@ class DeleteUserAccountCall {
   static Future<ApiCallResponse> call({
     String? userToken = '',
   }) async {
+    final config = AppConfig.current;
     final ffApiRequestBody = '''
 {
   "confirm": true
 }''';
     return ApiManager.instance.makeApiCall(
       callName: 'DeleteUserAccount',
-      apiUrl:
-          'https://jckksrcdmhtafwbimzov.supabase.co/rest/v1/rpc/delete_user_account',
+      apiUrl: config.supabaseRpcUrl('delete_user_account'),
       callType: ApiCallType.POST,
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'sb_publishable__gyAUoNllJyqH-Tt9LthBA_FPlvIogS',
+        'apikey': config.supabasePublishableKey,
         'Authorization': 'Bearer ${userToken}',
       },
       params: {},
@@ -223,6 +220,7 @@ class ProcessReferralCall {
     String? refereeId = '',
     String? deviceId = '',
   }) async {
+    final config = AppConfig.current;
     final ffApiRequestBody = '''
 {
   "p_ref_code": "${escapeStringForJson(refCode)}",
@@ -231,14 +229,11 @@ class ProcessReferralCall {
 }''';
     return ApiManager.instance.makeApiCall(
       callName: 'ProcessReferral',
-      apiUrl:
-          'https://jckksrcdmhtafwbimzov.supabase.co/rest/v1/rpc/process_referral',
+      apiUrl: config.supabaseRpcUrl('process_referral'),
       callType: ApiCallType.POST,
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'sb_publishable__gyAUoNllJyqH-Tt9LthBA_FPlvIogS',
-        'Authorization':
-            'Bearer sb_publishable__gyAUoNllJyqH-Tt9LthBA_FPlvIogS',
+        ...config.anonymousSupabaseHeaders,
       },
       params: {},
       body: ffApiRequestBody,

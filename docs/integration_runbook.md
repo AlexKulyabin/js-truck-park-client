@@ -1,0 +1,89 @@
+# Production-parallel integration runbook
+
+## Purpose
+
+The integration build validates the existing Flutter client against the current
+Supabase project without changing database contracts or intentionally writing
+production data.
+
+It is an accident-prevention mode, not a security boundary. Supabase RLS remains
+the only server-side authorization boundary.
+
+## Build modes
+
+| Build | Environment default | Application identity | External SDKs | Navigation |
+|---|---|---|---|---|
+| Debug/Profile | `integration` | `com.mycompany.jstrackpark.dev`; `JS Truck Park Dev` | RevenueCat and Chottu Link disabled | read-only allowlist |
+| Release | `production` | `com.mycompany.jstrackpark`; `JS Truck Park` | unchanged | unchanged |
+
+The integration UI displays both the Flutter debug banner and a `READ ONLY`
+banner.
+
+## Allowed integration routes
+
+- `/`, `/splash`;
+- `/onboard1`, `/onboard2`, `/onboard3`;
+- `/enterPhoneNumber`, `/validateSmsCode`;
+- `/homePage`;
+- `/language`.
+
+All other routes redirect to Home for an authenticated test user or to phone
+authentication for a signed-out user. In particular, registration, profile
+editing, account deletion, parking/review/report creation, parking details with
+favorite toggles, referrals, requests and subscription screens are unavailable.
+
+## Configuration
+
+Defaults preserve the current Supabase project. Publishable client values may be
+overridden at build time:
+
+```bash
+flutter run \
+  --dart-define=APP_ENV=integration \
+  --dart-define=SUPABASE_URL=https://PROJECT.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_REDACTED
+```
+
+Supported `APP_ENV` values are `integration` and `production`. Never pass a
+database password, secret key or service-role key to Flutter. Dart defines are
+compiled into the application and are suitable only for publishable values.
+
+For safety, `integration` is accepted only by Debug/Profile builds and
+`production` only by Release builds. A mismatched override fails during app
+startup instead of enabling production side effects under the wrong native app
+identity.
+
+## Safe smoke sequence
+
+1. Install the debug build alongside the production app.
+2. Confirm the app label is `JS Truck Park Dev` and the `READ ONLY` banner is
+   visible.
+3. Complete local onboarding; this only updates the dev app's local storage.
+4. Sign in only with the designated production test user.
+5. Confirm Home loads parking markers using `get_filtered_parkings`.
+6. Exercise viewport, search and filters without opening write-capable screens.
+7. Confirm Language can switch between `en` and `ru`.
+8. Confirm RevenueCat and production deep links do not initialize.
+9. Do not create a missing profile; registration is intentionally blocked.
+10. Sign out by clearing the dev app or through a future integration-only safe
+    control; do not use account deletion.
+
+## Verification commands
+
+```bash
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze --no-fatal-infos --no-fatal-warnings
+flutter test
+flutter build apk --debug
+flutter build ios --simulator
+```
+
+## Rollback
+
+Revert the integration commit if production release configuration changes,
+debug and production identifiers collide, a blocked route becomes reachable,
+RevenueCat/deep links start in integration mode, or any connectivity diagnostic
+performs a write.
+
+This mode must not be used as a substitute for a staging project, RLS tests or a
+version-controlled Supabase schema.

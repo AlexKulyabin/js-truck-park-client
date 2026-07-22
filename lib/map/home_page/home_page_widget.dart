@@ -1,4 +1,5 @@
 import '/backend/api_requests/api_calls.dart';
+import '/core/config/app_config.dart';
 import '/create_parking/create_parking_dialog/create_parking_dialog_widget.dart';
 import '/filter/filter/filter_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -52,6 +53,9 @@ class _HomePageWidgetState extends State<HomePageWidget> {
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
+      if (AppConfig.current.integrationReadOnly) {
+        return;
+      }
       if (FFAppState().isGuest == true) {
         return;
       }
@@ -161,6 +165,9 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                   Brightness.dark,
                               clusterSize: 120,
                               onMarkerTap: (markerId) async {
+                                if (AppConfig.current.integrationReadOnly) {
+                                  return;
+                                }
                                 FFAppState().isMapUnLocked = false;
                                 safeSetState(() {});
                                 await showModalBottomSheet(
@@ -231,6 +238,9 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                 safeSetState(() {});
                               },
                               onLongPress: (longPressedPoint) async {
+                                if (AppConfig.current.integrationReadOnly) {
+                                  return;
+                                }
                                 FFAppState().tempLat =
                                     functions.getLat(longPressedPoint);
                                 FFAppState().tempLng =
@@ -497,6 +507,10 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                 _model.textController?.clear();
                                               });
                                               await actions.hideKeyboard();
+                                              if (AppConfig.current
+                                                  .integrationReadOnly) {
+                                                return;
+                                              }
                                               await showModalBottomSheet(
                                                 isScrollControlled: true,
                                                 backgroundColor:

@@ -9,6 +9,7 @@ import 'auth/supabase_auth/supabase_user_provider.dart';
 import 'auth/supabase_auth/auth_util.dart';
 
 import '/backend/supabase/supabase.dart';
+import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/internationalization.dart';
@@ -30,11 +31,13 @@ void main() async {
   final appState = FFAppState(); // Initialize FFAppState
   await appState.initializePersistedState();
 
-  await revenue_cat.initialize(
-    "appl_NrPQbuBOcXtTLrzaVOxuHSGJpCU",
-    "goog_QUrXVRyuoRQRgEdSZJiRuvMfhcp",
-    loadDataAfterLaunch: true,
-  );
+  if (AppConfig.current.enableRevenueCat) {
+    await revenue_cat.initialize(
+      "appl_NrPQbuBOcXtTLrzaVOxuHSGJpCU",
+      "goog_QUrXVRyuoRQRgEdSZJiRuvMfhcp",
+      loadDataAfterLaunch: true,
+    );
+  }
 
   runApp(ChangeNotifierProvider(
     create: (context) => appState,
@@ -112,8 +115,19 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: 'JS Truck Park',
+      debugShowCheckedModeBanner: AppConfig.current.isIntegration,
+      title: AppConfig.current.appDisplayName,
+      builder: (context, child) {
+        final app = child ?? const SizedBox.shrink();
+        if (!AppConfig.current.integrationReadOnly) {
+          return app;
+        }
+        return Banner(
+          message: 'READ ONLY',
+          location: BannerLocation.topStart,
+          child: app,
+        );
+      },
       scrollBehavior: MyAppScrollBehavior(),
       localizationsDelegates: [
         FFLocalizationsDelegate(),
