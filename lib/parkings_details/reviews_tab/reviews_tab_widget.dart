@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -510,43 +511,49 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                       Expanded(
                         child: Builder(
                           builder: (context) => FFButtonWidget(
-                            onPressed: () async {
-                              if (FFAppState().isGuest == true) {
-                                await showDialog(
-                                  barrierColor:
-                                      FlutterFlowTheme.of(context).overlay,
-                                  context: context,
-                                  builder: (dialogContext) {
-                                    return Dialog(
-                                      elevation: 0,
-                                      insetPadding: EdgeInsets.zero,
-                                      backgroundColor: Colors.transparent,
-                                      alignment: AlignmentDirectional(0.0, 0.0)
-                                          .resolve(Directionality.of(context)),
-                                      child: GuestDialogWidget(),
-                                    );
-                                  },
-                                );
+                            onPressed: AppConfig.current.integrationReadOnly
+                                ? null
+                                : () async {
+                                    if (FFAppState().isGuest == true) {
+                                      await showDialog(
+                                        barrierColor:
+                                            FlutterFlowTheme.of(context)
+                                                .overlay,
+                                        context: context,
+                                        builder: (dialogContext) {
+                                          return Dialog(
+                                            elevation: 0,
+                                            insetPadding: EdgeInsets.zero,
+                                            backgroundColor: Colors.transparent,
+                                            alignment: AlignmentDirectional(
+                                                    0.0, 0.0)
+                                                .resolve(
+                                                    Directionality.of(context)),
+                                            child: GuestDialogWidget(),
+                                          );
+                                        },
+                                      );
 
-                                return;
-                              }
-                              await showModalBottomSheet(
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                barrierColor:
-                                    FlutterFlowTheme.of(context).overlay,
-                                enableDrag: false,
-                                context: context,
-                                builder: (context) {
-                                  return Padding(
-                                    padding: MediaQuery.viewInsetsOf(context),
-                                    child: ReportCreateWidget(
-                                      parkingId: widget!.parkingRow!.id!,
-                                    ),
-                                  );
-                                },
-                              ).then((value) => safeSetState(() {}));
-                            },
+                                      return;
+                                    }
+                                    await showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      barrierColor:
+                                          FlutterFlowTheme.of(context).overlay,
+                                      enableDrag: false,
+                                      context: context,
+                                      builder: (context) {
+                                        return Padding(
+                                          padding:
+                                              MediaQuery.viewInsetsOf(context),
+                                          child: ReportCreateWidget(
+                                            parkingId: widget!.parkingRow!.id!,
+                                          ),
+                                        );
+                                      },
+                                    ).then((value) => safeSetState(() {}));
+                                  },
                             text: FFLocalizations.of(context).getText(
                               '2jy1g9cx' /* Report a problem */,
                             ),
@@ -587,12 +594,13 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                       Expanded(
                         child: Builder(
                           builder: (context) => FFButtonWidget(
-                            onPressed: functions.hasUserReviewed(
-                                    containerViewReviewsWithUsersRowList
-                                        .map((e) => e.userId)
-                                        .withoutNulls
-                                        .toList(),
-                                    currentUserUid)
+                            onPressed: AppConfig.current.integrationReadOnly ||
+                                    functions.hasUserReviewed(
+                                        containerViewReviewsWithUsersRowList
+                                            .map((e) => e.userId)
+                                            .withoutNulls
+                                            .toList(),
+                                        currentUserUid)
                                 ? null
                                 : () async {
                                     if (FFAppState().isGuest == true) {

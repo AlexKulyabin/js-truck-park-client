@@ -1,6 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
+import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -681,9 +682,10 @@ class _ReportCreateWidgetState extends State<ReportCreateWidget> {
                   padding:
                       EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 60.0),
                   child: FFButtonWidget(
-                    onPressed: ((_model.report == Report.Report3) &&
-                            (_model.textController.text == null ||
-                                _model.textController.text == ''))
+                    onPressed: AppConfig.current.integrationReadOnly ||
+                            ((_model.report == Report.Report3) &&
+                                (_model.textController.text == null ||
+                                    _model.textController.text == ''))
                         ? null
                         : () async {
                             _model.createReportOut =

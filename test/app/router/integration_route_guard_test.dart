@@ -28,6 +28,20 @@ void main() {
       }
     });
 
+    test('allows read-only parking photo viewers', () {
+      for (final path in ['/photoDetailed', '/photoDetailedReviews']) {
+        expect(
+          integrationReadOnlyRedirect(
+            enabled: true,
+            loggedIn: true,
+            requestedPath: path,
+          ),
+          isNull,
+          reason: path,
+        );
+      }
+    });
+
     test('redirects authenticated users away from write-capable routes', () {
       for (final path in [
         '/registration',

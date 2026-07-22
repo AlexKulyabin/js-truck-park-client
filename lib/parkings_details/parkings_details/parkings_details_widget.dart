@@ -1,6 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
+import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -525,62 +526,76 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                   focusColor: Colors.transparent,
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
-                                  onTap: () async {
-                                    var _shouldSetState = false;
-                                    if (FFAppState().isGuest == true) {
-                                      await showDialog(
-                                        barrierColor:
-                                            FlutterFlowTheme.of(context)
-                                                .overlay,
-                                        context: context,
-                                        builder: (dialogContext) {
-                                          return Dialog(
-                                            elevation: 0,
-                                            insetPadding: EdgeInsets.zero,
-                                            backgroundColor: Colors.transparent,
-                                            alignment: AlignmentDirectional(
-                                                    0.0, 0.0)
-                                                .resolve(
-                                                    Directionality.of(context)),
-                                            child: GuestDialogWidget(),
-                                          );
+                                  onTap: AppConfig.current.integrationReadOnly
+                                      ? null
+                                      : () async {
+                                          var _shouldSetState = false;
+                                          if (FFAppState().isGuest == true) {
+                                            await showDialog(
+                                              barrierColor:
+                                                  FlutterFlowTheme.of(context)
+                                                      .overlay,
+                                              context: context,
+                                              builder: (dialogContext) {
+                                                return Dialog(
+                                                  elevation: 0,
+                                                  insetPadding: EdgeInsets.zero,
+                                                  backgroundColor:
+                                                      Colors.transparent,
+                                                  alignment:
+                                                      AlignmentDirectional(
+                                                              0.0, 0.0)
+                                                          .resolve(
+                                                    Directionality.of(context),
+                                                  ),
+                                                  child: GuestDialogWidget(),
+                                                );
+                                              },
+                                            );
+
+                                            if (_shouldSetState) {
+                                              safeSetState(() {});
+                                            }
+                                            return;
+                                          }
+                                          if (_model.isFavorite == true) {
+                                            _model.isFavorite = false;
+                                            safeSetState(() {});
+                                            _model.deletefavoriteOut =
+                                                await FavoritesTable().delete(
+                                              matchingRows: (rows) =>
+                                                  rows.eqOrNull(
+                                                'parking_id',
+                                                widget!.parkingId,
+                                              ),
+                                              returnRows: true,
+                                            );
+                                            _shouldSetState = true;
+                                          } else {
+                                            _model.isFavorite = true;
+                                            safeSetState(() {});
+                                            _model.addFavoriteOut =
+                                                await FavoritesTable().insert({
+                                              'user_id': currentUserUid,
+                                              'parking_id': widget!.parkingId,
+                                            });
+                                            _shouldSetState = true;
+                                          }
+
+                                          if (_shouldSetState) {
+                                            safeSetState(() {});
+                                          }
                                         },
-                                      );
-
-                                      if (_shouldSetState) safeSetState(() {});
-                                      return;
-                                    }
-                                    if (_model.isFavorite == true) {
-                                      _model.isFavorite = false;
-                                      safeSetState(() {});
-                                      _model.deletefavoriteOut =
-                                          await FavoritesTable().delete(
-                                        matchingRows: (rows) => rows.eqOrNull(
-                                          'parking_id',
-                                          widget!.parkingId,
-                                        ),
-                                        returnRows: true,
-                                      );
-                                      _shouldSetState = true;
-                                    } else {
-                                      _model.isFavorite = true;
-                                      safeSetState(() {});
-                                      _model.addFavoriteOut =
-                                          await FavoritesTable().insert({
-                                        'user_id': currentUserUid,
-                                        'parking_id': widget!.parkingId,
-                                      });
-                                      _shouldSetState = true;
-                                    }
-
-                                    if (_shouldSetState) safeSetState(() {});
-                                  },
                                   child: Container(
                                     width: 56.0,
                                     height: 56.0,
                                     decoration: BoxDecoration(
                                       color:
-                                          FlutterFlowTheme.of(context).buttons,
+                                          AppConfig.current.integrationReadOnly
+                                              ? FlutterFlowTheme.of(context)
+                                                  .inactiveButton
+                                              : FlutterFlowTheme.of(context)
+                                                  .buttons,
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
                                     child: Align(

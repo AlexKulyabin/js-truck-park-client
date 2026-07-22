@@ -7,6 +7,8 @@ const integrationReadOnlyAllowedPaths = <String>{
   '/enterPhoneNumber',
   '/validateSmsCode',
   '/homePage',
+  '/photoDetailed',
+  '/photoDetailedReviews',
   '/language',
 };
 

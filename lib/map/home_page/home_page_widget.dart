@@ -12,6 +12,7 @@ import '/custom_code/actions/index.dart' as actions;
 import '/custom_code/widgets/index.dart' as custom_widgets;
 import '/flutter_flow/custom_functions.dart' as functions;
 import '/index.dart';
+import 'search_panel_layout.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -122,6 +123,10 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       );
     }
 
+    final mediaQuery = MediaQuery.of(context);
+    final keyboardInset = mediaQuery.viewInsets.bottom;
+    final isKeyboardVisible = keyboardInset > 0.0;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -165,9 +170,6 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                   Brightness.dark,
                               clusterSize: 120,
                               onMarkerTap: (markerId) async {
-                                if (AppConfig.current.integrationReadOnly) {
-                                  return;
-                                }
                                 FFAppState().isMapUnLocked = false;
                                 safeSetState(() {});
                                 await showModalBottomSheet(
@@ -308,51 +310,101 @@ class _HomePageWidgetState extends State<HomePageWidget> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Align(
-                      alignment: AlignmentDirectional(1.0, -1.0),
-                      child: Builder(
-                        builder: (context) => Padding(
+                if (!isKeyboardVisible)
+                  Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Align(
+                        alignment: AlignmentDirectional(1.0, -1.0),
+                        child: Builder(
+                          builder: (context) => Padding(
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                                16.0, 0.0, 0.0, 24.0),
+                            child: InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                if (FFAppState().isGuest == true) {
+                                  await showDialog(
+                                    barrierColor:
+                                        FlutterFlowTheme.of(context).overlay,
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return Dialog(
+                                        elevation: 0,
+                                        insetPadding: EdgeInsets.zero,
+                                        backgroundColor: Colors.transparent,
+                                        alignment:
+                                            AlignmentDirectional(0.0, 0.0)
+                                                .resolve(
+                                                    Directionality.of(context)),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            FocusScope.of(dialogContext)
+                                                .unfocus();
+                                            FocusManager.instance.primaryFocus
+                                                ?.unfocus();
+                                          },
+                                          child: GuestDialogWidget(),
+                                        ),
+                                      );
+                                    },
+                                  );
+
+                                  return;
+                                }
+
+                                context
+                                    .pushNamed(CreateParkingWidget.routeName);
+                              },
+                              child: Material(
+                                color: Colors.transparent,
+                                elevation: 1.0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(99.0),
+                                ),
+                                child: Container(
+                                  width: 46.0,
+                                  height: 46.0,
+                                  decoration: BoxDecoration(
+                                    color: FlutterFlowTheme.of(context).info,
+                                    borderRadius: BorderRadius.circular(99.0),
+                                  ),
+                                  child: Icon(
+                                    Icons.add,
+                                    color: FlutterFlowTheme.of(context).primary,
+                                    size: 24.0,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Align(
+                        alignment: AlignmentDirectional(1.0, 1.0),
+                        child: Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
-                              16.0, 0.0, 0.0, 24.0),
+                              0.0, 0.0, 16.0, 24.0),
                           child: InkWell(
                             splashColor: Colors.transparent,
                             focusColor: Colors.transparent,
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              if (FFAppState().isGuest == true) {
-                                await showDialog(
-                                  barrierColor:
-                                      FlutterFlowTheme.of(context).overlay,
-                                  context: context,
-                                  builder: (dialogContext) {
-                                    return Dialog(
-                                      elevation: 0,
-                                      insetPadding: EdgeInsets.zero,
-                                      backgroundColor: Colors.transparent,
-                                      alignment: AlignmentDirectional(0.0, 0.0)
-                                          .resolve(Directionality.of(context)),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          FocusScope.of(dialogContext)
-                                              .unfocus();
-                                          FocusManager.instance.primaryFocus
-                                              ?.unfocus();
-                                        },
-                                        child: GuestDialogWidget(),
-                                      ),
-                                    );
-                                  },
-                                );
-
-                                return;
-                              }
-
-                              context.pushNamed(CreateParkingWidget.routeName);
+                              currentUserLocationValue =
+                                  await getCurrentUserLocation(
+                                      defaultLocation: LatLng(0.0, 0.0));
+                              await Future.delayed(
+                                Duration(
+                                  milliseconds: 100,
+                                ),
+                              );
+                              _model.searchCoord = currentUserLocationValue;
+                              safeSetState(() {});
                             },
                             child: Material(
                               color: Colors.transparent,
@@ -368,7 +420,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                   borderRadius: BorderRadius.circular(99.0),
                                 ),
                                 child: Icon(
-                                  Icons.add,
+                                  Icons.my_location_outlined,
                                   color: FlutterFlowTheme.of(context).primary,
                                   size: 24.0,
                                 ),
@@ -377,60 +429,17 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                           ),
                         ),
                       ),
-                    ),
-                    Align(
-                      alignment: AlignmentDirectional(1.0, 1.0),
-                      child: Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(
-                            0.0, 0.0, 16.0, 24.0),
-                        child: InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            currentUserLocationValue =
-                                await getCurrentUserLocation(
-                                    defaultLocation: LatLng(0.0, 0.0));
-                            await Future.delayed(
-                              Duration(
-                                milliseconds: 100,
-                              ),
-                            );
-                            _model.searchCoord = currentUserLocationValue;
-                            safeSetState(() {});
-                          },
-                          child: Material(
-                            color: Colors.transparent,
-                            elevation: 1.0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(99.0),
-                            ),
-                            child: Container(
-                              width: 46.0,
-                              height: 46.0,
-                              decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context).info,
-                                borderRadius: BorderRadius.circular(99.0),
-                              ),
-                              child: Icon(
-                                Icons.my_location_outlined,
-                                color: FlutterFlowTheme.of(context).primary,
-                                size: 24.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 Align(
                   alignment: AlignmentDirectional(0.0, 1.0),
                   child: Container(
                     width: double.infinity,
                     constraints: BoxConstraints(
-                      maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+                      maxHeight: searchPanelMaxHeight(
+                        screenHeight: mediaQuery.size.height,
+                        keyboardInset: keyboardInset,
+                      ),
                     ),
                     decoration: BoxDecoration(
                       color: FlutterFlowTheme.of(context).primaryBackground,
@@ -507,10 +516,6 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                 _model.textController?.clear();
                                               });
                                               await actions.hideKeyboard();
-                                              if (AppConfig.current
-                                                  .integrationReadOnly) {
-                                                return;
-                                              }
                                               await showModalBottomSheet(
                                                 isScrollControlled: true,
                                                 backgroundColor:
