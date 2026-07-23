@@ -15,3 +15,21 @@ ParkingsRow parkingRequestToLegacyRow(ParkingRequestSummary request) =>
       'has_shop': request.hasShop,
       'has_recreation_area': request.hasRecreationArea,
     });
+
+ParkingRequestSummary parkingRequestFromLegacyRow(
+  ParkingsRow? row, {
+  required ParkingRequestStatus expectedStatus,
+}) =>
+    ParkingRequestSummary(
+      id: row?.id ?? '',
+      status: expectedStatus,
+      address: row?.address,
+      totalSpaces: row?.totalSpaces,
+      rating: row?.rating,
+      hasGasStation: row?.hasGasStation ?? true,
+      hasShower: row?.hasShower ?? true,
+      hasLaundry: row?.hasLaundry ?? true,
+      hasHotel: row?.hasHotel ?? true,
+      hasShop: row?.hasShop ?? true,
+      hasRecreationArea: row?.hasRecreationArea ?? true,
+    );
