@@ -1,21 +1,30 @@
+import 'dart:async';
+
 import '/auth/supabase_auth/auth_util.dart';
-import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
+import '/features/parking_requests/application/parking_requests_controller.dart';
+import '/features/parking_requests/data/legacy_parking_request_route_adapter.dart';
+import '/features/parking_requests/data/supabase_parking_requests_repository.dart';
+import '/features/parking_requests/domain/parking_request_summary.dart';
+import '/features/parking_requests/domain/parking_requests_repository.dart';
+import '/features/parking_requests/presentation/parking_requests_list.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import '/requests/request_card/request_card_widget.dart';
-import 'dart:ui';
 import '/index.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'requests_model.dart';
 export 'requests_model.dart';
 
 class RequestsWidget extends StatefulWidget {
-  const RequestsWidget({super.key});
+  const RequestsWidget({
+    super.key,
+    this.repository,
+    this.userId,
+  });
+
+  final ParkingRequestsRepository? repository;
+  final String? userId;
 
   static String routeName = 'Requests';
   static String routePath = '/requests';
@@ -26,6 +35,7 @@ class RequestsWidget extends StatefulWidget {
 
 class _RequestsWidgetState extends State<RequestsWidget> {
   late RequestsModel _model;
+  late final ParkingRequestsController _requestsController;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -33,15 +43,46 @@ class _RequestsWidgetState extends State<RequestsWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => RequestsModel());
+    _requestsController = ParkingRequestsController(
+      repository: widget.repository ?? SupabaseParkingRequestsRepository(),
+      userId: widget.userId ?? currentUserUid,
+    )..addListener(_onRequestsChanged);
+    unawaited(_requestsController.load());
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
   @override
   void dispose() {
+    _requestsController
+      ..removeListener(_onRequestsChanged)
+      ..dispose();
     _model.dispose();
 
     super.dispose();
+  }
+
+  void _onRequestsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _openRequest(ParkingRequestSummary request) {
+    final routeName = switch (request.status) {
+      ParkingRequestStatus.pending => ModerationParkingWidget.routeName,
+      ParkingRequestStatus.approved => AcceptedParkingWidget.routeName,
+      ParkingRequestStatus.rejected => RejectedParkingWidget.routeName,
+    };
+    context.pushNamed(
+      routeName,
+      queryParameters: {
+        'parkingRow': serializeParam(
+          parkingRequestToLegacyRow(request),
+          ParamType.SupabaseRow,
+        ),
+      }.withoutNulls,
+    );
   }
 
   @override
@@ -204,6 +245,9 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                     _model.isAcceptedTabOn = false;
                                     _model.isRejectedTabOn = false;
                                     safeSetState(() {});
+                                    unawaited(_requestsController.selectStatus(
+                                      ParkingRequestStatus.pending,
+                                    ));
                                   },
                                   child: Container(
                                     height: double.infinity,
@@ -301,6 +345,9 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                     _model.isAcceptedTabOn = true;
                                     _model.isRejectedTabOn = false;
                                     safeSetState(() {});
+                                    unawaited(_requestsController.selectStatus(
+                                      ParkingRequestStatus.approved,
+                                    ));
                                   },
                                   child: Container(
                                     height: double.infinity,
@@ -398,6 +445,9 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                     _model.isModerationTabOn = false;
                                     _model.isRejectedTabOn = true;
                                     safeSetState(() {});
+                                    unawaited(_requestsController.selectStatus(
+                                      ParkingRequestStatus.rejected,
+                                    ));
                                   },
                                   child: Container(
                                     height: double.infinity,
@@ -446,470 +496,10 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Builder(
-                      builder: (context) {
-                        if (_model.isModerationTabOn) {
-                          return FutureBuilder<List<ParkingsRow>>(
-                            future: ParkingsTable().queryRows(
-                              queryFn: (q) => q
-                                  .eqOrNull(
-                                    'created_by',
-                                    currentUserUid,
-                                  )
-                                  .eqOrNull(
-                                    'status',
-                                    StatusParking.pending.name,
-                                  ),
-                            ),
-                            builder: (context, snapshot) {
-                              // Customize what your widget looks like when it's loading.
-                              if (!snapshot.hasData) {
-                                return Center(
-                                  child: SizedBox(
-                                    width: 50.0,
-                                    height: 50.0,
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        FlutterFlowTheme.of(context).primary,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              List<ParkingsRow> moderationParkingsRowList =
-                                  snapshot.data!;
-
-                              return Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(),
-                                child: Builder(
-                                  builder: (context) {
-                                    if (moderationParkingsRowList.length > 0) {
-                                      return Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            16.0, 0.0, 16.0, 0.0),
-                                        child: Builder(
-                                          builder: (context) {
-                                            final moderation =
-                                                moderationParkingsRowList
-                                                    .toList();
-
-                                            return ListView.separated(
-                                              padding: EdgeInsets.zero,
-                                              shrinkWrap: true,
-                                              scrollDirection: Axis.vertical,
-                                              itemCount: moderation.length,
-                                              separatorBuilder: (_, __) =>
-                                                  SizedBox(height: 8.0),
-                                              itemBuilder:
-                                                  (context, moderationIndex) {
-                                                final moderationItem =
-                                                    moderation[moderationIndex];
-                                                return InkWell(
-                                                  splashColor:
-                                                      Colors.transparent,
-                                                  focusColor:
-                                                      Colors.transparent,
-                                                  hoverColor:
-                                                      Colors.transparent,
-                                                  highlightColor:
-                                                      Colors.transparent,
-                                                  onTap: () async {
-                                                    context.pushNamed(
-                                                      ModerationParkingWidget
-                                                          .routeName,
-                                                      queryParameters: {
-                                                        'parkingRow':
-                                                            serializeParam(
-                                                          moderationItem,
-                                                          ParamType.SupabaseRow,
-                                                        ),
-                                                      }.withoutNulls,
-                                                    );
-                                                  },
-                                                  child: RequestCardWidget(
-                                                    key: Key(
-                                                        'Key7md_${moderationIndex}_of_${moderation.length}'),
-                                                    parkingRow: moderationItem,
-                                                  ),
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    } else {
-                                      return Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            0.0, 150.0, 0.0, 0.0),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.max,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(0.0),
-                                              child: SvgPicture.asset(
-                                                'assets/images/map.svg',
-                                                width: 96.0,
-                                                height: 96.0,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            Text(
-                                              FFLocalizations.of(context)
-                                                  .getText(
-                                                'kt10y4th' /* Applications awaiting moderati... */,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .labelLarge
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontStyle,
-                                                      ),
-                                            ),
-                                          ].divide(SizedBox(height: 16.0)),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
-                              );
-                            },
-                          );
-                        } else if (_model.isAcceptedTabOn) {
-                          return FutureBuilder<List<ParkingsRow>>(
-                            future: ParkingsTable().queryRows(
-                              queryFn: (q) => q
-                                  .eqOrNull(
-                                    'created_by',
-                                    currentUserUid,
-                                  )
-                                  .eqOrNull(
-                                    'status',
-                                    StatusParking.approved.name,
-                                  ),
-                            ),
-                            builder: (context, snapshot) {
-                              // Customize what your widget looks like when it's loading.
-                              if (!snapshot.hasData) {
-                                return Center(
-                                  child: SizedBox(
-                                    width: 50.0,
-                                    height: 50.0,
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        FlutterFlowTheme.of(context).primary,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              List<ParkingsRow> acceptedParkingsRowList =
-                                  snapshot.data!;
-
-                              return Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(),
-                                child: Builder(
-                                  builder: (context) {
-                                    if (acceptedParkingsRowList.length > 0) {
-                                      return Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            16.0, 0.0, 16.0, 0.0),
-                                        child: Builder(
-                                          builder: (context) {
-                                            final accepted =
-                                                acceptedParkingsRowList
-                                                    .toList();
-
-                                            return ListView.separated(
-                                              padding: EdgeInsets.zero,
-                                              shrinkWrap: true,
-                                              scrollDirection: Axis.vertical,
-                                              itemCount: accepted.length,
-                                              separatorBuilder: (_, __) =>
-                                                  SizedBox(height: 8.0),
-                                              itemBuilder:
-                                                  (context, acceptedIndex) {
-                                                final acceptedItem =
-                                                    accepted[acceptedIndex];
-                                                return InkWell(
-                                                  splashColor:
-                                                      Colors.transparent,
-                                                  focusColor:
-                                                      Colors.transparent,
-                                                  hoverColor:
-                                                      Colors.transparent,
-                                                  highlightColor:
-                                                      Colors.transparent,
-                                                  onTap: () async {
-                                                    context.pushNamed(
-                                                      AcceptedParkingWidget
-                                                          .routeName,
-                                                      queryParameters: {
-                                                        'parkingRow':
-                                                            serializeParam(
-                                                          acceptedItem,
-                                                          ParamType.SupabaseRow,
-                                                        ),
-                                                      }.withoutNulls,
-                                                    );
-                                                  },
-                                                  child: RequestCardWidget(
-                                                    key: Key(
-                                                        'Key4j9_${acceptedIndex}_of_${accepted.length}'),
-                                                    parkingRow: acceptedItem,
-                                                  ),
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    } else {
-                                      return Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            0.0, 150.0, 0.0, 0.0),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.max,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(0.0),
-                                              child: SvgPicture.asset(
-                                                'assets/images/map.svg',
-                                                width: 96.0,
-                                                height: 96.0,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            Text(
-                                              FFLocalizations.of(context)
-                                                  .getText(
-                                                'u04tu3wa' /* Approved applications will be ... */,
-                                              ),
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .labelLarge
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontStyle,
-                                                      ),
-                                            ),
-                                          ].divide(SizedBox(height: 16.0)),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
-                              );
-                            },
-                          );
-                        } else {
-                          return FutureBuilder<List<ParkingsRow>>(
-                            future: ParkingsTable().queryRows(
-                              queryFn: (q) => q
-                                  .eqOrNull(
-                                    'created_by',
-                                    currentUserUid,
-                                  )
-                                  .eqOrNull(
-                                    'status',
-                                    StatusParking.rejected.name,
-                                  ),
-                            ),
-                            builder: (context, snapshot) {
-                              // Customize what your widget looks like when it's loading.
-                              if (!snapshot.hasData) {
-                                return Center(
-                                  child: SizedBox(
-                                    width: 50.0,
-                                    height: 50.0,
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        FlutterFlowTheme.of(context).primary,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              List<ParkingsRow> rejectedParkingsRowList =
-                                  snapshot.data!;
-
-                              return Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(),
-                                child: Builder(
-                                  builder: (context) {
-                                    if (rejectedParkingsRowList.length > 0) {
-                                      return Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            16.0, 0.0, 16.0, 0.0),
-                                        child: Builder(
-                                          builder: (context) {
-                                            final rejected =
-                                                rejectedParkingsRowList
-                                                    .toList();
-
-                                            return ListView.separated(
-                                              padding: EdgeInsets.zero,
-                                              shrinkWrap: true,
-                                              scrollDirection: Axis.vertical,
-                                              itemCount: rejected.length,
-                                              separatorBuilder: (_, __) =>
-                                                  SizedBox(height: 8.0),
-                                              itemBuilder:
-                                                  (context, rejectedIndex) {
-                                                final rejectedItem =
-                                                    rejected[rejectedIndex];
-                                                return InkWell(
-                                                  splashColor:
-                                                      Colors.transparent,
-                                                  focusColor:
-                                                      Colors.transparent,
-                                                  hoverColor:
-                                                      Colors.transparent,
-                                                  highlightColor:
-                                                      Colors.transparent,
-                                                  onTap: () async {
-                                                    context.pushNamed(
-                                                      RejectedParkingWidget
-                                                          .routeName,
-                                                      queryParameters: {
-                                                        'parkingRow':
-                                                            serializeParam(
-                                                          rejectedItem,
-                                                          ParamType.SupabaseRow,
-                                                        ),
-                                                      }.withoutNulls,
-                                                    );
-                                                  },
-                                                  child: RequestCardWidget(
-                                                    key: Key(
-                                                        'Key6oh_${rejectedIndex}_of_${rejected.length}'),
-                                                    parkingRow: rejectedItem,
-                                                  ),
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    } else {
-                                      return Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            0.0, 150.0, 0.0, 0.0),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.max,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(0.0),
-                                              child: SvgPicture.asset(
-                                                'assets/images/map.svg',
-                                                width: 96.0,
-                                                height: 96.0,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            Text(
-                                              FFLocalizations.of(context)
-                                                  .getText(
-                                                'd79wksx8' /* Rejected applications will be ... */,
-                                              ),
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .labelLarge
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontStyle,
-                                                      ),
-                                            ),
-                                          ].divide(SizedBox(height: 16.0)),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
-                              );
-                            },
-                          );
-                        }
-                      },
+                    ParkingRequestsList(
+                      state: _requestsController.state,
+                      onRequestSelected: _openRequest,
+                      onRetry: () => unawaited(_requestsController.retry()),
                     ),
                     Padding(
                       padding:
