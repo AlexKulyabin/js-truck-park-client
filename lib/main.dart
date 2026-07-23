@@ -11,7 +11,9 @@ import 'auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
 import '/core/localization/shared_preferences_locale_store.dart';
+import '/core/theme/shared_preferences_theme_store.dart';
 import '/features/language/application/language_controller.dart';
+import '/features/settings/application/theme_controller.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/internationalization.dart';
@@ -26,7 +28,9 @@ void main() async {
 
   await SupaFlow.initialize();
 
-  await FlutterFlowTheme.initialize();
+  final themeStore = await SharedPreferencesThemeStore.create();
+  await FlutterFlowTheme.initialize(themeStore: themeStore);
+  final themeController = ThemeController(themeStore: themeStore);
 
   final localeStore = await SharedPreferencesLocaleStore.create();
   await FFLocalizations.initialize(localeStore: localeStore);
@@ -48,6 +52,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => appState),
         ChangeNotifierProvider(create: (_) => languageController),
+        ChangeNotifierProvider(create: (_) => themeController),
       ],
       child: MyApp(),
     ),
@@ -73,8 +78,6 @@ class MyAppScrollBehavior extends MaterialScrollBehavior {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = FlutterFlowTheme.themeMode;
-
   late AppStateNotifier _appStateNotifier;
   late GoRouter _router;
   String getRoute([RouteMatch? routeMatch]) {
@@ -109,14 +112,10 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  void setThemeMode(ThemeMode mode) => safeSetState(() {
-        _themeMode = mode;
-        FlutterFlowTheme.saveThemeMode(mode);
-      });
-
   @override
   Widget build(BuildContext context) {
     final locale = context.watch<LanguageController>().state.locale;
+    final themeMode = context.watch<ThemeController>().state.themeMode;
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: AppConfig.current.isIntegration,
@@ -154,7 +153,7 @@ class _MyAppState extends State<MyApp> {
         brightness: Brightness.dark,
         useMaterial3: false,
       ),
-      themeMode: _themeMode,
+      themeMode: themeMode,
       routerConfig: _router,
     );
   }

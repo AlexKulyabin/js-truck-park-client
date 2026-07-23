@@ -1,30 +1,31 @@
 // ignore_for_file: overridden_fields, annotate_overrides
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import '/core/theme/shared_preferences_theme_store.dart';
+import '/core/theme/theme_store.dart';
 
-const kThemeModeKey = '__theme_mode__';
-
-SharedPreferences? _prefs;
+const kThemeModeKey = SharedPreferencesThemeStore.storageKey;
 
 abstract class FlutterFlowTheme {
-  static Future initialize() async =>
-      _prefs = await SharedPreferences.getInstance();
+  static ThemeStore? _themeStore;
 
-  static ThemeMode get themeMode {
-    final darkMode = _prefs?.getBool(kThemeModeKey);
-    return darkMode == null
-        ? ThemeMode.system
-        : darkMode
-            ? ThemeMode.dark
-            : ThemeMode.light;
+  static Future<void> initialize({ThemeStore? themeStore}) async {
+    _themeStore = themeStore ?? await SharedPreferencesThemeStore.create();
   }
 
-  static void saveThemeMode(ThemeMode mode) => mode == ThemeMode.system
-      ? _prefs?.remove(kThemeModeKey)
-      : _prefs?.setBool(kThemeModeKey, mode == ThemeMode.dark);
+  static ThemeMode get themeMode =>
+      _themeStore?.readThemeMode() ?? ThemeMode.system;
+
+  static void saveThemeMode(ThemeMode mode) {
+    final themeStore = _themeStore;
+    if (themeStore != null) {
+      unawaited(themeStore.writeThemeMode(mode));
+    }
+  }
 
   static FlutterFlowTheme of(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark

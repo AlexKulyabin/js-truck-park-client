@@ -16,6 +16,7 @@ import 'package:provider/provider.dart';
 
 import '../main.dart';
 import '../features/language/application/language_controller.dart';
+import '../features/settings/application/theme_controller.dart';
 
 import 'lat_lng.dart';
 
@@ -326,8 +327,9 @@ void setAppLanguage(BuildContext context, String language) => unawaited(
       context.read<LanguageController>().selectLanguage(language),
     );
 
-void setDarkModeSetting(BuildContext context, ThemeMode themeMode) =>
-    MyApp.of(context).setThemeMode(themeMode);
+void setDarkModeSetting(BuildContext context, ThemeMode themeMode) => unawaited(
+      context.read<ThemeController>().selectThemeMode(themeMode),
+    );
 
 void showSnackbar(
   BuildContext context,
