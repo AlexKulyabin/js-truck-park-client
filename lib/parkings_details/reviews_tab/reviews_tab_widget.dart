@@ -1,6 +1,8 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/features/parking_details/application/parking_details_controller.dart';
+import '/features/parking_details/data/legacy_parking_details_adapter.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -8,6 +10,7 @@ import '/reviews/report_create/report_create_widget.dart';
 import '/reviews/review_card_parking_details/review_card_parking_details_widget.dart';
 import '/reviews/review_create/review_create_widget.dart';
 import '/subscription/guest_dialog/guest_dialog_widget.dart';
+import 'dart:async';
 import 'dart:ui';
 import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
@@ -23,9 +26,14 @@ class ReviewsTabWidget extends StatefulWidget {
   const ReviewsTabWidget({
     super.key,
     required this.parkingRow,
+    required this.detailsController,
   });
 
   final ViewFullParkingDetailsRow? parkingRow;
+  final ParkingDetailsController detailsController;
+
+  static const loadingKey = Key('public-parking-reviews-loading');
+  static const failureKey = Key('public-parking-reviews-failure');
 
   @override
   State<ReviewsTabWidget> createState() => _ReviewsTabWidgetState();
@@ -44,12 +52,25 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ReviewsTabModel());
+    widget.detailsController.addListener(_onReviewsStateChanged);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(widget.detailsController.loadReviews());
+        safeSetState(() {});
+      }
+    });
+  }
+
+  void _onReviewsStateChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    widget.detailsController.removeListener(_onReviewsStateChanged);
     _model.maybeDispose();
 
     super.dispose();
@@ -59,20 +80,14 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
 
-    return FutureBuilder<List<ViewReviewsWithUsersRow>>(
-      future: ViewReviewsWithUsersTable().queryRows(
-        queryFn: (q) => q
-            .eqOrNull(
-              'parking_id',
-              widget!.parkingRow?.id,
-            )
-            .order('created_at'),
-      ),
-      builder: (context, snapshot) {
-        // Customize what your widget looks like when it's loading.
-        if (!snapshot.hasData) {
+    return Builder(
+      builder: (context) {
+        final state = widget.detailsController.state;
+        if (state.reviewsPhase == ParkingDetailsLoadPhase.idle ||
+            state.reviewsPhase == ParkingDetailsLoadPhase.loading) {
           return Center(
             child: SizedBox(
+              key: ReviewsTabWidget.loadingKey,
               width: 50.0,
               height: 50.0,
               child: CircularProgressIndicator(
@@ -83,8 +98,25 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
             ),
           );
         }
-        List<ViewReviewsWithUsersRow> containerViewReviewsWithUsersRowList =
-            snapshot.data!;
+        if (state.reviewsPhase == ParkingDetailsLoadPhase.failure) {
+          return InkWell(
+            key: ReviewsTabWidget.failureKey,
+            onTap: () => unawaited(widget.detailsController.loadReviews()),
+            child: Center(
+              child: SizedBox(
+                width: 50.0,
+                height: 50.0,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    FlutterFlowTheme.of(context).primary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        final containerViewReviewsWithUsersRowList =
+            state.reviews.map(parkingReviewToLegacyRow).toList(growable: false);
 
         return Container(
           decoration: BoxDecoration(

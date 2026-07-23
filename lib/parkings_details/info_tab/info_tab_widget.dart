@@ -103,114 +103,86 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
             ),
           ),
         ),
-        FutureBuilder<List<ReviewsRow>>(
-          future: ReviewsTable().queryRows(
-            queryFn: (q) => q.eqOrNull(
-              'parking_id',
-              widget!.parkingRow?.id,
-            ),
+        Container(
+          width: double.infinity,
+          height: 72.0,
+          decoration: BoxDecoration(
+            color: FlutterFlowTheme.of(context).secondaryBackground,
+            borderRadius: BorderRadius.circular(10.0),
           ),
-          builder: (context, snapshot) {
-            // Customize what your widget looks like when it's loading.
-            if (!snapshot.hasData) {
-              return Center(
-                child: SizedBox(
-                  width: 50.0,
-                  height: 50.0,
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      FlutterFlowTheme.of(context).primary,
-                    ),
+          child: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(0.0),
+                  child: SvgPicture.asset(
+                    'assets/images/review.svg',
+                    width: 30.0,
+                    height: 30.0,
+                    fit: BoxFit.cover,
                   ),
                 ),
-              );
-            }
-            List<ReviewsRow> reviewsContainerReviewsRowList = snapshot.data!;
-
-            return Container(
-              width: double.infinity,
-              height: 72.0,
-              decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).secondaryBackground,
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-                child: Row(
+                Column(
                   mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(0.0),
-                      child: SvgPicture.asset(
-                        'assets/images/review.svg',
-                        width: 30.0,
-                        height: 30.0,
-                        fit: BoxFit.cover,
+                    Text(
+                      valueOrDefault<String>(
+                        widget!.parkingRow?.rating?.toString(),
+                        '4.0',
                       ),
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          valueOrDefault<String>(
-                            widget!.parkingRow?.rating?.toString(),
-                            '4.0',
+                      style: FlutterFlowTheme.of(context).bodyLarge.override(
+                            font: GoogleFonts.roboto(
+                              fontWeight: FontWeight.w500,
+                              fontStyle: FlutterFlowTheme.of(context)
+                                  .bodyLarge
+                                  .fontStyle,
+                            ),
+                            letterSpacing: 0.0,
+                            fontWeight: FontWeight.w500,
+                            fontStyle: FlutterFlowTheme.of(context)
+                                .bodyLarge
+                                .fontStyle,
                           ),
-                          style:
-                              FlutterFlowTheme.of(context).bodyLarge.override(
-                                    font: GoogleFonts.roboto(
-                                      fontWeight: FontWeight.w500,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyLarge
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FontWeight.w500,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyLarge
-                                        .fontStyle,
-                                  ),
-                        ),
-                        Text(
-                          valueOrDefault<String>(
-                            '${valueOrDefault<String>(
-                              reviewsContainerReviewsRowList.length.toString(),
-                              '0',
-                            )} ${FFLocalizations.of(context).getVariableText(
-                              enText: 'reviews',
-                              ruText: 'отзывов',
-                            )}',
-                            '0',
-                          ),
-                          style:
-                              FlutterFlowTheme.of(context).labelLarge.override(
-                                    font: GoogleFonts.roboto(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .labelLarge
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .labelLarge
-                                          .fontStyle,
-                                    ),
-                                    fontSize: 15.0,
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelLarge
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelLarge
-                                        .fontStyle,
-                                  ),
-                        ),
-                      ].divide(SizedBox(height: 4.0)),
                     ),
-                  ].divide(SizedBox(width: 12.0)),
+                    Text(
+                      valueOrDefault<String>(
+                        '${valueOrDefault<String>(
+                          widget!.parkingRow?.reviewsCount?.toString(),
+                          '0',
+                        )} ${FFLocalizations.of(context).getVariableText(
+                          enText: 'reviews',
+                          ruText: 'отзывов',
+                        )}',
+                        '0',
+                      ),
+                      style: FlutterFlowTheme.of(context).labelLarge.override(
+                            font: GoogleFonts.roboto(
+                              fontWeight: FlutterFlowTheme.of(context)
+                                  .labelLarge
+                                  .fontWeight,
+                              fontStyle: FlutterFlowTheme.of(context)
+                                  .labelLarge
+                                  .fontStyle,
+                            ),
+                            fontSize: 15.0,
+                            letterSpacing: 0.0,
+                            fontWeight: FlutterFlowTheme.of(context)
+                                .labelLarge
+                                .fontWeight,
+                            fontStyle: FlutterFlowTheme.of(context)
+                                .labelLarge
+                                .fontStyle,
+                          ),
+                    ),
+                  ].divide(SizedBox(height: 4.0)),
                 ),
-              ),
-            );
-          },
+              ].divide(SizedBox(width: 12.0)),
+            ),
+          ),
         ),
         Container(
           width: double.infinity,

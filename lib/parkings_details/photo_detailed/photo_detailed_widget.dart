@@ -1,8 +1,8 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import '/features/parking_details/presentation/parking_details_links.dart';
 import 'dart:ui';
-import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -152,7 +152,11 @@ class _PhotoDetailedWidgetState extends State<PhotoDetailedWidget> {
                             highlightColor: Colors.transparent,
                             onTap: () async {
                               await Share.share(
-                                'https://js-truck-park.web.app/deeplink.html?route=sharedPhotoView&photoUrl=${functions.urlEncode(widget!.photoRef)}&address=${functions.urlEncode(widget!.address)}&date=${functions.urlEncode(widget!.data)}',
+                                buildSharedPhotoUrl(
+                                  photoUrl: widget.photoRef,
+                                  address: widget.address,
+                                  date: widget.data,
+                                ),
                                 sharePositionOrigin:
                                     getWidgetBoundingBox(context),
                               );
