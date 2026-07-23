@@ -1,10 +1,12 @@
-import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
+import '/backend/supabase/database/tables/view_full_parking_details.dart';
 import '/core/config/app_config.dart';
+import '/features/parking_details/application/parking_favorite_controller.dart';
 import '/features/parking_details/application/parking_details_controller.dart';
 import '/features/parking_details/data/legacy_parking_details_adapter.dart';
+import '/features/parking_details/data/supabase_parking_favorite_repository.dart';
 import '/features/parking_details/data/supabase_parking_details_repository.dart';
+import '/features/parking_details/domain/parking_favorite_repository.dart';
 import '/features/parking_details/domain/parking_details_repository.dart';
 import '/features/parking_details/presentation/parking_details_links.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -35,14 +37,18 @@ class ParkingsDetailsWidget extends StatefulWidget {
     super.key,
     required this.parkingId,
     this.detailsRepository,
+    this.favoriteRepository,
   });
 
   final String? parkingId;
   final ParkingDetailsRepository? detailsRepository;
+  final ParkingFavoriteRepository? favoriteRepository;
 
   static const loadingKey = Key('public-parking-details-loading');
   static const failureKey = Key('public-parking-details-failure');
   static const emptyKey = Key('public-parking-details-empty');
+  static const favoriteButtonKey = Key('public-parking-favorite-button');
+  static const favoriteUpdatingKey = Key('public-parking-favorite-updating');
 
   @override
   State<ParkingsDetailsWidget> createState() => _ParkingsDetailsWidgetState();
@@ -51,7 +57,7 @@ class ParkingsDetailsWidget extends StatefulWidget {
 class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late ParkingsDetailsModel _model;
   late final ParkingDetailsController _controller;
-  var _favoriteInitialized = false;
+  late final ParkingFavoriteController _favoriteController;
 
   @override
   void setState(VoidCallback callback) {
@@ -68,6 +74,11 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
           widget.detailsRepository ?? SupabaseParkingDetailsRepository(),
       parkingId: widget.parkingId ?? '',
     )..addListener(_onDetailsStateChanged);
+    _favoriteController = ParkingFavoriteController(
+      repository:
+          widget.favoriteRepository ?? SupabaseParkingFavoriteRepository(),
+      parkingId: widget.parkingId ?? '',
+    )..addListener(_onFavoriteStateChanged);
     unawaited(_controller.loadDetails());
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
@@ -75,19 +86,39 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
 
   void _onDetailsStateChanged() {
     final details = _controller.state.details;
-    if (!_favoriteInitialized && details != null) {
-      _model.isFavorite = details.isFavorited;
-      _favoriteInitialized = true;
+    if (details != null) {
+      _favoriteController.initialize(details.isFavorited);
     }
     if (mounted) {
       setState(() {});
     }
   }
 
+  void _onFavoriteStateChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _showFavoriteFailure(ParkingFavoriteFailureKind? kind) {
+    final isRussian = Localizations.localeOf(context).languageCode == 'ru';
+    final message = kind == ParkingFavoriteFailureKind.unauthenticated
+        ? (isRussian
+            ? 'Сессия завершена. Войдите снова.'
+            : 'Your session has expired. Please sign in again.')
+        : (isRussian
+            ? 'Не удалось обновить избранное. Попробуйте ещё раз.'
+            : 'Unable to update favorites. Please try again.');
+    showSnackbar(context, message);
+  }
+
   @override
   void dispose() {
     _controller
       ..removeListener(_onDetailsStateChanged)
+      ..dispose();
+    _favoriteController
+      ..removeListener(_onFavoriteStateChanged)
       ..dispose();
     _model.maybeDispose();
 
@@ -552,6 +583,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                               ),
                               Builder(
                                 builder: (context) => InkWell(
+                                  key: ParkingsDetailsWidget.favoriteButtonKey,
                                   splashColor: Colors.transparent,
                                   focusColor: Colors.transparent,
                                   hoverColor: Colors.transparent,
@@ -559,7 +591,6 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                   onTap: AppConfig.current.integrationReadOnly
                                       ? null
                                       : () async {
-                                          var _shouldSetState = false;
                                           if (FFAppState().isGuest == true) {
                                             await showDialog(
                                               barrierColor:
@@ -582,38 +613,19 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                 );
                                               },
                                             );
-
-                                            if (_shouldSetState) {
-                                              safeSetState(() {});
-                                            }
                                             return;
                                           }
-                                          if (_model.isFavorite == true) {
-                                            _model.isFavorite = false;
-                                            safeSetState(() {});
-                                            _model.deletefavoriteOut =
-                                                await FavoritesTable().delete(
-                                              matchingRows: (rows) =>
-                                                  rows.eqOrNull(
-                                                'parking_id',
-                                                widget!.parkingId,
-                                              ),
-                                              returnRows: true,
+                                          final outcome =
+                                              await _favoriteController
+                                                  .toggle();
+                                          if (outcome ==
+                                                  ParkingFavoriteToggleOutcome
+                                                      .failed &&
+                                              mounted) {
+                                            _showFavoriteFailure(
+                                              _favoriteController
+                                                  .state.failureKind,
                                             );
-                                            _shouldSetState = true;
-                                          } else {
-                                            _model.isFavorite = true;
-                                            safeSetState(() {});
-                                            _model.addFavoriteOut =
-                                                await FavoritesTable().insert({
-                                              'user_id': currentUserUid,
-                                              'parking_id': widget!.parkingId,
-                                            });
-                                            _shouldSetState = true;
-                                          }
-
-                                          if (_shouldSetState) {
-                                            safeSetState(() {});
                                           }
                                         },
                                   child: Container(
@@ -632,7 +644,28 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                       alignment: AlignmentDirectional(0.0, 0.0),
                                       child: Builder(
                                         builder: (context) {
-                                          if (_model.isFavorite == true) {
+                                          final favoriteState =
+                                              _favoriteController.state;
+                                          if (favoriteState.phase ==
+                                              ParkingFavoriteMutationPhase
+                                                  .updating) {
+                                            return SizedBox(
+                                              key: ParkingsDetailsWidget
+                                                  .favoriteUpdatingKey,
+                                              width: 24.0,
+                                              height: 24.0,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.0,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(
+                                                  FlutterFlowTheme.of(context)
+                                                      .primaryBackground,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          if (favoriteState.isFavorite) {
                                             return ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(0.0),

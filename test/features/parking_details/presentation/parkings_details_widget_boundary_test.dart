@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:j_s_truck_park/app_state.dart';
 import 'package:j_s_truck_park/features/parking_details/domain/parking_details.dart';
+import 'package:j_s_truck_park/features/parking_details/domain/parking_favorite_repository.dart';
 import 'package:j_s_truck_park/features/parking_details/domain/parking_details_repository.dart';
 import 'package:j_s_truck_park/flutter_flow/internationalization.dart';
 import 'package:j_s_truck_park/parkings_details/parkings_details/parkings_details_widget.dart';
@@ -27,7 +28,26 @@ class _FakeRepository implements ParkingDetailsRepository {
   }
 }
 
-Widget _buildSubject(_FakeRepository repository) =>
+class _FakeFavoriteRepository implements ParkingFavoriteRepository {
+  final calls = <({String parkingId, bool isFavorite})>[];
+  Object? error;
+
+  @override
+  Future<void> setFavorite({
+    required String parkingId,
+    required bool isFavorite,
+  }) async {
+    calls.add((parkingId: parkingId, isFavorite: isFavorite));
+    if (error case final error?) {
+      throw error;
+    }
+  }
+}
+
+Widget _buildSubject(
+  _FakeRepository repository, {
+  ParkingFavoriteRepository? favoriteRepository,
+}) =>
     ChangeNotifierProvider.value(
       value: FFAppState(),
       child: MaterialApp(
@@ -44,6 +64,7 @@ Widget _buildSubject(_FakeRepository repository) =>
           body: ParkingsDetailsWidget(
             parkingId: 'parking-1',
             detailsRepository: repository,
+            favoriteRepository: favoriteRepository,
           ),
         ),
       ),
@@ -123,6 +144,37 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(ParkingsDetailsWidget.emptyKey), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps favorite writes disabled in integration read-only mode',
+      (tester) async {
+    final detailsRepository = _FakeRepository()
+      ..details = const ParkingDetails(
+        id: 'parking-1',
+        isFavorited: false,
+        stars1: 0,
+        stars2: 0,
+        stars3: 0,
+        stars4: 0,
+        stars5: 0,
+      );
+    final favoriteRepository = _FakeFavoriteRepository();
+
+    await tester.pumpWidget(
+      _buildSubject(
+        detailsRepository,
+        favoriteRepository: favoriteRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final button = find.byKey(ParkingsDetailsWidget.favoriteButtonKey);
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+
+    expect(favoriteRepository.calls, isEmpty);
     expect(tester.takeException(), isNull);
   });
 }

@@ -1,5 +1,4 @@
 import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/parkings_details/info_tab/info_tab_widget.dart';
 import '/parkings_details/photos_tab/photos_tab_widget.dart';
@@ -12,8 +11,6 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
 
   TabsToggle? activeTab = TabsToggle.info;
 
-  bool? isFavorite;
-
   ///  State fields for stateful widgets in this component.
 
   // State field(s) for PageView widget.
@@ -24,10 +21,6 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
           pageViewController!.page != null
       ? pageViewController!.page!.round()
       : 0;
-  // Stores action output result for [Backend Call - Delete Row(s)] action in FavoriteButton widget.
-  List<FavoritesRow>? deletefavoriteOut;
-  // Stores action output result for [Backend Call - Insert Row] action in FavoriteButton widget.
-  FavoritesRow? addFavoriteOut;
   // Model for InfoTab component.
   late InfoTabModel infoTabModel;
   // Model for ReviewsTab component.
