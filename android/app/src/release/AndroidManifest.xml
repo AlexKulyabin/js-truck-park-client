@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name=".MainActivity">
+            <!-- Chottu referral links. The existing hosting/custom-scheme
+                 intent filter remains defined in src/main unchanged. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="js-truck-park.chottu.link" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

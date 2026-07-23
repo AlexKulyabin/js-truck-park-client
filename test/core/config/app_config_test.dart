@@ -10,6 +10,7 @@ void main() {
       expect(config.integrationReadOnly, isTrue);
       expect(config.enableRevenueCat, isFalse);
       expect(config.enableDeepLinks, isFalse);
+      expect(config.enableReferrals, isFalse);
       expect(config.appDisplayName, 'JS Truck Park Dev');
     });
 
@@ -20,6 +21,7 @@ void main() {
       expect(config.integrationReadOnly, isFalse);
       expect(config.enableRevenueCat, isTrue);
       expect(config.enableDeepLinks, isTrue);
+      expect(config.enableReferrals, isTrue);
       expect(config.appDisplayName, 'JS Truck Park');
     });
 

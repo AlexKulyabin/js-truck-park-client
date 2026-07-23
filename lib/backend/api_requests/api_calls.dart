@@ -219,6 +219,7 @@ class ProcessReferralCall {
     String? refCode = '',
     String? refereeId = '',
     String? deviceId = '',
+    String? userToken = '',
   }) async {
     final config = AppConfig.current;
     final ffApiRequestBody = '''
@@ -233,7 +234,8 @@ class ProcessReferralCall {
       callType: ApiCallType.POST,
       headers: {
         'Content-Type': 'application/json',
-        ...config.anonymousSupabaseHeaders,
+        'apikey': config.supabasePublishableKey,
+        'Authorization': 'Bearer ${userToken}',
       },
       params: {},
       body: ffApiRequestBody,

@@ -9,6 +9,7 @@ import '/profile/log_out_dialog_copy/log_out_dialog_copy_widget.dart';
 import '/subscription/guest_dialog/guest_dialog_widget.dart';
 import 'dart:ui';
 import '/custom_code/actions/index.dart' as actions;
+import '/core/config/app_config.dart';
 import '/index.dart';
 import 'profile_widget.dart' show ProfileWidget;
 import 'package:flutter/material.dart';
@@ -19,7 +20,7 @@ import 'package:provider/provider.dart';
 class ProfileModel extends FlutterFlowModel<ProfileWidget> {
   ///  Local state fields for this page.
 
-  bool tempInvite = false;
+  bool tempInvite = AppConfig.current.enableReferrals;
 
   ///  State fields for stateful widgets in this page.
 

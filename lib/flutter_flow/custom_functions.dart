@@ -178,10 +178,10 @@ String getDisplayedMonthlyPrice(SubscriptionPricesStructStruct? prices) {
   return prices.isEligible ? prices.referral : prices.monthly;
 }
 
-bool isReferralApiSuccess(String? jsonBody) {
-  if (jsonBody == null || jsonBody.isEmpty) return false;
+bool isReferralApiSuccess(dynamic jsonBody) {
+  if (jsonBody == null) return false;
   try {
-    final decoded = jsonDecode(jsonBody);
+    final decoded = jsonBody is String ? jsonDecode(jsonBody) : jsonBody;
     if (decoded is Map && decoded['success'] == true) {
       return true;
     }

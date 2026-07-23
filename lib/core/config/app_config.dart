@@ -88,6 +88,7 @@ class AppConfig {
   bool get integrationReadOnly => isIntegration;
   bool get enableRevenueCat => isProduction;
   bool get enableDeepLinks => isProduction;
+  bool get enableReferrals => isProduction;
 
   String get appDisplayName =>
       isProduction ? 'JS Truck Park' : 'JS Truck Park Dev';

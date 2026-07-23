@@ -10,14 +10,22 @@ import 'package:flutter/material.dart';
 // Begin custom action code
 // DO NOT REMOVE OR MODIFY THE CODE ABOVE!
 
+import 'dart:async';
+
 import 'package:chottu_link/chottu_link.dart';
+import '/features/referrals/referral_links.dart';
+
+StreamSubscription<String>? _chottuLinkSubscription;
 
 Future listenChottuLink() async {
-  ChottuLink.onLinkReceived.listen((String link) {
-    final uri = Uri.tryParse(link);
-    final refCode = uri?.queryParameters['ref'];
+  if (_chottuLinkSubscription != null) {
+    return;
+  }
 
-    if (refCode != null && refCode.isNotEmpty) {
+  _chottuLinkSubscription = ChottuLink.onLinkReceived.listen((String link) {
+    final refCode = referralCodeFromUrl(link);
+
+    if (refCode != null) {
       FFAppState().update(() {
         FFAppState().tempReferralCode = refCode;
       });
