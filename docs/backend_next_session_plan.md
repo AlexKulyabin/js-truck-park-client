@@ -1,4 +1,22 @@
-# План следующей backend-сессии
+# Первый backend-этап: ограничение обновлений users
+
+## Статус реализации
+
+Статус: реализовано и проверяется локально; в production не применено.
+
+- PR с исходным аудитом слит в `main`.
+- Реферальные Flutter-изменения изолированы в отдельном draft PR и не входят в этот этап.
+- Создан стандартный `supabase/config.toml` для PostgreSQL 17.
+- `20260723173000_remote_schema.sql` фиксирует локальный baseline существующего проекта без данных.
+- `20260723180000_restrict_user_profile_updates.sql` содержит только grants hardening.
+- `users_authorization_test.sql` проверяет Auth trigger, column grants, own/cross-user RLS, anon и service role.
+- Два чистых reset/test: по 20 tests, PASS.
+- Schema diff: пустой. Flutter: 21 test PASS, format чистый, blocking analyzer errors нет.
+- DB lint содержит только baseline findings PostGIS и старых функций; migration-specific findings отсутствуют.
+- Commit `security(supabase): restrict mutable user profile columns` опубликован в draft PR #3.
+- Production write-команды не выполнялись.
+
+Baseline migration нельзя повторно выполнять на существующей production-базе: перед будущим rollout её migration version нужно отдельно отметить как already applied после проверки migration history. Это действие не входит в текущий этап.
 
 ## Выбранный модуль
 
@@ -23,8 +41,10 @@ Supabase authorization baseline для `public.users`: блокировка са
 
 - `diagnostics/supabase_schema_2026-07-23.sql`;
 - `diagnostics/supabase_backend_metadata_2026-07-23.json`;
-- будущая migration в `supabase/migrations/`;
-- будущие database tests в `supabase/tests/database/`.
+- `supabase/config.toml`;
+- `supabase/migrations/20260723173000_remote_schema.sql`;
+- `supabase/migrations/20260723180000_restrict_user_profile_updates.sql`;
+- `supabase/tests/database/users_authorization_test.sql`.
 
 ### Flutter callers, которые должны пройти regression
 
@@ -62,8 +82,10 @@ Supabase authorization baseline для `public.users`: блокировка са
 
 ```text
 supabase/
+  config.toml
   migrations/
-    <timestamp>_restrict_user_profile_updates.sql
+    20260723173000_remote_schema.sql
+    20260723180000_restrict_user_profile_updates.sql
   tests/
     database/
       users_authorization_test.sql
@@ -72,22 +94,24 @@ docs/
   backend_next_session_plan.md
 ```
 
-Migration должна:
+Hardening migration:
 
 1. зафиксировать текущие grants;
-2. revoke table-level UPDATE у `authenticated`;
+2. revoke table-level UPDATE у `anon` и `authenticated`;
 3. grant UPDATE только `full_name`, `avatar_url`, `updated_at`, `last_device_id`;
 4. сохранить полный доступ `service_role`;
 5. не менять SELECT policy, Auth trigger, RPC, таблицы, колонки или данные;
 6. содержать обратимый down/rollback SQL в runbook, но не запускать его автоматически.
 
-## Файлы, которые будут созданы
+## Созданные файлы
 
-- `supabase/migrations/<timestamp>_restrict_user_profile_updates.sql`;
+- `supabase/.gitignore`;
+- `supabase/config.toml`;
+- `supabase/migrations/20260723173000_remote_schema.sql`;
+- `supabase/migrations/20260723180000_restrict_user_profile_updates.sql`;
 - `supabase/tests/database/users_authorization_test.sql`;
-- при отсутствии тестового bootstrap — один минимальный helper под `supabase/tests/database/support/`.
 
-## Файлы, которые будут изменены
+## Изменённые файлы
 
 - `docs/backend_security_audit.md` — фактический результат tests;
 - `docs/backend_next_session_plan.md` — status/rollback evidence.
@@ -106,16 +130,16 @@ Production Flutter files на первом backend-этапе изменятьс
 
 ## Последовательность
 
-1. Создать локальный или отдельный staging Supabase; production не использовать для tests.
-2. Применить актуальный schema baseline.
-3. Написать negative tests для update `is_admin`, `is_premium`, `status`, referral fields.
-4. Написать positive tests для `full_name`, `avatar_url`, `updated_at`, `last_device_id`.
-5. Добавить migration grants.
-6. Выполнить reset/test/lint минимум два раза с чистого состояния.
-7. Запустить Flutter unit/analyze и ручной integration smoke против staging.
-8. Проверить diff: только одна migration, tests и docs.
-9. Сделать отдельный Git-коммит.
-10. Production deployment — только отдельное явное решение после staging evidence.
+1. [x] Создать локальный Supabase; production не использовать для tests.
+2. [x] Применить актуальный schema baseline без данных.
+3. [x] Написать negative tests для update `is_admin`, `is_premium`, `status`, referral fields.
+4. [x] Написать positive tests для `full_name`, `avatar_url`, `updated_at`, `last_device_id`.
+5. [x] Добавить migration grants.
+6. [x] Выполнить reset/test/lint второй раз с чистого состояния.
+7. [x] Запустить Flutter unit/analyze.
+8. [x] Проверить финальный diff: config, baseline, одна hardening migration, tests и docs.
+9. [x] Сделать отдельный Git-коммит и draft PR.
+10. [ ] Staging/production deployment — только отдельное явное решение.
 
 ## Необходимые тесты
 
@@ -137,9 +161,9 @@ Production Flutter files на первом backend-этапе изменятьс
 ## Команды проверки
 
 ```bash
-supabase start
+supabase start -x vector,logflare,studio,storage-api,imgproxy,edge-runtime,mailpit,postgres-meta,postgrest,realtime,gotrue,kong,supavisor
 supabase db reset
-supabase test db
+supabase test db supabase/tests/database/users_authorization_test.sql --local
 supabase db lint --level warning
 supabase db diff --local --schema public
 dart format --output=none --set-exit-if-changed lib test

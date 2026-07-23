@@ -1,6 +1,19 @@
 # Backend security audit
 
-Дата: 2026-07-23. Scope: фактическая production-схема Supabase и Flutter callers. Проверка была read-only; SQL migrations, policies, данные и production-код не изменялись.
+Дата: 2026-07-23. Scope: фактическая production-схема Supabase и Flutter callers. Исходный аудит был read-only. Первый hardening patch реализован и проверен только в локальном Supabase; production schema, policies и данные не изменялись.
+
+## Статус первого hardening-этапа
+
+- Добавлен воспроизводимый локальный Supabase PostgreSQL 17 config.
+- Зафиксирован schema baseline существующего hosted-проекта без пользовательских данных.
+- Миграция `20260723180000_restrict_user_profile_updates.sql` удаляет table-level `UPDATE` у `anon` и `authenticated`.
+- `authenticated` получает UPDATE только для `full_name`, `avatar_url`, `updated_at`, `last_device_id`.
+- `service_role`, RLS policies, Auth trigger, RPC, таблицы и данные не меняются.
+- Два чистых `db reset` и два запуска pgTAP прошли: 20 tests, PASS в каждом запуске.
+- `supabase db diff --local --schema public`: изменений не найдено.
+- DB lint повторяет существующие замечания PostGIS и legacy-функций; новых findings от grants migration нет.
+- Flutter regression: 21 test PASS; format без изменений; analyzer — 2297 существующих warning/info, blocking errors нет.
+- Миграция в production не применялась. Finding остаётся P0 для работающего production до отдельного rollout-решения.
 
 ## Итог
 
@@ -27,6 +40,8 @@ Impact: пользователь может изменить собственн�
 2. grant UPDATE только колонок, реально изменяемых клиентом: `full_name`, `avatar_url`, `updated_at`, `last_device_id` и отдельно подтверждённые settings;
 3. менять `is_admin`, `is_premium`, `status`, referral linkage только server-side функциями с явной авторизацией;
 4. добавить негативные SQL tests до применения.
+
+Локальная реализация: выполнена в отдельной migration и покрыта pgTAP. Production status: не применено.
 
 ### P0 — любой authenticated user может изменять любую парковку
 
@@ -218,9 +233,9 @@ Impact: resource abuse и неожиданный объём ответа. Нуж
 Команды выполняются только против локального Supabase или отдельного staging project:
 
 ```bash
-supabase start
+supabase start -x vector,logflare,studio,storage-api,imgproxy,edge-runtime,mailpit,postgres-meta,postgrest,realtime,gotrue,kong,supavisor
 supabase db reset
-supabase test db
+supabase test db supabase/tests/database/users_authorization_test.sql --local
 supabase db lint --level warning
 supabase db diff --local --schema public,storage
 dart format --output=none --set-exit-if-changed lib test
