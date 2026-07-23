@@ -73,7 +73,7 @@ Guard не описан декларативно на каждом route. `AppSt
 - Slider radius преобразуется в 5/10/50/100/150 км функцией `getMetersFromIndex`.
 - Ответ хранится как `dynamic`; карта ожидает элементы с `lat`, `lng`, `is_cluster`, `count`, `id`. Невалидные элементы тихо пропускаются.
 - Поиск lower-case, debounce 500 ms; результат приводится к `List<dynamic>` без typed DTO.
-- Клиентской пагинации/range нет. Лимит, сортировка по расстоянию и PostGIS-реализация не могут быть подтверждены без SQL definitions.
+- Клиентской пагинации/range нет. Schema snapshot подтвердил zoom-grid clustering, spherical radius filter, GiST geography index и отсутствие hard result limit/сортировки в `get_filtered_parkings`; подробности в `supabase_backend_reference.md`.
 - Reverse geocode выполняется через Google endpoint и берёт `results[0].formatted_address` без отдельной typed/null-safe модели.
 
 ## Локализация и темы
@@ -92,6 +92,6 @@ Guard не описан декларативно на каждом route. `AppSt
 3. RLS и Storage policies отсутствуют в репозитории, поэтому безопасность write/read операций не доказана. Клиентские проверки guest/premium не являются security boundary.
 4. Возвращаемые dynamic JSON и force unwrap увеличивают риск malformed response/crash.
 5. Не найдено централизованного redaction/logging/error mapping. Некоторые исключения печатаются напрямую.
-6. Удаление аккаунта, referral и геопоиск — RPC-контракты с высоким security/abuse риском; их нельзя рефакторить без SQL/RLS/contract fixtures.
+6. Удаление аккаунта, referral и геопоиск — подтверждённые RPC-контракты с высоким security/abuse риском; перед рефакторингом нужны negative RLS tests и contract fixtures из `backend_security_audit.md`.
 
 Целевой принцип: секреты остаются только на server side; publishable config инъецируется per environment; authorization обеспечивается RLS/RPC, а UI лишь отражает права; все сетевые границы typed, валидируемы и тестируемы.

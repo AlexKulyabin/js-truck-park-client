@@ -1,0 +1,2258 @@
+{
+    "policies": [
+        {
+            "name": "Allow users to manage their own favorites",
+            "check": "(auth.uid() = user_id)",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "favorites",
+            "using": "(auth.uid() = user_id)",
+            "schema": "public",
+            "command": "ALL",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "favorites_owner_all",
+            "check": "(auth.uid() = user_id)",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "favorites",
+            "using": "(auth.uid() = user_id)",
+            "schema": "public",
+            "command": "ALL",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow authenticated insert",
+            "check": "(auth.uid() = user_id)",
+            "roles": [
+                "public"
+            ],
+            "table": "parking_photos",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow authenticated users to insert photos",
+            "check": "(auth.uid() = user_id)",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parking_photos",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow public read access",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "parking_photos",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow public select on parking photos",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "parking_photos",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow public select on parking_photos",
+            "check": null,
+            "roles": [
+                "anon",
+                "authenticated"
+            ],
+            "table": "parking_photos",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Authenticated can create parking photos",
+            "check": "true",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parking_photos",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Authenticated can delete parking photos",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parking_photos",
+            "using": "true",
+            "schema": "public",
+            "command": "DELETE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "photos_delete",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parking_photos",
+            "using": "(is_admin() OR (auth.uid() = user_id))",
+            "schema": "public",
+            "command": "DELETE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "photos_insert",
+            "check": "true",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parking_photos",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "photos_select_authenticated",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parking_photos",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow authenticated users to insert parkings",
+            "check": "true",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parkings",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow authenticated users to update parkings",
+            "check": "true",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parkings",
+            "using": "true",
+            "schema": "public",
+            "command": "UPDATE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow public read of approved parkings",
+            "check": null,
+            "roles": [
+                "anon",
+                "authenticated"
+            ],
+            "table": "parkings",
+            "using": "(status = 'approved'::parking_status)",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow public select on approved parkings",
+            "check": null,
+            "roles": [
+                "anon",
+                "authenticated"
+            ],
+            "table": "parkings",
+            "using": "((status = 'approved'::parking_status) OR (created_by = auth.uid()) OR is_admin())",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "parkings_delete",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parkings",
+            "using": "is_admin()",
+            "schema": "public",
+            "command": "DELETE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "parkings_insert",
+            "check": "true",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parkings",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "parkings_select",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "parkings",
+            "using": "((status = 'approved'::parking_status) OR is_admin())",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "parkings_update",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "parkings",
+            "using": "((auth.uid() = created_by) OR is_admin())",
+            "schema": "public",
+            "command": "UPDATE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow authenticated users to insert reports",
+            "check": "(auth.uid() = user_id)",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "reports",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "reports_insert",
+            "check": "(auth.uid() = user_id)",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "reports",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "reports_select",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "reports",
+            "using": "((auth.uid() = user_id) OR is_admin())",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow authenticated users to insert reviews",
+            "check": "(auth.uid() = user_id)",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "reviews",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow public select of reviews",
+            "check": null,
+            "roles": [
+                "anon",
+                "authenticated"
+            ],
+            "table": "reviews",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow public select on reviews",
+            "check": null,
+            "roles": [
+                "anon",
+                "authenticated"
+            ],
+            "table": "reviews",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "reviews_delete",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "reviews",
+            "using": "is_admin()",
+            "schema": "public",
+            "command": "DELETE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "reviews_insert",
+            "check": "(auth.uid() = user_id)",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "reviews",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "reviews_select",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "reviews",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "users_insert_all",
+            "check": "true",
+            "roles": [
+                "anon",
+                "authenticated"
+            ],
+            "table": "users",
+            "using": null,
+            "schema": "public",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "users_select_all",
+            "check": null,
+            "roles": [
+                "anon",
+                "authenticated"
+            ],
+            "table": "users",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "users_select_all_clean",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "users",
+            "using": "true",
+            "schema": "public",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "users_update_own",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "users",
+            "using": "(auth.uid() = id)",
+            "schema": "public",
+            "command": "UPDATE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "users_update_own_clean",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "users",
+            "using": "(auth.uid() = id)",
+            "schema": "public",
+            "command": "UPDATE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow authenticated upload",
+            "check": "((bucket_id = 'parking_content'::text) AND (auth.role() = 'authenticated'::text))",
+            "roles": [
+                "public"
+            ],
+            "table": "objects",
+            "using": null,
+            "schema": "storage",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow owner deletion",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "objects",
+            "using": "((bucket_id = 'parking_content'::text) AND ((auth.uid())::text = (storage.foldername(name))[2]))",
+            "schema": "storage",
+            "command": "DELETE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow public viewing",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "objects",
+            "using": "(bucket_id = 'parking_content'::text)",
+            "schema": "storage",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Authenticated can upload parking content",
+            "check": "((bucket_id = 'parking_content'::text) AND ((storage.foldername(name))[1] = 'parkings'::text))",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "objects",
+            "using": null,
+            "schema": "storage",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Authenticated users can upload",
+            "check": "((bucket_id = 'parking-images'::text) AND (auth.role() = 'authenticated'::text))",
+            "roles": [
+                "public"
+            ],
+            "table": "objects",
+            "using": null,
+            "schema": "storage",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Avatar_Delete",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "objects",
+            "using": "(bucket_id = 'avatars'::text)",
+            "schema": "storage",
+            "command": "DELETE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Avatar_Public_View",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "objects",
+            "using": "(bucket_id = 'avatars'::text)",
+            "schema": "storage",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Avatar_Update",
+            "check": null,
+            "roles": [
+                "authenticated"
+            ],
+            "table": "objects",
+            "using": "(bucket_id = 'avatars'::text)",
+            "schema": "storage",
+            "command": "UPDATE",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Avatar_Upload",
+            "check": "(bucket_id = 'avatars'::text)",
+            "roles": [
+                "authenticated"
+            ],
+            "table": "objects",
+            "using": null,
+            "schema": "storage",
+            "command": "INSERT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Universal public read for parking_content",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "objects",
+            "using": "(bucket_id = 'parking_content'::text)",
+            "schema": "storage",
+            "command": "SELECT",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Users can delete own images",
+            "check": null,
+            "roles": [
+                "public"
+            ],
+            "table": "objects",
+            "using": "((bucket_id = 'parking-images'::text) AND ((storage.foldername(name))[1] = 'users'::text) AND ((storage.foldername(name))[2] = (auth.uid())::text))",
+            "schema": "storage",
+            "command": "DELETE",
+            "permissive": "PERMISSIVE"
+        }
+    ],
+    "routines": [
+        {
+            "name": "aggregate_parking_stats_after",
+            "owner": "postgres",
+            "config": null,
+            "returns": "trigger",
+            "arguments": "",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "delete_user_account",
+            "owner": "postgres",
+            "config": null,
+            "returns": "void",
+            "arguments": "confirm boolean",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "generate_referral_code",
+            "owner": "postgres",
+            "config": null,
+            "returns": "text",
+            "arguments": "",
+            "execute_anon": true,
+            "security_definer": false,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "get_filtered_parkings",
+            "owner": "postgres",
+            "config": null,
+            "returns": "SETOF json",
+            "arguments": "center_lat double precision, center_lng double precision, radius_meters double precision, min_lat double precision, max_lat double precision, min_lng double precision, max_lng double precision, min_capacity integer, max_capacity integer, need_gas boolean, need_shower boolean, need_laundry boolean, need_hotel boolean, need_shop boolean, need_recreation boolean, is_filter_active boolean, zoom_level double precision, search_query text",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "get_parkings_by_location",
+            "owner": "postgres",
+            "config": null,
+            "returns": "SETOF parkings",
+            "arguments": "lat double precision, lng double precision, radius_meters double precision",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "get_parkings_by_viewport",
+            "owner": "postgres",
+            "config": null,
+            "returns": "TABLE(lat double precision, lng double precision, count integer, id uuid, is_cluster boolean)",
+            "arguments": "min_lng double precision, min_lat double precision, max_lng double precision, max_lat double precision, zoom_level double precision",
+            "execute_anon": true,
+            "security_definer": false,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "handle_new_auth_user",
+            "owner": "postgres",
+            "config": [
+                "search_path=public"
+            ],
+            "returns": "trigger",
+            "arguments": "",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "handle_new_user",
+            "owner": "postgres",
+            "config": [
+                "search_path=public"
+            ],
+            "returns": "trigger",
+            "arguments": "",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "handle_review_score_before",
+            "owner": "postgres",
+            "config": null,
+            "returns": "trigger",
+            "arguments": "",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "initialize_parking_rating",
+            "owner": "postgres",
+            "config": null,
+            "returns": "trigger",
+            "arguments": "",
+            "execute_anon": true,
+            "security_definer": false,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "is_admin",
+            "owner": "postgres",
+            "config": null,
+            "returns": "boolean",
+            "arguments": "",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "process_referral",
+            "owner": "postgres",
+            "config": null,
+            "returns": "jsonb",
+            "arguments": "p_ref_code text, p_referee_id uuid, p_device_id text",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        },
+        {
+            "name": "sync_user_data_to_auth",
+            "owner": "postgres",
+            "config": null,
+            "returns": "trigger",
+            "arguments": "",
+            "execute_anon": true,
+            "security_definer": true,
+            "execute_service_role": true,
+            "execute_authenticated": true
+        }
+    ],
+    "extensions": [
+        {
+            "name": "pg_stat_statements",
+            "schema": "extensions",
+            "version": "1.11"
+        },
+        {
+            "name": "pg_trgm",
+            "schema": "public",
+            "version": "1.6"
+        },
+        {
+            "name": "pgcrypto",
+            "schema": "extensions",
+            "version": "1.3"
+        },
+        {
+            "name": "plpgsql",
+            "schema": "pg_catalog",
+            "version": "1.0"
+        },
+        {
+            "name": "postgis",
+            "schema": "public",
+            "version": "3.3.7"
+        },
+        {
+            "name": "supabase_vault",
+            "schema": "vault",
+            "version": "0.3.1"
+        },
+        {
+            "name": "uuid-ossp",
+            "schema": "extensions",
+            "version": "1.1"
+        }
+    ],
+    "table_grants": [
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "parking_photos",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "referral_stats",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_full_parking_details",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_reports_detailed",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_reviews_with_users",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "anon",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "authenticated",
+            "privilege": "UPDATE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "DELETE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "INSERT"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "REFERENCES"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "SELECT"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRIGGER"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "TRUNCATE"
+        },
+        {
+            "table": "view_user_favorites",
+            "schema": "public",
+            "grantee": "service_role",
+            "privilege": "UPDATE"
+        }
+    ],
+    "table_security": [
+        {
+            "kind": "r",
+            "table": "favorites",
+            "rls_forced": false,
+            "rls_enabled": true
+        },
+        {
+            "kind": "r",
+            "table": "parking_photos",
+            "rls_forced": false,
+            "rls_enabled": true
+        },
+        {
+            "kind": "r",
+            "table": "parkings",
+            "rls_forced": false,
+            "rls_enabled": true
+        },
+        {
+            "kind": "r",
+            "table": "referral_stats",
+            "rls_forced": false,
+            "rls_enabled": true
+        },
+        {
+            "kind": "r",
+            "table": "reports",
+            "rls_forced": false,
+            "rls_enabled": true
+        },
+        {
+            "kind": "r",
+            "table": "reviews",
+            "rls_forced": false,
+            "rls_enabled": true
+        },
+        {
+            "kind": "r",
+            "table": "users",
+            "rls_forced": false,
+            "rls_enabled": true
+        },
+        {
+            "kind": "v",
+            "table": "view_full_parking_details",
+            "rls_forced": false,
+            "rls_enabled": false
+        },
+        {
+            "kind": "v",
+            "table": "view_reports_detailed",
+            "rls_forced": false,
+            "rls_enabled": false
+        },
+        {
+            "kind": "v",
+            "table": "view_reviews_with_users",
+            "rls_forced": false,
+            "rls_enabled": false
+        },
+        {
+            "kind": "v",
+            "table": "view_user_favorites",
+            "rls_forced": false,
+            "rls_enabled": false
+        }
+    ],
+    "realtime_tables": [
+        {
+            "table": "favorites",
+            "schema": "public",
+            "publication": "supabase_realtime"
+        },
+        {
+            "table": "parkings",
+            "schema": "public",
+            "publication": "supabase_realtime"
+        },
+        {
+            "table": "reports",
+            "schema": "public",
+            "publication": "supabase_realtime"
+        },
+        {
+            "table": "reviews",
+            "schema": "public",
+            "publication": "supabase_realtime"
+        },
+        {
+            "table": "messages",
+            "schema": "realtime",
+            "publication": "supabase_realtime_messages_publication"
+        }
+    ],
+    "storage_buckets": [
+        {
+            "id": "assets",
+            "name": "assets",
+            "public": true,
+            "file_size_limit": null,
+            "allowed_mime_types": null
+        },
+        {
+            "id": "avatars",
+            "name": "avatars",
+            "public": true,
+            "file_size_limit": 5242880,
+            "allowed_mime_types": [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ]
+        },
+        {
+            "id": "parking_content",
+            "name": "parking_content",
+            "public": true,
+            "file_size_limit": 5242880,
+            "allowed_mime_types": [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ]
+        }
+    ],
+    "auth_user_triggers": [
+        {
+            "name": "on_auth_user_created",
+            "enabled": "O",
+            "function": "public.handle_new_auth_user"
+        }
+    ]
+}
