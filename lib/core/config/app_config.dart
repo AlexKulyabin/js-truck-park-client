@@ -121,6 +121,7 @@ class AppConfig {
   bool get integrationReadOnly => isIntegration;
   bool get enableRevenueCat => isProduction;
   bool get enableDeepLinks => isProduction;
+  bool get enableReferrals => isProduction;
 
   bool canPerformWrite(AppWriteOperation operation) {
     return switch (operation) {

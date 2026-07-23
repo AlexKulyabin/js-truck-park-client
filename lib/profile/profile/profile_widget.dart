@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/core/config/app_config.dart';
 import '/features/profile/application/profile_controller.dart';
 import '/features/profile/data/user_profile_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -39,7 +40,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ProfileModel());
-    _profileController = ProfileController();
+    _profileController = ProfileController()
+      ..setInviteActionVisible(AppConfig.current.enableReferrals);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }

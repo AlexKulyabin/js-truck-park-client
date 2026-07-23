@@ -1,5 +1,4 @@
 import '/auth/base_auth_user_provider.dart';
-import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -39,10 +38,6 @@ class _SplashWidgetState extends State<SplashWidget> {
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      if (AppConfig.current.enableDeepLinks) {
-        await actions.initChottuLink();
-        await actions.listenChottuLink();
-      }
       _model.currentId = await actions.getDeviceId();
       FFAppState().deviceId = _model.currentId!;
       safeSetState(() {});

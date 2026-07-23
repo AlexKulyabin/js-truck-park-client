@@ -15,6 +15,7 @@ import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/internationalization.dart';
 import 'flutter_flow/nav/nav.dart';
 import 'index.dart';
+import 'custom_code/actions/index.dart' as actions;
 import 'flutter_flow/revenue_cat_util.dart' as revenue_cat;
 
 void main() async {
@@ -30,6 +31,15 @@ void main() async {
 
   final appState = FFAppState(); // Initialize FFAppState
   await appState.initializePersistedState();
+
+  if (AppConfig.current.enableDeepLinks) {
+    try {
+      await actions.initChottuLink();
+      await actions.listenChottuLink();
+    } catch (error) {
+      debugPrint('Chottu Link initialization failed: $error');
+    }
+  }
 
   if (AppConfig.current.enableRevenueCat) {
     await revenue_cat.initialize(

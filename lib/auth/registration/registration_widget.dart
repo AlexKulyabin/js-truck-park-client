@@ -548,15 +548,14 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                   refCode: FFAppState().tempReferralCode,
                                   refereeId: currentUserUid,
                                   deviceId: FFAppState().deviceId,
-                                  userToken: currentJwtToken,
+                                  userToken: SupaFlow.client.auth.currentSession
+                                          ?.accessToken ??
+                                      currentJwtToken,
                                 );
 
                                 if ((_model.apiResult8fn?.succeeded ?? true)) {
-                                  FFAppState().tempReferralCode = '';
-                                  safeSetState(() {});
                                   if (functions.isReferralApiSuccess(
-                                          (_model.apiResult8fn?.jsonBody ?? '')
-                                              .toString()) !=
+                                          _model.apiResult8fn?.jsonBody) !=
                                       true) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -577,6 +576,9 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                                 .accent2,
                                       ),
                                     );
+                                  } else {
+                                    FFAppState().tempReferralCode = '';
+                                    safeSetState(() {});
                                   }
                                 }
                               }

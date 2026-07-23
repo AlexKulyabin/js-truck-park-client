@@ -11,6 +11,7 @@ void main() {
       expect(config.testWritesEnabled, isFalse);
       expect(config.enableRevenueCat, isFalse);
       expect(config.enableDeepLinks, isFalse);
+      expect(config.enableReferrals, isFalse);
       expect(
         config.canPerformWrite(AppWriteOperation.favoriteToggle),
         isTrue,
@@ -38,6 +39,7 @@ void main() {
       expect(config.testWritesEnabled, isFalse);
       expect(config.enableRevenueCat, isTrue);
       expect(config.enableDeepLinks, isTrue);
+      expect(config.enableReferrals, isTrue);
       expect(
         config.canPerformWrite(AppWriteOperation.favoriteToggle),
         isTrue,
