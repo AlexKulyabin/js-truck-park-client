@@ -189,12 +189,6 @@ class FFAppState extends ChangeNotifier {
     _isFilterApplied = value;
   }
 
-  bool _isDarkThemeOn = false;
-  bool get isDarkThemeOn => _isDarkThemeOn;
-  set isDarkThemeOn(bool value) {
-    _isDarkThemeOn = value;
-  }
-
   bool _isPremium = false;
   bool get isPremium => _isPremium;
   set isPremium(bool value) {
