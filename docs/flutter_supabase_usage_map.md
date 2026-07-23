@@ -2,12 +2,11 @@
 
 ## Доступность серверных контрактов
 
-В проекте отсутствуют `supabase/migrations/`, `supabase/functions/`, `docs/database_schema.sql`, `docs/sql_functions.sql`, `docs/rls_policies.csv` и `docs/triggers.csv`. Поэтому:
+23 июля 2026 года выполнена read-only schema-only выгрузка production Supabase. Теперь подтверждены tables, views, functions/RPC, triggers, indexes, foreign keys, grants, RLS, Storage buckets/policies, Auth profile trigger и Realtime publications.
 
-- определения RPC, views, triggers, indexes, PostGIS expressions и RLS неизвестны;
-- параметры ниже подтверждены клиентом, но server defaults/validation не подтверждены;
-- для каждой операции зависимость от RLS считается обязательной, но фактическая policy отмечена как неизвестная;
-- нельзя утверждать сортировку по расстоянию, лимиты, pagination или точную PostGIS-логику, если её нет в Dart-коде.
+Основная backend-спецификация: `docs/supabase_backend_reference.md`. Security findings и порядок исправлений: `docs/backend_security_audit.md`. Сырые диагностические снимки находятся в `diagnostics/` и не содержат строк пользовательских данных.
+
+Versioned `supabase/migrations/` всё ещё отсутствуют. Dump является baseline/reference, но не заменяет migration history и не должен автоматически применяться к базе.
 
 ## Клиент и auth
 
@@ -17,7 +16,7 @@
 | `auth/supabase_auth/supabase_user_provider.dart` | session restore/change | `auth.onAuthStateChange`, `currentUser`, `refreshSession` | nullable Supabase User оборачивается в `BaseAuthUser`; stream debounce token refresh | критический |
 | `auth/supabase_auth/auth_util.dart` | JWT для authenticated RPC | `auth.onAuthStateChange` → access token | пустая строка до session | критический |
 | `auth/supabase_auth/supabase_auth_manager.dart`, `email_auth.dart` | sign-in/out/update/reset | `signOut`, `updateUser`, password reset, email auth | `AuthException` показывается SnackBar; OTP custom actions обрабатывают bool | критический |
-| `custom_code/actions/send_otp.dart`, `verify_otp.dart` | phone OTP | Supabase Auth OTP | bool, exceptions печатаются/превращаются в false | критический; abuse/rate-limit contract неизвестен |
+| `custom_code/actions/send_otp.dart`, `verify_otp.dart` | phone OTP | Supabase Auth OTP | bool, exceptions печатаются/превращаются в false | критический; client logging и abuse/rate-limit требуют отдельного Auth audit |
 
 ## RPC и внешние API wrappers
 
@@ -25,10 +24,10 @@
 
 | RPC / caller | Операция и параметры | Ожидаемый ответ / Dart | Null и error | SQL/RLS | Риск |
 |---|---|---|---|---|---|
-| `get_parkings_by_viewport`; caller не найден, wrapper только объявлен | POST: `min_lng`, `min_lat`, `max_lng`, `max_lat`, `zoom_level` | JSON list; accessors ожидают `lat: double`, `lng: double`, `count: int`, `id: String`, `is_cluster: bool`; outer type `ApiCallResponse` | accessors nullable и отбрасывают null; реального caller error flow нет | definition отсутствует; spatial/PostGIS поведение не доказано; RLS неизвестна | высокий, но сейчас dormant |
-| `get_filtered_parkings`; `map/home_page/home_page_widget.dart`, `create_parking2/select_parking/select_parking_widget.dart` | POST: `center_lat/lng`, `radius_meters`, capacity bounds, viewport bounds, six amenity flags, `zoom_level`, lower-case `search_query`, `is_filter_active` | `ApiCallResponse.jsonBody` → `dynamic/List<dynamic>`; map ожидает `lat/lng/is_cluster/count/id` | caller местами использует `succeeded ?? true`; parsing typed validation нет; map silently skips malformed item | definition, PostGIS, ordering, max rows, indexes и RLS отсутствуют | критический |
-| `delete_user_account`; `profile/log_out_dialog_copy/log_out_dialog_copy_widget.dart` | POST `{confirm: true}`, Bearer current JWT | `ApiCallResponse`; body не валидируется | при `succeeded ?? true` выполняются sign-out/navigation; failure UI не виден | SECURITY DEFINER/cleanup/cascade/RLS неизвестны | критический |
-| `process_referral`; `auth/registration/registration_widget.dart` | `p_ref_code`, `p_referee_id`, `p_device_id` | JSON, helper ожидает map `{success: true}` | пустой/invalid JSON → false; HTTP проверяется через nullable succeeded | anti-fraud, idempotency, permissions, SQL отсутствуют | критический |
+| `get_parkings_by_viewport`; caller не найден, wrapper только объявлен | POST: `min_lng`, `min_lat`, `max_lng`, `max_lat`, `zoom_level` | JSON list; accessors ожидают `lat: double`, `lng: double`, `count: int`, `id: String`, `is_cluster: bool`; outer type `ApiCallResponse` | accessors nullable и отбрасывают null; реального caller error flow нет | invoker; approved+active; clusters до zoom 8, затем markers, limit 500 | высокий, но сейчас dormant |
+| `get_filtered_parkings`; `map/home_page/home_page_widget.dart`, `create_parking2/select_parking/select_parking_widget.dart` | POST: `center_lat/lng`, `radius_meters`, capacity bounds, viewport bounds, six amenity flags, `zoom_level`, lower-case `search_query`, `is_filter_active` | `ApiCallResponse.jsonBody` → `dynamic/List<dynamic>`; map ожидает `lat/lng/is_cluster/count/id` | caller местами использует `succeeded ?? true`; parsing typed validation нет; map silently skips malformed item | SECURITY DEFINER; approved/admin filter; custom distance math + zoom grid; no hard result limit | критический |
+| `delete_user_account`; `profile/log_out_dialog_copy/log_out_dialog_copy_widget.dart` | POST `{confirm: true}`, Bearer current JWT | `ApiCallResponse`; body не валидируется | при `succeeded ?? true` выполняются sign-out/navigation; failure UI не виден | SECURITY DEFINER; `confirm` игнорируется; удаляет только `auth.uid()`; cascades по FK | критический |
+| `process_referral`; `auth/registration/registration_widget.dart` | `p_ref_code`, `p_referee_id`, `p_device_id` | JSON, helper ожидает map `{success: true}` | пустой/invalid JSON → false; HTTP проверяется через nullable succeeded | SECURITY DEFINER, доступен anon; не проверяет `p_referee_id=auth.uid()`; unique device/referee | P0 authorization |
 | Google Geocoding; Home/SelectParking | `lat`, `lng`; language `en` | `results[0].formatted_address` через JSONPath | индекс/field не проверены typed; при nullable succeeded может выполниться parsing | не Supabase | высокий для UX/config, не DB |
 
 ## Загрузка парковок, геопоиск и фильтры
@@ -40,11 +39,11 @@
 5. Search использует debounce 500 ms, lower-case query и принудительный zoom 20, сохраняя остальные filter/bounds params.
 6. Ответ RPC напрямую передаётся в map/search UI как dynamic JSON.
 7. Клиент не задаёт `limit`, `range`, page/cursor. В generated table adapter limit существует, но эти RPC wrappers его не передают.
-8. Сортировка по расстоянию, cluster algorithm, PostGIS operator/SRID, max result count и server-side pagination неизвестны. Их нельзя воспроизводить при рефакторинге без SQL definition и contract fixtures.
+8. RPC использует zoom grid clustering и spherical distance formula; сортировки по расстоянию и hard result limit в `get_filtered_parkings` нет. Typed contract fixtures обязательны перед рефакторингом.
 
 ## Tables и views: фактические callers
 
-Во всех строках RLS/policy и SQL definition неизвестны.
+Точные policies приведены в backend reference. Главные cross-cutting риски: public `users SELECT *`, unrestricted own sensitive-column update, broad parking update и broad photo insert/delete.
 
 | Flutter-файл / сценарий | Entity | Операция и параметры | Dart-результат | Null/error handling | Риск |
 |---|---|---|---|---|---|
@@ -76,16 +75,16 @@ Generated helper: `backend/supabase/storage/storage.dart`. Upload делает `
 
 | Caller | Bucket/path | Операция | Error/atomicity | Security dependency |
 |---|---|---|---|---|
-| registration, edit profile | `avatars/users/<uid>/...` | upload, public URL stored in `users.avatar_url` | upload list length проверяется; DB update отдельно | Storage policy должна ограничивать owner/path/content type/size; неизвестна |
-| create parking flows | `parking_content/parkings/<parkingId>/<index>` | upload, then insert `parking_photos` | нет transaction/compensation; orphan object/partial rows возможны | write/read/delete policies неизвестны |
-| create review | `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>` | upload, then insert row | review создаётся до uploads; partial state возможен | owner/moderation/content policies неизвестны |
-| marker asset | public `assets` URL hardcoded в Home | read | fallback default marker on load error | bucket public exposure intentionality неизвестна |
+| registration, edit profile | `avatars/users/<uid>/...` | upload, public URL stored in `users.avatar_url` | upload list length проверяется; DB update отдельно | bucket public, 5 MiB images; write/delete policies не проверяют owner path — P1 |
+| create parking flows | `parking_content/parkings/<parkingId>/<index>` | upload, then insert `parking_photos` | нет transaction/compensation; orphan object/partial rows возможны | bucket public, 5 MiB images; дублирующие path policies |
+| create review | `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>` | upload, then insert row | review создаётся до uploads; partial state возможен | DB photo policies допускают broad authenticated insert/delete |
+| marker asset | public `assets` URL hardcoded в Home | read | fallback default marker on load error | bucket подтверждён public; это часть текущего UI contract |
 
 Helper `deleteSupabaseFileFromPublicUrl` существует; фактические callers в production widgets не найдены. Signed URLs не используются. Uploaded objects предполагаются public.
 
 ## Realtime и Edge Functions
 
-- Realtime channels/table streams не найдены. Единственный live stream Supabase — Auth `onAuthStateChange`.
+- Realtime channels/table streams во Flutter не найдены. В publication находятся `favorites`, `parkings`, `reports`, `reviews`; сейчас это dormant backend contract.
 - `functions.invoke` и callers Edge Functions не найдены.
 - Packages `realtime_client` и `functions_client` присутствуют транзитивно/явно, но feature usage не подтверждено.
 
@@ -95,14 +94,13 @@ Helper `deleteSupabaseFileFromPublicUrl` существует; фактичес�
 
 ## Security и масштабирование: обязательные следующие артефакты
 
-До миграции data-heavy features получить в version control:
+До миграции data-heavy features добавить в version control:
 
-1. schema migrations и точные signatures/bodies RPC;
-2. RLS policies с тестами authenticated/guest/cross-user;
-3. Storage bucket policies и limits;
-4. contract fixtures для `get_filtered_parkings`, включая empty/malformed/cluster/edge coordinates;
-5. query plans/indexes и max-row/pagination contract;
-6. environment config без server secrets в клиенте;
-7. audit delete-account/referral functions на authorization, idempotency и abuse controls.
+1. baseline migration history вместо зависимости от разового dump;
+2. RLS tests для anon/owner/cross-user/admin;
+3. Storage owner/path tests;
+4. contract fixtures для map RPC;
+5. query plan и load limits;
+6. hardening `users`, `parkings`, `process_referral`, photos и SECURITY DEFINER grants по отдельным этапам.
 
-Repository/service слой должен вводиться на этих проверенных контрактах, а не маскировать неизвестное поведение.
+Repository/service слой должен вводиться на зафиксированных контрактах из backend reference и не должен маскировать P0/P1 findings.
