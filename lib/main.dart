@@ -10,6 +10,8 @@ import 'auth/supabase_auth/auth_util.dart';
 
 import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/core/localization/shared_preferences_locale_store.dart';
+import '/features/language/application/language_controller.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/internationalization.dart';
@@ -26,7 +28,9 @@ void main() async {
 
   await FlutterFlowTheme.initialize();
 
-  await FFLocalizations.initialize();
+  final localeStore = await SharedPreferencesLocaleStore.create();
+  await FFLocalizations.initialize(localeStore: localeStore);
+  final languageController = LanguageController(localeStore: localeStore);
 
   final appState = FFAppState(); // Initialize FFAppState
   await appState.initializePersistedState();
@@ -39,10 +43,15 @@ void main() async {
     );
   }
 
-  runApp(ChangeNotifierProvider(
-    create: (context) => appState,
-    child: MyApp(),
-  ));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => appState),
+        ChangeNotifierProvider(create: (_) => languageController),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -64,8 +73,6 @@ class MyAppScrollBehavior extends MaterialScrollBehavior {
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale? _locale = FFLocalizations.getStoredLocale();
-
   ThemeMode _themeMode = FlutterFlowTheme.themeMode;
 
   late AppStateNotifier _appStateNotifier;
@@ -102,11 +109,6 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  void setLocale(String language) {
-    safeSetState(() => _locale = createLocale(language));
-    FFLocalizations.storeLocale(language);
-  }
-
   void setThemeMode(ThemeMode mode) => safeSetState(() {
         _themeMode = mode;
         FlutterFlowTheme.saveThemeMode(mode);
@@ -114,6 +116,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.watch<LanguageController>().state.locale;
+
     return MaterialApp.router(
       debugShowCheckedModeBanner: AppConfig.current.isIntegration,
       title: AppConfig.current.appDisplayName,
@@ -137,7 +141,7 @@ class _MyAppState extends State<MyApp> {
         FallbackMaterialLocalizationDelegate(),
         FallbackCupertinoLocalizationDelegate(),
       ],
-      locale: _locale,
+      locale: locale,
       supportedLocales: const [
         Locale('en'),
         Locale('ru'),
