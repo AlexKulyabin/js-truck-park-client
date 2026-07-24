@@ -69,8 +69,8 @@ Map / Favorites / hosted deep link
                                 -> generated Supabase views
 
 typed ParkingDetails / ParkingReview
-  -> narrow legacy adapters
-       -> existing FlutterFlow tabs/photo/review cards
+  -> typed presentation widgets where migrated
+  -> narrow legacy adapters for remaining FlutterFlow compatibility widgets
 ```
 
 Направление зависимостей:
@@ -89,6 +89,7 @@ domain/application  -X-> Supabase / FlutterFlow rows
 - `lib/features/parking_details/data/legacy_parking_details_adapter.dart`;
 - `lib/features/parking_details/application/parking_details_controller.dart`;
 - `lib/features/parking_details/presentation/parking_details_links.dart`;
+- `lib/features/parking_details/presentation/parking_review_card.dart`;
 - `test/features/parking_details/data/supabase_parking_details_repository_test.dart`;
 - `test/features/parking_details/application/parking_details_controller_test.dart`;
 - `test/features/parking_details/presentation/parking_details_links_test.dart`;
@@ -105,8 +106,9 @@ domain/application  -X-> Supabase / FlutterFlow rows
 - `lib/parkings_details/info_tab/info_tab_widget.dart` — review count читается из
   подтверждённого view aggregate вместо загрузки всех review rows;
 - `lib/parkings_details/info_tab/info_tab_model.dart` — только cleanup imports;
-- `lib/parkings_details/reviews_tab/reviews_tab_widget.dart` — отзывы загружаются
-  через общий controller и repository;
+- `lib/parkings_details/reviews_tab/reviews_tab_widget.dart` — отзывы
+  загружаются через общий controller/repository и отображаются из typed
+  `ParkingReview`, без обратного преобразования в `ViewReviewsWithUsersRow`;
 - `lib/parkings_details/reviews_tab/reviews_tab_model.dart` — только cleanup
   imports;
 - `lib/parkings_details/photo_detailed/photo_detailed_widget.dart` — photo share
@@ -205,8 +207,9 @@ Realtime, migrations, grants и RLS не менялись.
 - generated parent/tab models пока сохранены;
 - `FlutterFlowTheme`, `FFLocalizations`, generated buttons, guest/subscription
   dialogs и navigation serialization продолжают использоваться;
-- существующие `ViewFullParkingDetailsRow` и `ViewReviewsWithUsersRow` временно
-  создаются compatibility adapters для tabs/review cards;
+- существующий `ViewFullParkingDetailsRow` временно создаётся compatibility
+  adapter для немигрированных tabs; публичный Reviews tab уже использует typed
+  `ParkingReview`;
 - photo parameters `photoPath`, `index`, `address`, `photoCount`, `photoRef`,
   `data` не менялись;
 - FlutterFlow dependencies не удалялись, пока они используются.

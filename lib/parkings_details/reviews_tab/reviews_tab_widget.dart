@@ -2,12 +2,11 @@ import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
 import '/features/parking_details/application/parking_details_controller.dart';
-import '/features/parking_details/data/legacy_parking_details_adapter.dart';
+import '/features/parking_details/presentation/parking_review_card.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/reviews/report_create/report_create_widget.dart';
-import '/reviews/review_card_parking_details/review_card_parking_details_widget.dart';
 import '/reviews/review_create/review_create_widget.dart';
 import '/subscription/guest_dialog/guest_dialog_widget.dart';
 import 'dart:async';
@@ -115,8 +114,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
             ),
           );
         }
-        final containerViewReviewsWithUsersRowList =
-            state.reviews.map(parkingReviewToLegacyRow).toList(growable: false);
+        final reviews = state.reviews;
 
         return Container(
           decoration: BoxDecoration(
@@ -161,7 +159,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                           ),
                           Text(
                             valueOrDefault<String>(
-                              '${containerViewReviewsWithUsersRowList.length.toString()} ${FFLocalizations.of(context).getVariableText(
+                              '${reviews.length.toString()} ${FFLocalizations.of(context).getVariableText(
                                 enText: ' reviews ',
                                 ruText: 'отзывов',
                               )}',
@@ -628,7 +626,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                           builder: (context) => FFButtonWidget(
                             onPressed: AppConfig.current.integrationReadOnly ||
                                     functions.hasUserReviewed(
-                                        containerViewReviewsWithUsersRowList
+                                        reviews
                                             .map((e) => e.userId)
                                             .withoutNulls
                                             .toList(),
@@ -734,15 +732,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
               ),
               Builder(
                 builder: (context) {
-                  if (containerViewReviewsWithUsersRowList.length > 0) {
+                  if (reviews.isNotEmpty) {
                     return Padding(
                       padding:
                           EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 60.0),
                       child: Builder(
                         builder: (context) {
-                          final reviews =
-                              containerViewReviewsWithUsersRowList.toList();
-
                           return ListView.builder(
                             padding: EdgeInsets.zero,
                             primary: false,
@@ -751,10 +746,10 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             itemCount: reviews.length,
                             itemBuilder: (context, reviewsIndex) {
                               final reviewsItem = reviews[reviewsIndex];
-                              return ReviewCardParkingDetailsWidget(
+                              return ParkingReviewCard(
                                 key: Key(
                                     'Key7hq_${reviewsIndex}_of_${reviews.length}'),
-                                reviewRow: reviewsItem,
+                                review: reviewsItem,
                               );
                             },
                           );

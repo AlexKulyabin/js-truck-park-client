@@ -125,6 +125,17 @@ void main() {
     );
   });
 
+  test('renders review cards without the legacy Supabase row adapter', () {
+    final source = File(
+      'lib/parkings_details/reviews_tab/reviews_tab_widget.dart',
+    ).readAsStringSync();
+
+    expect(source, contains('ParkingReviewCard'));
+    expect(source, isNot(contains('parkingReviewToLegacyRow')));
+    expect(source, isNot(contains('legacy_parking_details_adapter')));
+    expect(source, isNot(contains('ReviewCardParkingDetailsWidget')));
+  });
+
   testWidgets('loads the bottom sheet through the repository boundary',
       (tester) async {
     final repository = _FakeRepository()
@@ -173,7 +184,18 @@ void main() {
         stars3: 0,
         stars4: 0,
         stars5: 0,
-      );
+      )
+      ..reviews = [
+        ParkingReview(
+          id: 1,
+          parkingId: 'parking-1',
+          createdAt: DateTime(2026, 1, 2),
+          userId: 'user-1',
+          authorName: 'Alex Driver',
+          comment: 'Quiet place near the highway.',
+          averageScore: 4.0,
+        ),
+      ];
 
     await tester.pumpWidget(_buildSubject(repository));
     await tester.pumpAndSettle();
@@ -184,7 +206,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.reviewsParkingIds, ['parking-1']);
-    expect(find.text('There are no reviews yet'), findsOneWidget);
+    expect(find.text('1  reviews '), findsOneWidget);
+    expect(find.text('Alex Driver'), findsOneWidget);
+    expect(find.text('Quiet place near the highway.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
