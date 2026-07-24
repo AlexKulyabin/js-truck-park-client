@@ -57,18 +57,16 @@ void main() {
   });
 
   test('review and complaint reads remain owner-filtered', () {
-    final source = File(
+    final widgetSource = File(
       'lib/reviews/reviews_and_complaints/'
       'reviews_and_complaints_widget.dart',
     ).readAsStringSync();
+    final repositorySource = File(
+      'lib/features/reviews/data/supabase_user_reviews_repository.dart',
+    ).readAsStringSync();
 
-    expect(
-      source,
-      matches(RegExp(r"'user_id',\s*currentUserUid", multiLine: true)),
-    );
-    expect(
-      source,
-      matches(RegExp(r"'reporter_id',\s*currentUserUid", multiLine: true)),
-    );
+    expect(widgetSource, contains('userId: widget.userId ?? currentUserUid'));
+    expect(repositorySource, contains("query.eq('user_id', userId)"));
+    expect(repositorySource, contains("query.eq('reporter_id', userId)"));
   });
 }

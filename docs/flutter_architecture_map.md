@@ -48,12 +48,12 @@ main.dart
 | Bootstrap/navigation | `main.dart`, `app_state.dart`, `flutter_flow/nav/*`, `index.dart` | `FFAppState`, `AppStateNotifier`, locale/theme | init, Auth stream | Provider, GoRouter, SharedPreferences, RevenueCat | theme, util, route serialization | критический |
 | Onboarding/deep link | `onboarding/splash`, `onboard1..3`, `custom_code/actions/{init,listen,wait}_chottu_link.dart`, `get_device_id.dart` | model + onboarding/referral/device fields in `FFAppState` | Auth status; later referral RPC in registration | Chottu Link, device_info_plus | model/theme/util/widgets/navigation | высокий |
 | Auth/registration | `auth/enter_phone_number`, `validate_sms_code`, `registration`, `auth/supabase_auth/*`, custom `send_otp`, `verify_otp` | models, phone/isGuest/referral in `FFAppState`, auth stream | Auth OTP; `users`; `avatars`; `process_referral` | Supabase Auth, image picker | generated auth manager, model/theme/util/upload/navigation | критический |
-| Home map/search + SelectParking reads | `map/home_page`, `create_parking2/select_parking`, `features/map`, `custom_code/widgets/custom_google_map.dart`, legacy `map/map` | local stale-safe controllers + typed repository; filter fields пока в `FFAppState`; legacy marker adapter на UI boundary | REST RPC `get_filtered_parkings`; declared `get_parkings_by_viewport`; public Storage marker URL | Google Maps, Geolocator, Google Geocoding, RevenueCat | generated model/theme/util/custom map сохранены; прямой parking RPC из active widgets удалён | высокий; active reads изолированы, renderer и create write-flow ещё legacy |
+| Home map/search | `map/home_page`, `custom_code/widgets/custom_google_map.dart`, legacy `map/map` | map/search model + filter/map fields in `FFAppState` | REST RPC `get_filtered_parkings`; declared `get_parkings_by_viewport`; public Storage marker URL | Google Maps, Geolocator, Google Geocoding, RevenueCat | model/theme/util/custom functions/widgets | критический |
 | Filters | `filter/filter` | model controls + 10 filter fields in `FFAppState` | parameters consumed by `get_filtered_parkings` | none | model/theme/util/widgets | высокий из-за связи с картой/RPC |
 | Parking creation | parallel flows `create_parking/*` and `create_parking2/*`; map long-press/select | form models + temporary address/lat/lng in `FFAppState` | insert `parkings`, insert `parking_photos`, bucket `parking_content`, Google geocode | Geolocator, image picker, Google Maps | model/theme/util/upload/custom functions | высокий |
 | Parking details | `parkings_details/parkings_details`, tabs and photo viewers | parent/child models, guest/map flags | `view_full_parking_details`, `favorites`, `parking_photos`, `reviews`, `view_reviews_with_users` | Google Maps route launcher, network images/share | model/theme/util/widgets/row serialization | высокий |
 | Favorites | `favourites/favourites`, `favourite_card`; toggle also in parking details | models; no global feature state | `view_user_favorites`; write `favorites` in details | network images | model/theme/util/widgets/navigation | средний |
-| Reviews/reports | `reviews/review_create`, `report_create`, cards, `reviews_and_complaints` | form/tab/upload models | `reviews`, `reports`, `parking_photos`, views `view_reviews_with_users`, `view_reports_detailed`, bucket `parking_content` | image picker | model/theme/util/upload/enums | высокий |
+| Reviews/reports | `reviews/review_create`, `report_create`, cards, `reviews_and_complaints`, `features/reviews` | create flows use form/tab/upload models; profile read screen uses local typed controller | write tables `reviews`, `reports`, `parking_photos`; profile read views isolated through typed repository | image picker for writes; network images/photo viewer for reads | model/theme/util/upload/enums сохранены; profile read screen no longer owns Supabase rows | высокий overall; profile read slice ниже |
 | Profile/referrals | `profile/profile`, `edit_profile`, dialogs | model + theme/premium/guest fields in `FFAppState` | `users`, bucket `avatars`, `delete_user_account`; referral link creation | Chottu Link, share_plus | model/theme/util/upload/navigation | высокий |
 | User parking requests | `requests/requests`, accepted/moderation/rejected, cards | tab model + global guest | `parkings`, `parking_photos`, `reviews` | network images | models/theme/util/enums/row route serialization | средне-высокий |
 | Subscription | `subscription/pay_wall`, dialogs; RevenueCat util/actions | model + premium plan fields in `FFAppState` | user/session identity indirectly; direct DB call not found | purchases_flutter / RevenueCat | model/theme/util/revenue_cat_util | критический |
@@ -71,21 +71,10 @@ Guard не описан декларативно на каждом route. `AppSt
 - `CustomGoogleMap` получает visible bounds и zoom, затем вызывает callback.
 - Home и SelectParking передают в `get_filtered_parkings`: bounds, midpoint как center, radius в метрах, capacity, service booleans, zoom, search query и `is_filter_active`.
 - Slider radius преобразуется в 5/10/50/100/150 км функцией `getMetersFromIndex`.
-- RPC response валидируется в `MapParkingPoint`, затем presentation adapter
-  создаёт immutable `MapMarkerItem`; `CustomGoogleMap` больше не читает
-  dynamic map keys. Search panel также использует immutable
-  `MapSearchResultItem` и не разбирает JSONPath.
-- Поиск lower-case, debounce 500 ms; результат представлен immutable
-  `MapSearchResultItem`.
-- Search panel выделен в `HomeMapSearchPanel`: он получает immutable typed
-  results и callbacks, а query/controller/dialog/navigation ownership остаётся
-  в Home.
+- Ответ хранится как `dynamic`; карта ожидает элементы с `lat`, `lng`, `is_cluster`, `count`, `id`. Невалидные элементы тихо пропускаются.
+- Поиск lower-case, debounce 500 ms; результат приводится к `List<dynamic>` без typed DTO.
 - Клиентской пагинации/range нет. Schema snapshot подтвердил zoom-grid clustering, spherical radius filter, GiST geography index и отсутствие hard result limit/сортировки в `get_filtered_parkings`; подробности в `supabase_backend_reference.md`.
-- Reverse geocode Home/SelectParking проходит через общий typed repository и application service; generated Google call из widgets удалён. Credential/config остаётся отдельным security debt, см. `docs/reverse_geocoding_read_integration.md`.
-- Production Home/SelectParking используют typed repository/controller и
-  typed marker renderer boundary; characterization и этапы миграции описаны
-  в `map_read_contract_characterization.md` и
-  `typed_map_marker_contract.md`.
+- Reverse geocode выполняется через Google endpoint и берёт `results[0].formatted_address` без отдельной typed/null-safe модели.
 
 ## Локализация и темы
 
