@@ -111,6 +111,9 @@ domain/application  -X-> Supabase / FlutterFlow rows
   `ParkingReview`, без обратного преобразования в `ViewReviewsWithUsersRow`;
 - `lib/parkings_details/reviews_tab/reviews_tab_model.dart` — только cleanup
   imports;
+- `lib/parkings_details/photos_tab/photos_tab_widget.dart` — фотографии
+  отображаются из typed `ParkingDetailsPhoto` без `ViewFullParkingDetailsRow` и
+  JSON parsing во вкладке;
 - `lib/parkings_details/photo_detailed/photo_detailed_widget.dart` — photo share
   URL строится проверенным pure builder без изменения hosting-контракта.
 
@@ -208,8 +211,8 @@ Realtime, migrations, grants и RLS не менялись.
 - `FlutterFlowTheme`, `FFLocalizations`, generated buttons, guest/subscription
   dialogs и navigation serialization продолжают использоваться;
 - существующий `ViewFullParkingDetailsRow` временно создаётся compatibility
-  adapter для немигрированных tabs; публичный Reviews tab уже использует typed
-  `ParkingReview`;
+  adapter для немигрированных Info tab и parent gallery/actions; публичные
+  Reviews и Photos tabs уже используют typed `ParkingReview`/`ParkingDetails`;
 - photo parameters `photoPath`, `index`, `address`, `photoCount`, `photoRef`,
   `data` не менялись;
 - FlutterFlow dependencies не удалялись, пока они используются.

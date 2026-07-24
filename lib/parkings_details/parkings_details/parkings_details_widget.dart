@@ -1108,8 +1108,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                     model: _model.photosTabModel,
                                     updateCallback: () => safeSetState(() {}),
                                     child: PhotosTabWidget(
-                                      parkingRow:
-                                          mainContainerViewFullParkingDetailsRow!,
+                                      details: details,
                                     ),
                                   ),
                                 ),
