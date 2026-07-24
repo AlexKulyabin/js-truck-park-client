@@ -12,9 +12,9 @@ Filter values are stored globally in `FFAppState` and are edited by
 `FilterWidget`. Home Map and Select Parking convert those fields into a
 `MapFilterSnapshot`, then into `MapParkingQuery` for `get_filtered_parkings`.
 
-`ParkingFilterController` has been added as the next feature-scoped owner and
-is available through Provider. The current UI still reads and writes
-`FFAppState` until the migration stages move the screen and map consumers.
+`ParkingFilterController` is available through Provider and now owns
+`FilterWidget` UI state. The screen still mirrors changes back to `FFAppState`
+until Home Map and Select Parking are migrated to the controller.
 
 Current legacy fields:
 

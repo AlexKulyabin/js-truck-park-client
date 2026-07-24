@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:j_s_truck_park/app_state.dart';
+import 'package:j_s_truck_park/features/map/application/parking_filter_controller.dart';
 import 'package:j_s_truck_park/features/map/domain/map_bounds.dart';
 import 'package:j_s_truck_park/features/map/domain/map_parking_query.dart';
 import 'package:j_s_truck_park/features/map/presentation/map_read_adapter.dart';
@@ -14,8 +15,13 @@ import 'package:provider/provider.dart';
 
 const _openFilterKey = Key('open-filter');
 
-Widget _buildFilterHost() => ChangeNotifierProvider<FFAppState>.value(
-      value: FFAppState(),
+Widget _buildFilterHost(ParkingFilterController controller) => MultiProvider(
+      providers: [
+        ChangeNotifierProvider<FFAppState>.value(value: FFAppState()),
+        ChangeNotifierProvider<ParkingFilterController>.value(
+          value: controller,
+        ),
+      ],
       child: MaterialApp(
         localizationsDelegates: const [
           FFLocalizationsDelegate(),
@@ -44,16 +50,24 @@ Widget _buildFilterHost() => ChangeNotifierProvider<FFAppState>.value(
       ),
     );
 
-Future<void> _openFilter(WidgetTester tester) async {
+Future<ParkingFilterController> _openFilterWithController(
+  WidgetTester tester,
+) async {
+  final controller = ParkingFilterController();
+  _setMobileViewSize(tester);
+  await tester.pumpWidget(_buildFilterHost(controller));
+  await tester.tap(find.byKey(_openFilterKey));
+  await tester.pumpAndSettle();
+  return controller;
+}
+
+void _setMobileViewSize(WidgetTester tester) {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1;
   addTearDown(() {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
-  await tester.pumpWidget(_buildFilterHost());
-  await tester.tap(find.byKey(_openFilterKey));
-  await tester.pumpAndSettle();
 }
 
 MapFilterSnapshot _legacyFilterSnapshot(FFAppState state) => MapFilterSnapshot(
@@ -168,10 +182,12 @@ void main() {
   testWidgets('Reset restores legacy defaults and clears applied state',
       (tester) async {
     _setNonDefaultFilterState();
-    await _openFilter(tester);
+    final controller = await _openFilterWithController(tester);
 
     await tester.tap(find.text('Reset'));
     await tester.pumpAndSettle();
+
+    expect(controller.state, const ParkingFilterState.initial());
 
     final state = FFAppState();
     expect(state.filterCapacityFrom, 0);
@@ -194,10 +210,15 @@ void main() {
       ..filterCapacityTo = 42
       ..isFilterHasGas = true
       ..isFilterApplied = false;
-    await _openFilter(tester);
+    final controller = await _openFilterWithController(tester);
 
     await tester.tap(find.text('Apply'));
     await tester.pumpAndSettle();
+
+    expect(controller.state.capacityFrom, 7);
+    expect(controller.state.capacityTo, 42);
+    expect(controller.state.hasGas, isTrue);
+    expect(controller.state.isApplied, isTrue);
 
     final state = FFAppState();
     expect(state.filterCapacityFrom, 7);
