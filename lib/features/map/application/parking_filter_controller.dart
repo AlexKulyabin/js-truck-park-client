@@ -167,10 +167,6 @@ class ParkingFilterController extends ChangeNotifier {
     _publish(state);
   }
 
-  void restoreSilently(ParkingFilterState state) {
-    _state = state;
-  }
-
   void _publish(ParkingFilterState state) {
     if (state == _state) {
       return;

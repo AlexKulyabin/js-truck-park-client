@@ -14,7 +14,7 @@
 
 Карта — наиболее нагруженная read-feature приложения и основной потребитель
 нестандартных Supabase RPC. В ней одновременно соединены generated
-FlutterFlow UI, глобальные фильтры, dynamic JSON, Google Maps, геокодирование,
+FlutterFlow UI, фильтры карты, dynamic JSON, Google Maps, геокодирование,
 deep-link target и два разных пользовательских сценария. Любая прямая замена
 здесь может незаметно изменить набор парковок, кластеризацию или навигацию.
 
@@ -46,8 +46,8 @@ deep-link target и два разных пользовательских сце�
 2. `HomePageWidget` сохраняет границы в generated model и вызывает
    `GetFilteredParkingsCall`.
 3. Центр считается как арифметическая середина границ viewport.
-4. Фильтры берутся напрямую из `FFAppState`; радиус передаётся только при
-   `isFilterShowNearest`, иначе `0.0`.
+4. Фильтры берутся из `ParkingFilterController`; радиус передаётся только при
+   `showNearest`, иначе `0.0`.
 5. При результате, который caller считает успешным, сырой `jsonBody`
    сохраняется в `parkingsOnMap` и передаётся обратно в custom map.
 6. Обычный marker открывает `ParkingsDetailsWidget` по parking ID.
@@ -60,7 +60,7 @@ deep-link target и два разных пользовательских сце�
 
 ### SelectParking
 
-- использует тот же `CustomGoogleMap`, тот же RPC и те же глобальные фильтры;
+- использует тот же `CustomGoogleMap`, тот же RPC и тот же контроллер фильтров;
 - marker открывает существующую карточку парковки;
 - long press запускает flow создания парковки и reverse geocoding;
 - этот write-flow не входит в read-рефакторинг и должен оставаться отдельным
@@ -87,11 +87,11 @@ deep-link target и два разных пользовательских сце�
 - `lib/backend/api_requests/api_calls.dart`;
 - `lib/backend/api_requests/api_manager.dart`.
 
-Фильтры и shared state:
+Фильтры:
 
 - `lib/filter/filter/filter_widget.dart`;
 - `lib/filter/filter/filter_model.dart`;
-- `lib/app_state.dart`;
+- `lib/features/map/application/parking_filter_controller.dart`;
 - `lib/flutter_flow/custom_functions.dart`.
 
 Навигация, details и deep links:
@@ -202,8 +202,8 @@ count, is_cluster, address, rating
 
 - generated `HomePageModel` и `SelectParkingModel` хранят bounds, zoom,
   `ApiCallResponse` и dynamic parking list;
-- `FFAppState` хранит filter applied/nearest, radius index, capacity range и
-  шесть amenity booleans;
+- `ParkingFilterController` хранит filter applied/nearest, radius index,
+  capacity range и шесть amenity booleans;
 - `getMetersFromIndex` сохраняет соответствие `0/1/2/3/4` к
   `5/10/50/100/150 km`, fallback — `5 km`;
 - `textToLower` задаёт существующую lowercase-only нормализацию поиска;
@@ -268,9 +268,9 @@ authenticated Supabase RPC boundary
 ```
 
 Один локальный controller должен обслуживать один экземпляр карты. Это не
-перевод всего приложения на глобальный state manager. `FFAppState` сначала
-остаётся источником filter snapshot; перенос ownership фильтров должен быть
-отдельным этапом после read boundary.
+перевод всего приложения на глобальный state manager. Ownership фильтров
+перенесён в `ParkingFilterController`; `FFAppState` больше не является
+источником filter snapshot.
 
 ## Созданные файлы
 

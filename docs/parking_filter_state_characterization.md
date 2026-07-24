@@ -2,52 +2,50 @@
 
 ## Scope
 
-This document records the legacy filter state contract before moving parking
-discovery filters out of `FFAppState`. It is a characterization note, not a
-behavior change.
+This document records the parking discovery filter state contract after moving
+the filter out of `FFAppState`. It is a characterization note, not a behavior
+change.
 
 ## Current owner
 
-Filter values are stored globally in `FFAppState` and are edited by
-`FilterWidget`. Home Map and Select Parking convert those fields into a
-`MapFilterSnapshot`, then into `MapParkingQuery` for `get_filtered_parkings`.
+Filter values are owned by `ParkingFilterController`, provided through
+Provider, and edited by `FilterWidget`. Home Map and Select Parking convert the
+controller state into a `MapFilterSnapshot`, then into `MapParkingQuery` for
+`get_filtered_parkings`.
 
-`ParkingFilterController` is available through Provider and now owns
-`FilterWidget` UI state. Home Map and Select Parking read filter snapshots from
-the controller. The screen still mirrors changes back to `FFAppState` only as a
-temporary compatibility bridge until the legacy fields are removed.
+The former filter fields have been removed from `FFAppState`; that global state
+is no longer a source or mirror for map filters.
 
-Current legacy fields:
+Current controller fields:
 
-- `filterCapacityFrom`, default `0`
-- `filterCapacityTo`, default `100`
-- `isFilterHasGas`, default `false`
-- `isFilterHasShower`, default `false`
-- `isFilterHasLaundry`, default `false`
-- `isFilterHasHotel`, default `false`
-- `isFilterHasShop`, default `false`
-- `isFilterHasRecreation`, default `false`
-- `isFilterShowNearest`, default `false`
-- `filterRadius`, default `0.0`
-- `isFilterApplied`, default `false`
+- `capacityFrom`, default `0`
+- `capacityTo`, default `100`
+- `hasGas`, default `false`
+- `hasShower`, default `false`
+- `hasLaundry`, default `false`
+- `hasHotel`, default `false`
+- `hasShop`, default `false`
+- `hasRecreation`, default `false`
+- `showNearest`, default `false`
+- `radiusIndex`, default `0.0`
+- `isApplied`, default `false`
 
 ## Query behavior
 
 - Capacity and service flags are always copied into the map query.
-- `filterRadius` is converted through `getMetersFromIndex`.
-- Radius is sent as `0.0` unless `isFilterShowNearest` is `true`.
-- `isFilterApplied` is sent as `is_filter_active`.
+- `radiusIndex` is converted through the preserved radius scale.
+- Radius is sent as `0.0` unless `showNearest` is `true`.
+- `isApplied` is sent as `is_filter_active`.
 - The search query is passed through separately by the map/search flow.
 
 ## UI actions
 
-- `Reset` restores legacy defaults, clears `isFilterApplied`, resets local
-  field and checkbox controls, and closes the filter screen with `true`.
-- `Apply` sets `isFilterApplied` to `true` and closes the filter screen with
+- `Reset` restores controller defaults, clears `isApplied`, resets local field
+  and checkbox controls, and closes the filter screen with `true`.
+- `Apply` sets `isApplied` to `true` and closes the filter screen with
   `true`.
-- Back navigation closes the filter screen without setting
-  `isFilterApplied`.
+- Back navigation closes the filter screen without setting `isApplied`.
 
 These behaviors are covered by
-`test/features/map/legacy/legacy_filter_state_contract_test.dart` so the next
-controller migration can be checked against the current app behavior.
+`test/features/map/application/parking_filter_controller_test.dart` and
+`test/features/map/presentation/parking_filter_widget_controller_test.dart`.

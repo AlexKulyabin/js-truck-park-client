@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:j_s_truck_park/features/map/application/parking_filter_controller.dart';
 
 void main() {
-  test('starts with the legacy filter defaults', () {
+  test('starts with the preserved filter defaults', () {
     final controller = ParkingFilterController();
 
     expect(controller.state, const ParkingFilterState.initial());
@@ -71,7 +71,7 @@ void main() {
     expect(controller.state.radiusMeters, 0);
   });
 
-  test('preserves the legacy radius index mapping', () {
+  test('preserves the radius index mapping', () {
     expect(metersFromRadiusIndex(0), 5000);
     expect(metersFromRadiusIndex(1), 10000);
     expect(metersFromRadiusIndex(2), 50000);
@@ -114,34 +114,6 @@ void main() {
     expect(controller.state.radiusMeters, 150000);
     expect(controller.state.isApplied, isTrue);
     expect(notifications, 2);
-  });
-
-  test('silent restore replaces state without notifying listeners', () {
-    final controller = ParkingFilterController();
-    var notifications = 0;
-    controller.addListener(() => notifications++);
-
-    controller.restoreSilently(
-      const ParkingFilterState(
-        capacityFrom: 1,
-        capacityTo: 2,
-        hasGas: false,
-        hasShower: true,
-        hasLaundry: false,
-        hasHotel: false,
-        hasShop: false,
-        hasRecreation: true,
-        showNearest: true,
-        radiusIndex: 2,
-        isApplied: false,
-      ),
-    );
-
-    expect(controller.state.capacityFrom, 1);
-    expect(controller.state.hasShower, isTrue);
-    expect(controller.state.hasRecreation, isTrue);
-    expect(controller.state.radiusMeters, 50000);
-    expect(notifications, 0);
   });
 
   test('does not notify when a command keeps the same state', () {

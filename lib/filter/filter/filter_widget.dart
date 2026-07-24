@@ -32,8 +32,7 @@ class _FilterWidgetState extends State<FilterWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => FilterModel());
-    final filterState = _legacyFilterState();
-    context.read<ParkingFilterController>().restoreSilently(filterState);
+    final filterState = context.read<ParkingFilterController>().state;
 
     _model.capasityFromTextController ??=
         TextEditingController(text: filterState.capacityFrom.toString());
@@ -53,42 +52,12 @@ class _FilterWidgetState extends State<FilterWidget> {
     super.dispose();
   }
 
-  ParkingFilterState _legacyFilterState() => ParkingFilterState(
-        capacityFrom: FFAppState().filterCapacityFrom,
-        capacityTo: FFAppState().filterCapacityTo,
-        hasGas: FFAppState().isFilterHasGas,
-        hasShower: FFAppState().isFilterHasShower,
-        hasLaundry: FFAppState().isFilterHasLaundry,
-        hasHotel: FFAppState().isFilterHasHotel,
-        hasShop: FFAppState().isFilterHasShop,
-        hasRecreation: FFAppState().isFilterHasRecreation,
-        showNearest: FFAppState().isFilterShowNearest,
-        radiusIndex: FFAppState().filterRadius,
-        isApplied: FFAppState().isFilterApplied,
-      );
-
-  void _writeLegacyFilterState(ParkingFilterState state) {
-    FFAppState().filterCapacityFrom = state.capacityFrom;
-    FFAppState().filterCapacityTo = state.capacityTo;
-    FFAppState().isFilterHasGas = state.hasGas;
-    FFAppState().isFilterHasShower = state.hasShower;
-    FFAppState().isFilterHasLaundry = state.hasLaundry;
-    FFAppState().isFilterHasHotel = state.hasHotel;
-    FFAppState().isFilterHasShop = state.hasShop;
-    FFAppState().isFilterHasRecreation = state.hasRecreation;
-    FFAppState().isFilterShowNearest = state.showNearest;
-    FFAppState().filterRadius = state.radiusIndex;
-    FFAppState().isFilterApplied = state.isApplied;
-  }
-
   ParkingFilterState _updateFilter(
     void Function(ParkingFilterController controller) update,
   ) {
     final controller = context.read<ParkingFilterController>();
     update(controller);
-    final state = controller.state;
-    _writeLegacyFilterState(state);
-    return state;
+    return controller.state;
   }
 
   @override

@@ -34,7 +34,7 @@ Versioned `supabase/migrations/` всё ещё отсутствуют. Dump яв
 
 1. `CustomGoogleMap` получает visible region и zoom от Google Maps.
 2. Home/SelectParking вычисляют center как midpoint viewport, не как GPS пользователя.
-3. `FFAppState.filterRadius` — индекс slider; `getMetersFromIndex` переводит его в 5, 10, 50, 100 или 150 км. Если nearest выключен, передаётся `0.0`.
+3. `ParkingFilterController.radiusIndex` — индекс slider; сохранённая шкала переводит его в 5, 10, 50, 100 или 150 км. Если nearest выключен, передаётся `0.0`.
 4. Capacity defaults: 0..100. Amenity flags: gas, shower, laundry, hotel, shop, recreation.
 5. Search использует debounce 500 ms, lower-case query и принудительный zoom 20, сохраняя остальные filter/bounds params.
 6. Ответ RPC напрямую передаётся в map/search UI как dynamic JSON.
