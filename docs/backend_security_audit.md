@@ -116,6 +116,17 @@ Fix: owner/admin delete; insert должен требовать `user_id=auth.ui
 
 Локальная реализация Storage-части: начата в `20260724104000_restrict_parking_content_storage_policies.sql`; migration удаляет mutation policies для `parking_content`/stale `parking-images`, если они найдены в `pg_policies`, и создаёт owner-scoped insert/update/delete для direct parking paths и review-author paths. Миграция `20260725110000_harden_parking_content_storage_checks.sql` переносит ownership lookup в закрытую `SECURITY DEFINER` helper-функцию с пустым `search_path`: authenticated-клиенту не нужен прямой `SELECT` на `parkings`/`reviews`, а policies других buckets больше не получают permission error. Она также добавляет owner-scoped `SELECT`, необходимый PostgreSQL для UPDATE/DELETE объекта. Локальные parking-content и avatar pgTAP tests проходят. Production status: не применено.
 
+### P1 — review mutations require owner-scoped grants
+
+Current production RLS allows public review reads and owner inserts, but direct
+owner edit/delete was not available as a reviewed contract. Local migration
+`20260725120000_allow_owner_review_mutations.sql` keeps owner inserts, allows
+owner/admin update only for `comment` and five rating fields, allows owner/admin
+delete, and blocks direct client updates to `user_id`, `parking_id`,
+`created_at` and `average_score`. The contract is covered by
+`reviews_authorization_test.sql` with 16 pgTAP checks. Production status: не
+применено.
+
 ### P1 — Storage avatars не ограничены владельцем
 
 Policies `Avatar_Update` и `Avatar_Delete` проверяют только `bucket_id='avatars'`; `Avatar_Upload` также не проверяет path owner.

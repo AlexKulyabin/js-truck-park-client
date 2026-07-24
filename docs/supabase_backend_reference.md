@@ -106,7 +106,7 @@ RLS включён. Текущие permissive policies разрешают чте
 
 ### `reviews`
 
-`id bigint identity`, `user_id -> auth.users.id SET NULL`, `parking_id -> parkings.id CASCADE`, `comment`, пять `smallint` ratings, calculated `average_score`, `created_at`. Уникальность `(user_id, parking_id)`, индекс по `parking_id`. RLS: публичное чтение, insert только с `user_id = auth.uid()`, delete только admin. Ограничений диапазона 1..5 на rating columns нет.
+`id bigint identity`, `user_id -> auth.users.id SET NULL`, `parking_id -> parkings.id CASCADE`, `comment`, пять `smallint` ratings, calculated `average_score`, `created_at`. Уникальность `(user_id, parking_id)`, индекс по `parking_id`. RLS: публичное чтение, insert только с `user_id = auth.uid()`, owner/admin update/delete через локальную migration `20260725120000_allow_owner_review_mutations.sql`. Direct client update grants ограничены `comment` и пятью rating columns; `user_id`, `parking_id`, `created_at` и `average_score` не меняются клиентом. Ограничений диапазона 1..5 на rating columns в базе пока нет.
 
 ### `reports`
 

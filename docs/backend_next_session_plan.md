@@ -264,6 +264,11 @@ Supabase-контракты.
 8. `refactor(reports): move create writes into service` — report-create UI
    пишет через `ReportsService` и `AppWriteOperation.reportCreate`, сохраняя
    текущие поля insert. На ошибке UI показывает snackbar и не закрывает экран.
+9. `security(reviews): allow owner review mutations` — добавлен локальный
+   Supabase contract для отзывов: owner insert сохранён, owner/admin могут
+   менять только `comment` и пять rating fields, owner/admin могут удалить
+   review row. Identity, parking, timestamp и calculated `average_score`
+   закрыты для прямого client update. Production write-команды не выполнялись.
 
 Проверки:
 
@@ -283,5 +288,8 @@ Supabase-контракты.
   отдельным этапом после read-side pilots;
 - reviews/reports profile tabs и request detail screens всё ещё используют
   generated rows напрямую и должны мигрировать отдельными маленькими этапами;
-- новые write-capabilities добавлять только отдельными этапами после RLS и
-  rollback contract.
+- review create можно включать следующим отдельным Flutter-этапом через
+  `ReviewSubmissionService`, но фото должны идти через staged upload с
+  компенсацией и FlutterFlow constraints `maxWidth=1920`, `maxHeight=1920`,
+  `imageQuality=80`, bucket `parking_content`, MIME jpeg/png/webp и лимит
+  5 MiB.
