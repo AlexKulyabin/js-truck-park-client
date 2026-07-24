@@ -1,8 +1,8 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
 import '/features/favorites/application/favorites_controller.dart';
+import '/features/parking_details/data/parking_details_service.dart';
 import '/features/parking_photos/data/parking_photos_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -42,6 +42,7 @@ class ParkingsDetailsWidget extends StatefulWidget {
 class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late ParkingsDetailsModel _model;
   final _favoriteToggleController = FavoriteToggleController();
+  final _parkingDetailsService = ParkingDetailsService();
   final _parkingPhotosService = ParkingPhotosService();
 
   @override
@@ -110,16 +111,14 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
               ),
             ),
           ),
-          FutureBuilder<List<ViewFullParkingDetailsRow>>(
-            future: ViewFullParkingDetailsTable().querySingleRow(
-              queryFn: (q) => q.eqOrNull(
-                'id',
-                widget!.parkingId,
-              ),
+          FutureBuilder<ParkingDetails?>(
+            future: _parkingDetailsService.getParkingDetails(
+              parkingId: widget!.parkingId,
             ),
             builder: (context, snapshot) {
               // Customize what your widget looks like when it's loading.
-              if (!snapshot.hasData) {
+              if (snapshot.connectionState != ConnectionState.done ||
+                  snapshot.hasError) {
                 return Center(
                   child: SizedBox(
                     width: 50.0,
@@ -132,13 +131,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                   ),
                 );
               }
-              List<ViewFullParkingDetailsRow>
-                  mainContainerViewFullParkingDetailsRowList = snapshot.data!;
-
-              final mainContainerViewFullParkingDetailsRow =
-                  mainContainerViewFullParkingDetailsRowList.isNotEmpty
-                      ? mainContainerViewFullParkingDetailsRowList.first
-                      : null;
+              final mainContainerViewFullParkingDetailsRow = snapshot.data;
 
               return SafeArea(
                 child: Container(
@@ -266,10 +259,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                       queryParameters: {
                                                         'photoPath':
                                                             serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.url''',
-                                                          ).toString(),
+                                                          photosItem.url
+                                                              .toString(),
                                                           ParamType.String,
                                                         ),
                                                         'index': serializeParam(
@@ -290,17 +281,13 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                         ),
                                                         'photoRef':
                                                             serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.url''',
-                                                          ).toString(),
+                                                          photosItem.url
+                                                              .toString(),
                                                           ParamType.String,
                                                         ),
                                                         'data': serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.date_display''',
-                                                          ).toString(),
+                                                          photosItem.dateDisplay
+                                                              .toString(),
                                                           ParamType.String,
                                                         ),
                                                       }.withoutNulls,
@@ -311,10 +298,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                         BorderRadius.circular(
                                                             8.0),
                                                     child: Image.network(
-                                                      getJsonField(
-                                                        photosItem,
-                                                        r'''$.url''',
-                                                      ).toString(),
+                                                      photosItem.url.toString(),
                                                       width: double.infinity,
                                                       height: 194.0,
                                                       fit: BoxFit.cover,

@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/parking_details/data/parking_details_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -16,7 +16,7 @@ class PhotosTabWidget extends StatefulWidget {
     required this.parkingRow,
   });
 
-  final ViewFullParkingDetailsRow? parkingRow;
+  final ParkingDetails? parkingRow;
 
   @override
   State<PhotosTabWidget> createState() => _PhotosTabWidgetState();
@@ -80,10 +80,7 @@ class _PhotosTabWidgetState extends State<PhotosTabWidget> {
                             PhotoDetailedWidget.routeName,
                             queryParameters: {
                               'photoPath': serializeParam(
-                                getJsonField(
-                                  photosItem,
-                                  r'''$.url''',
-                                ).toString(),
+                                photosItem.url.toString(),
                                 ParamType.String,
                               ),
                               'index': serializeParam(
@@ -99,17 +96,11 @@ class _PhotosTabWidgetState extends State<PhotosTabWidget> {
                                 ParamType.int,
                               ),
                               'photoRef': serializeParam(
-                                getJsonField(
-                                  photosItem,
-                                  r'''$.url''',
-                                ).toString(),
+                                photosItem.url.toString(),
                                 ParamType.String,
                               ),
                               'data': serializeParam(
-                                getJsonField(
-                                  photosItem,
-                                  r'''$.photo_date''',
-                                ).toString(),
+                                photosItem.photoDate.toString(),
                                 ParamType.String,
                               ),
                             }.withoutNulls,
@@ -118,10 +109,7 @@ class _PhotosTabWidgetState extends State<PhotosTabWidget> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(0.0),
                           child: Image.network(
-                            getJsonField(
-                              photosItem,
-                              r'''$.url''',
-                            ).toString(),
+                            photosItem.url.toString(),
                             width: double.infinity,
                             fit: BoxFit.cover,
                           ),

@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/parking_details/data/parking_details_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -16,7 +16,7 @@ class InfoTabWidget extends StatefulWidget {
     required this.parkingRow,
   });
 
-  final ViewFullParkingDetailsRow? parkingRow;
+  final ParkingDetails? parkingRow;
 
   @override
   State<InfoTabWidget> createState() => _InfoTabWidgetState();

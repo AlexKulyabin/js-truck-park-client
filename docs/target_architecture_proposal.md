@@ -151,6 +151,9 @@ Repository не нужен language page, статическим onboarding page
 - Request tab selection and loading now use `ParkingRequestsController` with
   immutable state and stale-response protection. The generated page model no
   longer owns three mutable tab booleans.
+- Main parking detail reads now use `ParkingDetailsService`. The detail sheet
+  and its info/reviews/photos tabs receive typed `ParkingDetails` and
+  `ParkingDetailPhoto` data instead of the generated Supabase view row.
 
 ## Где нужен service
 
