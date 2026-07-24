@@ -247,6 +247,10 @@ Supabase-контракты.
    избранного использует feature-scoped `FavoritesController` и immutable
    `FavoritesState` через текущий `provider`, без глобальной замены state
    manager.
+6. `refactor(reviews): isolate parking detail reads` — `info_tab` и
+   `reviews_tab` читают `reviews` / `view_reviews_with_users` через
+   `ReviewsService`; карточка parking details получает `ParkingReview`, а
+   создание reviews/reports не менялось.
 
 Проверки:
 
@@ -261,5 +265,7 @@ Supabase-контракты.
 - favorite toggle в parking details всё ещё хранит локальный bool в
   FlutterFlow model; перенос optimistic action в controller лучше делать
   отдельным этапом после read-side pilots;
+- reviews/reports profile tabs и request detail screens всё ещё используют
+  generated rows напрямую и должны мигрировать отдельными маленькими этапами;
 - новые write-capabilities добавлять только отдельными этапами после RLS и
   rollback contract.

@@ -1,6 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/features/reviews/data/reviews_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -59,14 +60,9 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
 
-    return FutureBuilder<List<ViewReviewsWithUsersRow>>(
-      future: ViewReviewsWithUsersTable().queryRows(
-        queryFn: (q) => q
-            .eqOrNull(
-              'parking_id',
-              widget!.parkingRow?.id,
-            )
-            .order('created_at'),
+    return FutureBuilder<List<ParkingReview>>(
+      future: _model.reviewsService.listParkingReviews(
+        parkingId: widget.parkingRow?.id,
       ),
       builder: (context, snapshot) {
         // Customize what your widget looks like when it's loading.
@@ -83,7 +79,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
             ),
           );
         }
-        List<ViewReviewsWithUsersRow> containerViewReviewsWithUsersRowList =
+        List<ParkingReview> containerViewReviewsWithUsersRowList =
             snapshot.data!;
 
         return Container(
@@ -722,7 +718,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                               return ReviewCardParkingDetailsWidget(
                                 key: Key(
                                     'Key7hq_${reviewsIndex}_of_${reviews.length}'),
-                                reviewRow: reviewsItem,
+                                review: reviewsItem,
                               );
                             },
                           );

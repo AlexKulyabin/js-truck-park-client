@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/reviews/data/reviews_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -19,6 +20,8 @@ import 'package:provider/provider.dart';
 
 class ReviewsTabModel extends FlutterFlowModel<ReviewsTabWidget> {
   ///  State fields for stateful widgets in this component.
+
+  final reviewsService = ReviewsService();
 
   // State field(s) for RatingBar widget.
   double? ratingBarValue1;

@@ -57,8 +57,9 @@ Versioned `supabase/migrations/` всё ещё отсутствуют. Dump яв
 | тот же / details toggle | `favorites` | delete by `parking_id` + `user_id`; insert `user_id`, `parking_id` | `bool` new state | UI uses optimistic local bool with rollback/snackbar on failure; action gated by `AppConfig.canPerformWrite(AppWriteOperation.favoriteToggle)` | средний |
 | тот же / details | `view_full_parking_details` | querySingle where `id = parkingId` | `List<ViewFullParkingDetailsRow>` | spinner on no data; nullable row handling частичное | высокий |
 | `parkings_details/parkings_details` и request detail screens | `parking_photos` | select where `parking_id`, иногда order `created_at` | `List<ParkingPhotosRow>` | empty supported; error not distinct | средний |
-| `parkings_details/info_tab`, accepted/moderation/rejected | `reviews` | select where `parking_id` | `List<ReviewsRow>` | aggregate/display defaults; error not distinct | средний |
-| `parkings_details/reviews_tab/reviews_tab_widget.dart` | `view_reviews_with_users` | select by parking id, order `created_at` | `List<ViewReviewsWithUsersRow>` | empty state; error spins | средний |
+| `features/reviews/data/reviews_service.dart` / parking details info tab | `reviews` | select where `parking_id` | `int` review count | aggregate/display defaults; empty/invalid parking id → 0; error not distinct | средний |
+| `features/reviews/data/reviews_service.dart` / parking details reviews tab | `view_reviews_with_users` | select by parking id, order `created_at` | `List<ParkingReview>` | empty state; empty/invalid parking id → empty list; error spins | средний |
+| accepted/moderation/rejected request detail screens | `reviews` | select where `parking_id` | `List<ReviewsRow>` | aggregate/display defaults; error not distinct | средний |
 | `reviews/reviews_and_complaints/reviews_and_complaints_widget.dart` | `view_reviews_with_users` | select `user_id = currentUserUid`, order `created_at` | typed row list | empty state; error spins | средний |
 | тот же | `view_reports_detailed` | select `reporter_id = currentUserUid`, order `report_date` | typed row list | empty state; error spins | средний |
 | `reviews/report_create/report_create_widget.dart` | `reports` | insert `parking_id`, `user_id`, category/report/comment/status fields | `ReportsRow?` | button validation; no DB catch/typed error UI | высокий |

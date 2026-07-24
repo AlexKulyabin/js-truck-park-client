@@ -1,4 +1,5 @@
 import '/backend/supabase/supabase.dart';
+import '/features/reviews/data/reviews_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -10,6 +11,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class InfoTabModel extends FlutterFlowModel<InfoTabWidget> {
+  final reviewsService = ReviewsService();
+
   @override
   void initState(BuildContext context) {}
 

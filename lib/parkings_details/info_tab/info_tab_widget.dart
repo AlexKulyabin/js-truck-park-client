@@ -103,12 +103,9 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
             ),
           ),
         ),
-        FutureBuilder<List<ReviewsRow>>(
-          future: ReviewsTable().queryRows(
-            queryFn: (q) => q.eqOrNull(
-              'parking_id',
-              widget!.parkingRow?.id,
-            ),
+        FutureBuilder<int>(
+          future: _model.reviewsService.countParkingReviews(
+            parkingId: widget.parkingRow?.id,
           ),
           builder: (context, snapshot) {
             // Customize what your widget looks like when it's loading.
@@ -125,7 +122,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                 ),
               );
             }
-            List<ReviewsRow> reviewsContainerReviewsRowList = snapshot.data!;
+            final reviewsCount = snapshot.data!;
 
             return Container(
               width: double.infinity,
@@ -176,7 +173,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                         Text(
                           valueOrDefault<String>(
                             '${valueOrDefault<String>(
-                              reviewsContainerReviewsRowList.length.toString(),
+                              reviewsCount.toString(),
                               '0',
                             )} ${FFLocalizations.of(context).getVariableText(
                               enText: 'reviews',

@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/reviews/data/reviews_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -15,10 +15,10 @@ export 'review_card_parking_details_model.dart';
 class ReviewCardParkingDetailsWidget extends StatefulWidget {
   const ReviewCardParkingDetailsWidget({
     super.key,
-    required this.reviewRow,
+    required this.review,
   });
 
-  final ViewReviewsWithUsersRow? reviewRow;
+  final ParkingReview? review;
 
   @override
   State<ReviewCardParkingDetailsWidget> createState() =>
@@ -66,9 +66,8 @@ class _ReviewCardParkingDetailsWidgetState
           children: [
             Text(
               valueOrDefault<String>(
-                widget!.reviewRow?.userId != null &&
-                        widget!.reviewRow?.userId != ''
-                    ? widget!.reviewRow?.authorName
+                widget.review?.userId != null && widget.review?.userId != ''
+                    ? widget.review?.authorName
                     : FFLocalizations.of(context).getVariableText(
                         enText: 'Deleted User',
                         ruText: 'Удалённый пользователь',
@@ -95,14 +94,14 @@ class _ReviewCardParkingDetailsWidgetState
                   padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 16.0, 0.0),
                   child: Builder(
                     builder: (context) {
-                      if ((widget!.reviewRow?.userId != null &&
-                              widget!.reviewRow?.userId != '') &&
-                          (widget!.reviewRow?.authorAvatar != null &&
-                              widget!.reviewRow?.authorAvatar != '')) {
+                      if ((widget.review?.userId != null &&
+                              widget.review?.userId != '') &&
+                          (widget.review?.authorAvatar != null &&
+                              widget.review?.authorAvatar != '')) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(99.0),
                           child: Image.network(
-                            widget!.reviewRow!.authorAvatar!,
+                            widget.review!.authorAvatar!,
                             width: 40.0,
                             height: 40.0,
                             fit: BoxFit.cover,
@@ -131,7 +130,7 @@ class _ReviewCardParkingDetailsWidgetState
                     ),
                     direction: Axis.horizontal,
                     rating: valueOrDefault<double>(
-                      widget!.reviewRow?.averageScore,
+                      widget.review?.averageScore,
                       3.0,
                     ),
                     unratedColor: Colors.transparent,
@@ -144,7 +143,7 @@ class _ReviewCardParkingDetailsWidgetState
                   valueOrDefault<String>(
                     dateTimeFormat(
                       "dd.MM.y",
-                      widget!.reviewRow?.createdAt,
+                      widget.review?.createdAt,
                       locale: FFLocalizations.of(context).languageCode,
                     ),
                     '01.01.2026',
@@ -166,14 +165,13 @@ class _ReviewCardParkingDetailsWidgetState
                 ),
               ],
             ),
-            if (widget!.reviewRow?.comment != null &&
-                widget!.reviewRow?.comment != '')
+            if (widget.review?.comment != null && widget.review?.comment != '')
               Flexible(
                 child: Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(66.0, 0.0, 0.0, 0.0),
                   child: Text(
                     valueOrDefault<String>(
-                      widget!.reviewRow?.comment,
+                      widget.review?.comment,
                       '.',
                     ),
                     maxLines: _model.isExpanded ? 100 : 4,
@@ -199,7 +197,7 @@ class _ReviewCardParkingDetailsWidgetState
               ),
             if ((String text) {
               return text.length > 160 || '\n'.allMatches(text).length >= 4;
-            }(widget!.reviewRow!.comment!))
+            }(widget.review!.comment!))
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(66.0, 0.0, 0.0, 0.0),
                 child: Builder(
@@ -273,14 +271,13 @@ class _ReviewCardParkingDetailsWidgetState
                 padding: EdgeInsetsDirectional.fromSTEB(66.0, 0.0, 0.0, 0.0),
                 child: Builder(
                   builder: (context) {
-                    if (widget!.reviewRow?.reviewPhotos != null) {
+                    if (widget.review?.hasPhotoPayload == true) {
                       return Container(
                         height: 64.0,
                         decoration: BoxDecoration(),
                         child: Builder(
                           builder: (context) {
-                            final photos =
-                                widget!.reviewRow?.reviewPhotos?.toList() ?? [];
+                            final photos = widget.review?.photoUrls ?? [];
 
                             return ListView.separated(
                               padding: EdgeInsets.zero,

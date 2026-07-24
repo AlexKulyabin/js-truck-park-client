@@ -127,6 +127,9 @@ Repository не нужен language page, статическим onboarding page
   immutable `FavoritesState` on top of the existing `provider` package for
   list loading state. This keeps the transitional state-management strategy
   local to one feature.
+- Parking details review reads now use `features/reviews/data/ReviewsService`.
+  The details info tab receives a typed count and the reviews tab/card receive
+  `ParkingReview`, while review creation remains outside this read-only stage.
 
 ## Где нужен service
 
