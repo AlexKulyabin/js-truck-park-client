@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(16);
 
 insert into storage.buckets (
   id,
@@ -104,6 +104,7 @@ select is_empty(
       and tablename = 'objects'
       and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
       and policyname not in (
+        'parking_content_select_own',
         'parking_content_insert_own',
         'parking_content_update_own',
         'parking_content_delete_own'
@@ -127,11 +128,49 @@ select set_eq(
       and policyname like 'parking_content_%_own'
   $$,
   $$ values
+    ('parking_content_select_own'),
     ('parking_content_insert_own'),
     ('parking_content_update_own'),
     ('parking_content_delete_own')
   $$,
   'parking content mutation policies are owner-scoped'
+);
+
+select ok(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'private.can_manage_parking_content(text)'::regprocedure
+  ),
+  'parking content ownership helper is security definer'
+);
+
+select is(
+  (
+    select array_to_string(proconfig, ',')
+    from pg_proc
+    where oid = 'private.can_manage_parking_content(text)'::regprocedure
+  ),
+  'search_path=""',
+  'parking content ownership helper has an empty search path'
+);
+
+select ok(
+  not has_function_privilege(
+    'anon',
+    'private.can_manage_parking_content(text)',
+    'EXECUTE'
+  ),
+  'anon may not execute parking content ownership helper'
+);
+
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'private.can_manage_parking_content(text)',
+    'EXECUTE'
+  ),
+  'authenticated may execute parking content ownership helper'
 );
 
 insert into storage.objects (id, bucket_id, name, owner, metadata)

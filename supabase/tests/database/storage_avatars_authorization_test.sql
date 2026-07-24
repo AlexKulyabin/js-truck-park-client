@@ -44,6 +44,7 @@ select set_eq(
       and policyname like 'avatars_%_own'
   $$,
   $$ values
+    ('avatars_select_own'),
     ('avatars_insert_own'),
     ('avatars_update_own'),
     ('avatars_delete_own')

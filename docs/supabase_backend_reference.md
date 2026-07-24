@@ -202,7 +202,7 @@ Flutter paths:
 - `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>/<timestamp>.<ext>` для review;
 - hardcoded public `assets/icnLocation.png` для marker icon.
 
-Есть stale Storage policies для отсутствующего bucket `parking-images`. Policies `Avatar_Update` и `Avatar_Delete` проверяют только bucket, но не owner path; authenticated user потенциально может менять чужие avatars. Локальная migration `20260724103000_restrict_avatar_storage_policies.sql` заменяет avatar writes на owner path `avatars/users/<auth.uid()>/...`; локальная migration `20260724104000_restrict_parking_content_storage_policies.sql` заменяет parking_content writes на owner/review-author path contract. Production schema пока не изменялась.
+Есть stale Storage policies для отсутствующего bucket `parking-images`. Policies `Avatar_Update` и `Avatar_Delete` проверяют только bucket, но не owner path; authenticated user потенциально может менять чужие avatars. Локальная migration `20260724103000_restrict_avatar_storage_policies.sql` заменяет avatar writes на owner path `avatars/users/<auth.uid()>/...`; локальная migration `20260724104000_restrict_parking_content_storage_policies.sql` заменяет parking_content writes на owner/review-author path contract. `20260725110000_harden_parking_content_storage_checks.sql` выполняет ownership lookup через закрытую helper-функцию, поэтому Storage policy не требует прямого `SELECT` на базовые таблицы и не мешает операциям в других buckets; owner-scoped object `SELECT` обеспечивает корректный UPDATE/DELETE. Production schema пока не изменялась.
 
 ## Realtime
 

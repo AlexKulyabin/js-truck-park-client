@@ -211,6 +211,8 @@ git status --short
 4. зафиксировать Storage baseline;
 5. ограничить avatar Storage mutations owner path;
 6. ограничить `parking_content` Storage mutations owner/review-author path.
+7. изолировать parking-content ownership lookup от client table grants и
+   подтвердить локальными pgTAP-тестами совместимость с avatar policies.
 
 ## Следующие отдельные этапы
 
@@ -272,10 +274,10 @@ Supabase-контракты.
 
 Ограничения:
 
-- Supabase local pgTAP/RLS smoke не запускался в рамках Flutter-only этапа;
-- reports pgTAP contract test добавлен, но локально не выполнен из-за
-  недоступного local Postgres/Supabase; перед rollout нужно повторить его на
-  поднятом local Supabase или staging clone;
+- локальный полный pgTAP-набор запускается; Storage/profile tests
+  проходят, но `reports_authorization_test.sql` отдельно выявил отсутствие
+  ожидаемого `service_role INSERT` grant в baseline. Исправлять grant или
+  корректировать ожидание теста нужно отдельным reports-этапом;
 - favorite toggle в parking details всё ещё хранит локальный bool в
   FlutterFlow model; перенос optimistic action в controller лучше делать
   отдельным этапом после read-side pilots;

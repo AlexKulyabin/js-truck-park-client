@@ -114,7 +114,7 @@ Fix: owner/admin delete; insert должен требовать `user_id=auth.ui
 
 Локальная реализация DB-части: начата в `20260724102000_restrict_parking_photo_policies.sql`; broad insert/delete policies удалены, `photos_insert` требует `auth.uid() = user_id`, `photos_delete` оставляет owner/admin. Storage ownership не менялся, потому что storage policies пока не зафиксированы в versioned baseline. pgTAP test добавлен, но локальный запуск сейчас заблокирован недоступным Docker daemon. Production status: не применено.
 
-Локальная реализация Storage-части: начата в `20260724104000_restrict_parking_content_storage_policies.sql`; migration удаляет mutation policies для `parking_content`/stale `parking-images`, если они найдены в `pg_policies`, и создаёт owner-scoped insert/update/delete для direct parking paths и review-author paths. pgTAP test добавлен в `storage_parking_content_authorization_test.sql`. Production status: не применено.
+Локальная реализация Storage-части: начата в `20260724104000_restrict_parking_content_storage_policies.sql`; migration удаляет mutation policies для `parking_content`/stale `parking-images`, если они найдены в `pg_policies`, и создаёт owner-scoped insert/update/delete для direct parking paths и review-author paths. Миграция `20260725110000_harden_parking_content_storage_checks.sql` переносит ownership lookup в закрытую `SECURITY DEFINER` helper-функцию с пустым `search_path`: authenticated-клиенту не нужен прямой `SELECT` на `parkings`/`reviews`, а policies других buckets больше не получают permission error. Она также добавляет owner-scoped `SELECT`, необходимый PostgreSQL для UPDATE/DELETE объекта. Локальные parking-content и avatar pgTAP tests проходят. Production status: не применено.
 
 ### P1 — Storage avatars не ограничены владельцем
 
@@ -124,7 +124,7 @@ Impact: authenticated user может менять или удалять чуж�
 
 Fix: единый path `users/<auth.uid()>/...`; INSERT/UPDATE/DELETE проверяют соответствующий segment. Не полагаться на UI path generation как на security boundary.
 
-Локальная реализация: начата в `20260724103000_restrict_avatar_storage_policies.sql`; migration удаляет bucket-only `Avatar_Upload`, `Avatar_Update`, `Avatar_Delete` и создаёт owner-scoped policies для `avatars/users/<auth.uid()>/...`. pgTAP test добавлен в `storage_avatars_authorization_test.sql`, но локальный запуск Supabase tests пока зависит от доступности Docker daemon. Production status: не применено.
+Локальная реализация: начата в `20260724103000_restrict_avatar_storage_policies.sql`; migration удаляет bucket-only `Avatar_Upload`, `Avatar_Update`, `Avatar_Delete` и создаёт owner-scoped policies для `avatars/users/<auth.uid()>/...`. `20260725110000_harden_parking_content_storage_checks.sql` добавляет owner-scoped object `SELECT`, необходимый для UPDATE/DELETE при включённом RLS. После изоляции Storage policies локальный `storage_avatars_authorization_test.sql` проходит все 9 проверок. Production status: не применено.
 
 ### P1 — SECURITY DEFINER без безопасного `search_path`
 
