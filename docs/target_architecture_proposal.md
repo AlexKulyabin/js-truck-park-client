@@ -158,6 +158,10 @@ Repository не нужен language page, статическим onboarding page
   `ReviewSubmissionService`. `AppWriteOperation.reviewCreate` remains disabled,
   no Supabase gateway exists and the legacy production UI is not wired to it;
   activation prerequisites are recorded in `review_submission_contract.md`.
+- Profile header, invite referral lookup and post-OTP profile-completion check
+  now read `users` through `features/profile/data/UserProfileService`. The UI
+  receives typed `UserProfile` data, while edit/registration writes remain in
+  the legacy generated screens until a separate guarded write contract stage.
 
 ## Где нужен service
 

@@ -47,10 +47,10 @@ Versioned `supabase/migrations/` всё ещё отсутствуют. Dump яв
 
 | Flutter-файл / сценарий | Entity | Операция и параметры | Dart-результат | Null/error handling | Риск |
 |---|---|---|---|---|---|
-| `auth/validate_sms_code/validate_sms_code_widget.dart` / после OTP | `users` | select where `id = currentUserUid` | `List<UsersRow>` | `firstOrNull`; без catch; выбирает Home или Registration | критический |
+| `features/profile/data/user_profile_service.dart` -> `auth/validate_sms_code/validate_sms_code_widget.dart` / после OTP | `users` | select where `id = currentUserUid` | typed `UserProfile?` / completion bool | empty/invalid user id -> incomplete profile; без catch; выбирает Home или Registration | высокий |
 | `auth/registration/registration_widget.dart` / завершение профиля | `users` | update by id: `full_name`, optional `avatar_url`, `last_device_id` | generated update result не используется | upload length check; DB error не показана | критический |
-| `profile/profile/profile_widget.dart` / header | `users` | querySingle where id | `List<UsersRow>` max 1 | empty → nullable row/default name; FutureBuilder error не отделён от loading | высокий |
-| `profile/profile/profile_widget.dart` / referral | `users` | select by id → `referral_code` | `List<UsersRow>` | force unwrap first row/code | высокий |
+| `features/profile/data/user_profile_service.dart` -> `profile/profile/profile_widget.dart` / header | `users` | select where id | `List<UserProfile>` | empty → nullable row/default name; FutureBuilder error не отделён от loading | средне-высокий |
+| `features/profile/data/user_profile_service.dart` -> `profile/profile/profile_widget.dart` / referral | `users` | select by id → `referral_code` | `List<UserProfile>` | legacy UI still force unwraps first row/code | высокий |
 | `profile/edit_profile/edit_profile_widget.dart` | `users` | querySingle; update `full_name`, optional `avatar_url`, `updated_at` by id | `UsersRow` list / update rows | FutureBuilder spinner; no explicit DB catch | высокий |
 | `features/favorites/application/FavoritesController` → `features/favorites/data/favorites_service.dart` / favorites list | `view_user_favorites` | select where `user_id = currentUserUid` | `FavoritesState.items: List<FavoriteParking>` | empty state есть; empty/invalid user id → empty list; load failure хранится в state, UI пока сохраняет старый spinner-only behavior | средний |
 | `features/favorites/data/favorites_service.dart` / details initial toggle | `favorites` | select where `parking_id` and `user_id`, limit 1 | `bool` | empty/invalid ids → false | средний |

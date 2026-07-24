@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/profile/data/user_profile_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -145,12 +146,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                     children: [
                       Stack(
                         children: [
-                          FutureBuilder<List<UsersRow>>(
-                            future: UsersTable().querySingleRow(
-                              queryFn: (q) => q.eqOrNull(
-                                'id',
-                                currentUserUid,
-                              ),
+                          FutureBuilder<List<UserProfile>>(
+                            future: UserProfileService().listProfilesByUserId(
+                              userId: currentUserUid,
                             ),
                             builder: (context, snapshot) {
                               // Customize what your widget looks like when it's loading.
@@ -167,7 +165,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                   ),
                                 );
                               }
-                              List<UsersRow> containerUsersRowList =
+                              List<UserProfile> containerUsersRowList =
                                   snapshot.data!;
 
                               final containerUsersRow =
@@ -1173,12 +1171,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                 if (_shouldSetState) safeSetState(() {});
                                 return;
                               }
-                              _model.currentUserOut =
-                                  await UsersTable().queryRows(
-                                queryFn: (q) => q.eqOrNull(
-                                  'id',
-                                  currentUserUid,
-                                ),
+                              _model.currentUserOut = await UserProfileService()
+                                  .listProfilesByUserId(
+                                userId: currentUserUid,
                               );
                               _shouldSetState = true;
                               _model.referralLink =
