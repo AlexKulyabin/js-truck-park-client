@@ -67,7 +67,7 @@ Versioned `supabase/migrations/` всё ещё отсутствуют. Dump яв
 | `create_parking/add_parking/add_parking_widget.dart` | `parkings` | insert capacity, amenities, address/lowercase, lat/lng, creator, timestamp, pending status | `ParkingsRow?` | generated form validation; no transaction/catch | критический |
 | `create_parking2/create_parking/create_parking_widget.dart` | `parkings` | тот же новый flow | `ParkingsRow?` | no transaction/catch | критический |
 | оба create screens | `parking_photos` | one insert per uploaded public URL and parking/user ids | `ParkingPhotosRow?` | partial write possible if upload/insert fails | критический |
-| `features/parking_requests/data/parking_requests_service.dart` -> `requests/requests/requests_widget.dart` | `parkings` | select by `created_by` + typed pending/approved/rejected status | `List<ParkingsRow>` transitional route-compatible result | empty/invalid user id -> empty list; separate FutureBuilders; error not distinct; no pagination | средне-высокий |
+| `features/parking_requests/application/parking_requests_controller.dart` -> `features/parking_requests/data/parking_requests_service.dart` -> requests screen | `parkings` | select by `created_by` + typed pending/approved/rejected status | immutable `ParkingRequestsState` with transitional route-compatible `List<ParkingsRow>` | empty/invalid user id -> empty list; stale tab responses ignored; failure stored while UI preserves spinner behavior; no pagination | средне-высокий |
 
 ## Storage
 

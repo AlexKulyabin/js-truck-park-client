@@ -1,7 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
-import '/features/parking_requests/data/parking_requests_service.dart';
+import '/features/parking_requests/application/parking_requests_controller.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -11,7 +10,6 @@ import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'requests_model.dart';
 export 'requests_model.dart';
 
@@ -29,18 +27,26 @@ class _RequestsWidgetState extends State<RequestsWidget> {
   late RequestsModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  final _parkingRequestsService = ParkingRequestsService();
+  final _parkingRequestsController = ParkingRequestsController();
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => RequestsModel());
+    _parkingRequestsController.addListener(_onRequestsChanged);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _parkingRequestsController.load(
+        userId: currentUserUid,
+        status: StatusParking.pending,
+      );
+    });
   }
 
   @override
   void dispose() {
+    _parkingRequestsController.removeListener(_onRequestsChanged);
+    _parkingRequestsController.dispose();
     _model.dispose();
 
     super.dispose();
@@ -48,6 +54,8 @@ class _RequestsWidgetState extends State<RequestsWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final requestsState = _parkingRequestsController.state;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -150,7 +158,8 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                         Expanded(
                           child: Builder(
                             builder: (context) {
-                              if (_model.isModerationTabOn) {
+                              if (requestsState.selectedStatus ==
+                                  StatusParking.pending) {
                                 return Container(
                                   height: double.infinity,
                                   decoration: BoxDecoration(
@@ -202,10 +211,10 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
                                   onTap: () async {
-                                    _model.isModerationTabOn = true;
-                                    _model.isAcceptedTabOn = false;
-                                    _model.isRejectedTabOn = false;
-                                    safeSetState(() {});
+                                    await _parkingRequestsController.load(
+                                      userId: currentUserUid,
+                                      status: StatusParking.pending,
+                                    );
                                   },
                                   child: Container(
                                     height: double.infinity,
@@ -247,7 +256,8 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                         Expanded(
                           child: Builder(
                             builder: (context) {
-                              if (_model.isAcceptedTabOn) {
+                              if (requestsState.selectedStatus ==
+                                  StatusParking.approved) {
                                 return Container(
                                   height: double.infinity,
                                   decoration: BoxDecoration(
@@ -299,10 +309,10 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
                                   onTap: () async {
-                                    _model.isModerationTabOn = false;
-                                    _model.isAcceptedTabOn = true;
-                                    _model.isRejectedTabOn = false;
-                                    safeSetState(() {});
+                                    await _parkingRequestsController.load(
+                                      userId: currentUserUid,
+                                      status: StatusParking.approved,
+                                    );
                                   },
                                   child: Container(
                                     height: double.infinity,
@@ -344,7 +354,8 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                         Expanded(
                           child: Builder(
                             builder: (context) {
-                              if (_model.isRejectedTabOn) {
+                              if (requestsState.selectedStatus ==
+                                  StatusParking.rejected) {
                                 return Container(
                                   height: double.infinity,
                                   decoration: BoxDecoration(
@@ -396,10 +407,10 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
                                   onTap: () async {
-                                    _model.isAcceptedTabOn = false;
-                                    _model.isModerationTabOn = false;
-                                    _model.isRejectedTabOn = true;
-                                    safeSetState(() {});
+                                    await _parkingRequestsController.load(
+                                      userId: currentUserUid,
+                                      status: StatusParking.rejected,
+                                    );
                                   },
                                   child: Container(
                                     height: double.infinity,
@@ -450,15 +461,12 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                   children: [
                     Builder(
                       builder: (context) {
-                        if (_model.isModerationTabOn) {
-                          return FutureBuilder<List<ParkingsRow>>(
-                            future: _parkingRequestsService.listUserRequests(
-                              userId: currentUserUid,
-                              status: StatusParking.pending,
-                            ),
-                            builder: (context, snapshot) {
+                        if (requestsState.selectedStatus ==
+                            StatusParking.pending) {
+                          return Builder(
+                            builder: (context) {
                               // Customize what your widget looks like when it's loading.
-                              if (!snapshot.hasData) {
+                              if (requestsState.showsLoadingIndicator) {
                                 return Center(
                                   child: SizedBox(
                                     width: 50.0,
@@ -471,8 +479,8 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                   ),
                                 );
                               }
-                              List<ParkingsRow> moderationParkingsRowList =
-                                  snapshot.data!;
+                              final moderationParkingsRowList =
+                                  requestsState.items;
 
                               return Container(
                                 width: double.infinity,
@@ -597,15 +605,12 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                               );
                             },
                           );
-                        } else if (_model.isAcceptedTabOn) {
-                          return FutureBuilder<List<ParkingsRow>>(
-                            future: _parkingRequestsService.listUserRequests(
-                              userId: currentUserUid,
-                              status: StatusParking.approved,
-                            ),
-                            builder: (context, snapshot) {
+                        } else if (requestsState.selectedStatus ==
+                            StatusParking.approved) {
+                          return Builder(
+                            builder: (context) {
                               // Customize what your widget looks like when it's loading.
-                              if (!snapshot.hasData) {
+                              if (requestsState.showsLoadingIndicator) {
                                 return Center(
                                   child: SizedBox(
                                     width: 50.0,
@@ -618,8 +623,8 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                   ),
                                 );
                               }
-                              List<ParkingsRow> acceptedParkingsRowList =
-                                  snapshot.data!;
+                              final acceptedParkingsRowList =
+                                  requestsState.items;
 
                               return Container(
                                 width: double.infinity,
@@ -744,14 +749,10 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                             },
                           );
                         } else {
-                          return FutureBuilder<List<ParkingsRow>>(
-                            future: _parkingRequestsService.listUserRequests(
-                              userId: currentUserUid,
-                              status: StatusParking.rejected,
-                            ),
-                            builder: (context, snapshot) {
+                          return Builder(
+                            builder: (context) {
                               // Customize what your widget looks like when it's loading.
-                              if (!snapshot.hasData) {
+                              if (requestsState.showsLoadingIndicator) {
                                 return Center(
                                   child: SizedBox(
                                     width: 50.0,
@@ -764,8 +765,8 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                                   ),
                                 );
                               }
-                              List<ParkingsRow> rejectedParkingsRowList =
-                                  snapshot.data!;
+                              final rejectedParkingsRowList =
+                                  requestsState.items;
 
                               return Container(
                                 width: double.infinity,
@@ -943,5 +944,11 @@ class _RequestsWidgetState extends State<RequestsWidget> {
         ),
       ),
     );
+  }
+
+  void _onRequestsChanged() {
+    if (mounted) {
+      safeSetState(() {});
+    }
   }
 }

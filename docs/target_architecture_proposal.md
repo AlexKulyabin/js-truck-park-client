@@ -148,6 +148,9 @@ Repository не нужен language page, статическим onboarding page
 - Parking request list reads now use `ParkingRequestsService`, which owns the
   current-user and typed status filters. `ParkingsRow` remains temporarily as a
   route-compatible result until request state migration is complete.
+- Request tab selection and loading now use `ParkingRequestsController` with
+  immutable state and stale-response protection. The generated page model no
+  longer owns three mutable tab booleans.
 
 ## Где нужен service
 
