@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/profile/application/profile_controller.dart';
 import '/features/profile/data/user_profile_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -30,6 +31,7 @@ class ProfileWidget extends StatefulWidget {
 
 class _ProfileWidgetState extends State<ProfileWidget> {
   late ProfileModel _model;
+  late ProfileController _profileController;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -37,12 +39,14 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ProfileModel());
+    _profileController = ProfileController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
   @override
   void dispose() {
+    _profileController.dispose();
     _model.dispose();
 
     super.dispose();
@@ -1134,16 +1138,64 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                           ),
                         ),
                       ),
-                      if (_model.tempInvite)
-                        Builder(
-                          builder: (context) => InkWell(
-                            splashColor: Colors.transparent,
-                            focusColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            onTap: () async {
-                              var _shouldSetState = false;
-                              if (FFAppState().isGuest == true) {
+                      AnimatedBuilder(
+                        animation: _profileController,
+                        builder: (context, _) {
+                          if (!_profileController.state.showInviteAction) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Builder(
+                            builder: (context) => InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                var _shouldSetState = false;
+                                if (FFAppState().isGuest == true) {
+                                  await showDialog(
+                                    barrierColor:
+                                        FlutterFlowTheme.of(context).overlay,
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return Dialog(
+                                        elevation: 0,
+                                        insetPadding: EdgeInsets.zero,
+                                        backgroundColor: Colors.transparent,
+                                        alignment:
+                                            AlignmentDirectional(0.0, 0.0)
+                                                .resolve(
+                                                    Directionality.of(context)),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            FocusScope.of(dialogContext)
+                                                .unfocus();
+                                            FocusManager.instance.primaryFocus
+                                                ?.unfocus();
+                                          },
+                                          child: GuestDialogWidget(),
+                                        ),
+                                      );
+                                    },
+                                  );
+
+                                  if (_shouldSetState) safeSetState(() {});
+                                  return;
+                                }
+                                _model.currentUserOut =
+                                    await UserProfileService()
+                                        .listProfilesByUserId(
+                                  userId: currentUserUid,
+                                );
+                                _shouldSetState = true;
+                                _model.referralLink =
+                                    await actions.createReferralLink(
+                                  _model.currentUserOut!
+                                      .elementAtOrNull(0)!
+                                      .referralCode!,
+                                );
+                                _shouldSetState = true;
                                 await showDialog(
                                   barrierColor:
                                       FlutterFlowTheme.of(context).overlay,
@@ -1162,85 +1214,58 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                           FocusManager.instance.primaryFocus
                                               ?.unfocus();
                                         },
-                                        child: GuestDialogWidget(),
+                                        child: InviteFriendsDialogWidget(
+                                          ref: _model.referralLink!,
+                                        ),
                                       ),
                                     );
                                   },
                                 );
 
                                 if (_shouldSetState) safeSetState(() {});
-                                return;
-                              }
-                              _model.currentUserOut = await UserProfileService()
-                                  .listProfilesByUserId(
-                                userId: currentUserUid,
-                              );
-                              _shouldSetState = true;
-                              _model.referralLink =
-                                  await actions.createReferralLink(
-                                _model.currentUserOut!
-                                    .elementAtOrNull(0)!
-                                    .referralCode!,
-                              );
-                              _shouldSetState = true;
-                              await showDialog(
-                                barrierColor:
-                                    FlutterFlowTheme.of(context).overlay,
-                                context: context,
-                                builder: (dialogContext) {
-                                  return Dialog(
-                                    elevation: 0,
-                                    insetPadding: EdgeInsets.zero,
-                                    backgroundColor: Colors.transparent,
-                                    alignment: AlignmentDirectional(0.0, 0.0)
-                                        .resolve(Directionality.of(context)),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        FocusScope.of(dialogContext).unfocus();
-                                        FocusManager.instance.primaryFocus
-                                            ?.unfocus();
-                                      },
-                                      child: InviteFriendsDialogWidget(
-                                        ref: _model.referralLink!,
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: FlutterFlowTheme.of(context)
+                                      .secondaryBackground,
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      16.0, 17.0, 16.0, 17.0),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                        child: SvgPicture.asset(
+                                          'assets/images/Invite_friends.svg',
+                                          width: 30.0,
+                                          height: 30.0,
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                              );
-
-                              if (_shouldSetState) safeSetState(() {});
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context)
-                                    .secondaryBackground,
-                                borderRadius: BorderRadius.circular(10.0),
-                              ),
-                              child: Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    16.0, 17.0, 16.0, 17.0),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child: SvgPicture.asset(
-                                        'assets/images/Invite_friends.svg',
-                                        width: 30.0,
-                                        height: 30.0,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    Text(
-                                      FFLocalizations.of(context).getText(
-                                        'b7mh2swm' /* Invite friends */,
-                                      ),
-                                      style: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .override(
-                                            font: GoogleFonts.roboto(
+                                      Text(
+                                        FFLocalizations.of(context).getText(
+                                          'b7mh2swm' /* Invite friends */,
+                                        ),
+                                        style: FlutterFlowTheme.of(context)
+                                            .titleSmall
+                                            .override(
+                                              font: GoogleFonts.roboto(
+                                                fontWeight:
+                                                    FlutterFlowTheme.of(context)
+                                                        .titleSmall
+                                                        .fontWeight,
+                                                fontStyle:
+                                                    FlutterFlowTheme.of(context)
+                                                        .titleSmall
+                                                        .fontStyle,
+                                              ),
+                                              letterSpacing: 0.0,
                                               fontWeight:
                                                   FlutterFlowTheme.of(context)
                                                       .titleSmall
@@ -1250,42 +1275,34 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                                       .titleSmall
                                                       .fontStyle,
                                             ),
-                                            letterSpacing: 0.0,
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleSmall
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleSmall
-                                                    .fontStyle,
-                                          ),
-                                    ),
-                                    Flexible(
-                                      child: Align(
-                                        alignment:
-                                            AlignmentDirectional(1.0, 0.0),
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8.0),
-                                          child: SvgPicture.asset(
-                                            Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? 'assets/images/Trailing_element_dark.svg'
-                                                : 'assets/images/Trailing_element.svg',
-                                            width: 24.0,
-                                            height: 24.0,
-                                            fit: BoxFit.cover,
+                                      ),
+                                      Flexible(
+                                        child: Align(
+                                          alignment:
+                                              AlignmentDirectional(1.0, 0.0),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            child: SvgPicture.asset(
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? 'assets/images/Trailing_element_dark.svg'
+                                                  : 'assets/images/Trailing_element.svg',
+                                              width: 24.0,
+                                              height: 24.0,
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ].divide(SizedBox(width: 12.0)),
+                                    ].divide(SizedBox(width: 12.0)),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
+                      ),
                       Padding(
                         padding:
                             EdgeInsetsDirectional.fromSTEB(0.0, 14.0, 0.0, 0.0),

@@ -162,6 +162,10 @@ Repository не нужен language page, статическим onboarding page
   now read `users` through `features/profile/data/UserProfileService`. The UI
   receives typed `UserProfile` data, while edit/registration writes remain in
   the legacy generated screens until a separate guarded write contract stage.
+- Profile page local invite visibility state now lives in
+  `features/profile/application/ProfileController` with immutable state. This is
+  intentionally narrow and preserves the generated screen behavior while moving
+  profile UI state out of `ProfileModel`.
 
 ## Где нужен service
 
