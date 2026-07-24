@@ -114,7 +114,7 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
       return;
     }
     safeSetState(() {
-      _model.parkingsOnMap = toLegacyMapItems(state.points);
+      _model.parkingsOnMap = toMapMarkerItems(state.points);
     });
   }
 
@@ -181,7 +181,7 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
                         markerIconPath:
                             'https://jckksrcdmhtafwbimzov.supabase.co/storage/v1/object/public/assets/icnLocation.png',
                         markerSize: 30,
-                        markerData: _model.parkingsOnMap,
+                        markers: _model.parkingsOnMap,
                         centerToMoveTo: _model.searchCoord,
                         isDarkMode: false,
                         onMarkerTap: (markerId) async {

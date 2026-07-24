@@ -71,11 +71,16 @@ Guard не описан декларативно на каждом route. `AppSt
 - `CustomGoogleMap` получает visible bounds и zoom, затем вызывает callback.
 - Home и SelectParking передают в `get_filtered_parkings`: bounds, midpoint как center, radius в метрах, capacity, service booleans, zoom, search query и `is_filter_active`.
 - Slider radius преобразуется в 5/10/50/100/150 км функцией `getMetersFromIndex`.
-- Ответ хранится как `dynamic`; карта ожидает элементы с `lat`, `lng`, `is_cluster`, `count`, `id`. Невалидные элементы тихо пропускаются.
+- RPC response валидируется в `MapParkingPoint`, затем presentation adapter
+  создаёт immutable `MapMarkerItem`; `CustomGoogleMap` больше не читает
+  dynamic map keys. Legacy `List<dynamic>` остаётся только у search panel.
 - Поиск lower-case, debounce 500 ms; результат приводится к `List<dynamic>` без typed DTO.
 - Клиентской пагинации/range нет. Schema snapshot подтвердил zoom-grid clustering, spherical radius filter, GiST geography index и отсутствие hard result limit/сортировки в `get_filtered_parkings`; подробности в `supabase_backend_reference.md`.
 - Reverse geocode Home/SelectParking проходит через общий typed repository и application service; generated Google call из widgets удалён. Credential/config остаётся отдельным security debt, см. `docs/reverse_geocoding_read_integration.md`.
-- Characterization-контракт bounds/query/marker добавлен в `features/map/domain`, но production Home/SelectParking пока намеренно остаются на generated dynamic caller. Риски и последовательность переключения описаны в `map_read_contract_characterization.md`.
+- Production Home/SelectParking используют typed repository/controller и
+  typed marker renderer boundary; characterization и этапы миграции описаны
+  в `map_read_contract_characterization.md` и
+  `typed_map_marker_contract.md`.
 
 ## Локализация и темы
 

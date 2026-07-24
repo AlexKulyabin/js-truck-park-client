@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../domain/map_bounds.dart';
 import '../domain/map_parking_point.dart';
 import '../domain/map_parking_query.dart';
+import 'map_marker_item.dart';
 
 @immutable
 class MapFilterSnapshot {
@@ -51,6 +52,21 @@ MapParkingQuery buildMapParkingQuery({
       needRecreation: filter.needRecreation,
       isFilterActive: filter.isActive,
       searchQuery: searchQuery,
+    );
+
+List<MapMarkerItem> toMapMarkerItems(
+  List<MapParkingPoint> points,
+) =>
+    List.unmodifiable(
+      points.map(
+        (point) => MapMarkerItem(
+          id: point.id,
+          latitude: point.latitude,
+          longitude: point.longitude,
+          count: point.count,
+          isCluster: point.isCluster,
+        ),
+      ),
     );
 
 List<Map<String, Object?>> toLegacyMapItems(

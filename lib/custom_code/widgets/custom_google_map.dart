@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart' as google_maps;
 import '/flutter_flow/lat_lng.dart' as ff_lat_lng;
+import '/features/map/presentation/map_marker_item.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:ui' as ui;
@@ -26,7 +27,7 @@ class CustomGoogleMap extends StatefulWidget {
     required this.initialLat,
     required this.initialLng,
     required this.initialZoom,
-    this.markerData,
+    required this.markers,
     this.onMarkerTap,
     this.onClusterTap,
     this.allowGestures,
@@ -44,7 +45,7 @@ class CustomGoogleMap extends StatefulWidget {
   final double initialLat;
   final double initialLng;
   final double initialZoom;
-  final List<dynamic>? markerData;
+  final List<MapMarkerItem> markers;
   final Future Function(String markerId)? onMarkerTap;
   final Future Function(double lat, double lng)? onClusterTap;
   final bool? allowGestures;
@@ -100,7 +101,7 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
   @override
   void didUpdateWidget(CustomGoogleMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.markerData != widget.markerData ||
+    if (oldWidget.markers != widget.markers ||
         oldWidget.clusterSize != widget.clusterSize) {
       _updateMarkers();
     }
@@ -131,40 +132,34 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
   }
 
   Future<void> _updateMarkers() async {
-    if (!_isMapReady || widget.markerData == null || !mounted) return;
+    if (!_isMapReady || !mounted) return;
     final List<google_maps.Marker> newMarkers = [];
     final iconToUse =
         _customMarkerIcon ?? google_maps.BitmapDescriptor.defaultMarker;
 
-    for (var item in widget.markerData!) {
-      try {
-        final double lat = (item['lat'] as num).toDouble();
-        final double lng = (item['lng'] as num).toDouble();
-        final bool isCluster = item['is_cluster'] ?? false;
-        final int count = item['count'] ?? 1;
-        final String id = item['id']?.toString() ?? 'c_${lat}_${lng}';
-
-        if (isCluster) {
-          final clusterIcon = await _getClusterIcon(count);
-          newMarkers.add(google_maps.Marker(
-            markerId: google_maps.MarkerId(id),
-            position: google_maps.LatLng(lat, lng),
-            icon: clusterIcon,
-            onTap: () => _moveToLatLng(ff_lat_lng.LatLng(lat, lng),
-                targetZoom: _currentZoom + 2.0),
-          ));
-        } else {
-          newMarkers.add(google_maps.Marker(
-            markerId: google_maps.MarkerId(id),
-            position: google_maps.LatLng(lat, lng),
-            icon: iconToUse,
-            onTap: () {
-              if (widget.onMarkerTap != null) widget.onMarkerTap!(id);
-            },
-          ));
-        }
-      } catch (e) {
-        continue;
+    for (final item in widget.markers) {
+      if (item.isCluster) {
+        final clusterIcon = await _getClusterIcon(item.count);
+        newMarkers.add(google_maps.Marker(
+          markerId: google_maps.MarkerId(item.id),
+          position: google_maps.LatLng(item.latitude, item.longitude),
+          icon: clusterIcon,
+          onTap: () => _moveToLatLng(
+            ff_lat_lng.LatLng(item.latitude, item.longitude),
+            targetZoom: _currentZoom + 2.0,
+          ),
+        ));
+      } else {
+        newMarkers.add(google_maps.Marker(
+          markerId: google_maps.MarkerId(item.id),
+          position: google_maps.LatLng(item.latitude, item.longitude),
+          icon: iconToUse,
+          onTap: () {
+            if (widget.onMarkerTap != null) {
+              widget.onMarkerTap!(item.id);
+            }
+          },
+        ));
       }
     }
     if (mounted) setState(() => _markers = newMarkers.toSet());

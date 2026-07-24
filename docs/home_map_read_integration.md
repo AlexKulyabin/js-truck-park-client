@@ -83,8 +83,8 @@ Presentation и Home:
 - `lib/features/map/presentation/map_read_adapter.dart`;
 - `lib/map/home_page/home_page_widget.dart`;
 - `lib/map/home_page/home_page_model.dart`;
-- `lib/custom_code/widgets/custom_google_map.dart` — consumer legacy shape,
-  не изменён;
+- `lib/custom_code/widgets/custom_google_map.dart` позднее переведён на typed
+  `MapMarkerItem`; актуальный отчёт: `docs/typed_map_marker_contract.md`;
 - `lib/filter/filter/filter_widget.dart` — источник результата фильтра, не
   изменён;
 - `lib/app_state.dart` — источник filter snapshot, не изменён.
@@ -111,7 +111,8 @@ Presentation и Home:
 - `FFAppState` пока остаётся источником фильтров;
 - `HomePageModel` и `createModel` остаются частью lifecycle экрана;
 - `safeSetState`, generated navigation и dialogs сохранены;
-- `CustomGoogleMap` пока принимает legacy `List<dynamic>`;
+- `CustomGoogleMap` позднее переведён на immutable typed marker list; legacy
+  maps остаются только в search results;
 - reverse geocoding позднее вынесен в typed shared boundary; актуальный отчёт:
   `docs/reverse_geocoding_read_integration.md`;
 - FlutterFlow dependencies не удалялись, пока они используются.
@@ -227,7 +228,8 @@ Backend rollback не нужен: сервер не изменялся.
 Home slice был подтверждён и `SelectParking` подключён следующим отдельным
 этапом без изменения write-flow. Актуальный отчёт:
 `docs/select_parking_map_read_integration.md`. Переход `CustomGoogleMap` на
-typed marker API остаётся отдельной будущей задачей.
+typed marker API выполнен следующим этапом; актуальный отчёт:
+`docs/typed_map_marker_contract.md`.
 
 ## Предлагаемое сообщение Git-коммита
 

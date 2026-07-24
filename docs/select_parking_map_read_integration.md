@@ -32,7 +32,7 @@ Home уже проверил новый map read layer в реальном consu
 SelectParkingWidget
   ├─ local ParkingMapController
   ├─ MapFilterSnapshot
-  └─ typed-to-legacy presentation adapter
+  └─ typed presentation marker adapter
                   │
                   v
        ParkingMapRepository
@@ -53,7 +53,7 @@ Controller принадлежит lifecycle экрана и корректно d
 - camera bounds, center, zoom и текущий `FFAppState` filter snapshot передаются
   с прежней семантикой;
 - RPC `public.get_filtered_parkings` и все 18 параметров не изменены;
-- marker и cluster response shape для `CustomGoogleMap` сохранён adapter-ом;
+- marker и cluster values для `CustomGoogleMap` сохранены typed adapter-ом;
 - старые markers сохраняются во время загрузки и при read failure;
 - marker tap по-прежнему открывает `ParkingsDetailsWidget`;
 - long press по-прежнему записывает временные координаты, выполняет reverse
@@ -105,7 +105,8 @@ Write-path создания парковки на этом этапе не ан�
 
 - `FFAppState` остаётся источником map filter values и временных координат;
 - `SelectParkingModel`, `createModel` и `safeSetState` сохранены;
-- `CustomGoogleMap` пока принимает legacy `List<dynamic>`;
+- `CustomGoogleMap` позднее переведён на immutable `MapMarkerItem`; legacy
+  maps остаются только у search UI;
 - reverse geocoding позднее вынесен в typed shared boundary; generated call
   остался только внутри data source;
 - `CreateParkingDialog2Widget` остаётся generated write-flow;
@@ -214,8 +215,8 @@ Backend rollback не требуется: сервер и production data не �
 
 Reverse geocoding изолирован следующим отдельным этапом без изменения create
 write-flow. Актуальный отчёт: `docs/reverse_geocoding_read_integration.md`.
-Следующий возможный этап — typed API для `CustomGoogleMap`, устраняющий
-последний `List<dynamic>` presentation adapter.
+Typed API для `CustomGoogleMap` выполнен следующим этапом. Актуальный отчёт:
+`docs/typed_map_marker_contract.md`.
 
 ## Предлагаемое сообщение Git-коммита
 

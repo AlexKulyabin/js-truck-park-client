@@ -54,5 +54,8 @@ void main() {
     expect(source, contains('_parkingMapController'));
     expect(source, contains('_reverseGeocodingService'));
     expect(source, contains('CreateParkingDialog2Widget'));
+    expect(source, contains('toMapMarkerItems(state.points)'));
+    expect(source, contains('markers: _model.parkingsOnMap'));
+    expect(source, isNot(contains('markerData:')));
   });
 }

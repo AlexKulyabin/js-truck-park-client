@@ -1,4 +1,5 @@
 import '/flutter_flow/flutter_flow_util.dart';
+import '/features/map/presentation/map_marker_item.dart';
 import 'home_page_widget.dart' show HomePageWidget;
 import 'package:flutter/material.dart';
 
@@ -7,7 +8,7 @@ class HomePageModel extends FlutterFlowModel<HomePageWidget> {
 
   bool isMapLocked = true;
 
-  List<dynamic>? parkingsOnMap;
+  List<MapMarkerItem> parkingsOnMap = const [];
 
   int? requests;
 

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:j_s_truck_park/features/map/domain/map_bounds.dart';
 import 'package:j_s_truck_park/features/map/domain/map_parking_point.dart';
+import 'package:j_s_truck_park/features/map/presentation/map_marker_item.dart';
 import 'package:j_s_truck_park/features/map/presentation/map_read_adapter.dart';
 
 void main() {
@@ -41,7 +42,43 @@ void main() {
     expect(query.searchQuery, 'warsaw');
   });
 
-  test('adapts typed points to the complete legacy map and search shape', () {
+  test('adapts typed points to immutable map marker items', () {
+    final items = toMapMarkerItems(const [
+      MapParkingPoint(
+        id: 'parking-1',
+        latitude: 52.1,
+        longitude: 21.2,
+        count: 1,
+        isCluster: false,
+        address: 'Test address',
+        rating: 4.5,
+      ),
+    ]);
+
+    expect(items, const [
+      MapMarkerItem(
+        id: 'parking-1',
+        latitude: 52.1,
+        longitude: 21.2,
+        count: 1,
+        isCluster: false,
+      ),
+    ]);
+    expect(
+      () => items.add(
+        const MapMarkerItem(
+          id: 'parking-2',
+          latitude: 52.2,
+          longitude: 21.3,
+          count: 1,
+          isCluster: false,
+        ),
+      ),
+      throwsUnsupportedError,
+    );
+  });
+
+  test('keeps the complete legacy shape only for search consumers', () {
     final items = toLegacyMapItems(const [
       MapParkingPoint(
         id: 'parking-1',
@@ -54,19 +91,17 @@ void main() {
       ),
     ]);
 
-    expect(items, [
-      {
-        'id': 'parking-1',
-        'lat': 52.1,
-        'lng': 21.2,
-        'latitude': 52.1,
-        'longitude': 21.2,
-        'count': 1,
-        'is_cluster': false,
-        'address': 'Test address',
-        'rating': 4.5,
-      },
-    ]);
+    expect(items.single, {
+      'id': 'parking-1',
+      'lat': 52.1,
+      'lng': 21.2,
+      'latitude': 52.1,
+      'longitude': 21.2,
+      'count': 1,
+      'is_cluster': false,
+      'address': 'Test address',
+      'rating': 4.5,
+    });
     expect(() => items.add(items.first), throwsUnsupportedError);
     expect(() => items.first['id'] = 'changed', throwsUnsupportedError);
   });

@@ -203,7 +203,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       return;
     }
     safeSetState(() {
-      _model.parkingsOnMap = toLegacyMapItems(state.points);
+      _model.parkingsOnMap = toMapMarkerItems(state.points);
     });
   }
 
@@ -305,7 +305,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                               markerIconPath:
                                   'https://jckksrcdmhtafwbimzov.supabase.co/storage/v1/object/public/assets/icnLocation.png',
                               markerSize: 30,
-                              markerData: _model.parkingsOnMap,
+                              markers: _model.parkingsOnMap,
                               centerToMoveTo: _model.searchCoord,
                               isDarkMode: Theme.of(context).brightness ==
                                   Brightness.dark,
