@@ -17,7 +17,7 @@ class SupabaseUserProfileGateway implements UserProfileGateway {
   Future<List<UserProfile>> listProfilesByUserId({
     required String userId,
   }) async {
-    final rows = await _usersTable.queryRows(
+    final rows = await _usersTable.querySingleRow(
       queryFn: (q) => q.eqOrNull(
         'id',
         userId,

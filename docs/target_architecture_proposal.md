@@ -166,6 +166,9 @@ Repository не нужен language page, статическим onboarding page
   `features/profile/application/ProfileController` with immutable state. This is
   intentionally narrow and preserves the generated screen behavior while moving
   profile UI state out of `ProfileModel`.
+- Edit profile initial form data now also uses `UserProfileService`, so profile
+  read paths are behind the typed boundary. The save action is intentionally
+  still legacy until the guarded profile update contract is introduced.
 
 ## Где нужен service
 
