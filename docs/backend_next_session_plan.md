@@ -240,6 +240,9 @@ Supabase-контракты.
 3. Документация и verification — `integration_runbook`,
    `flutter_supabase_usage_map` и `target_architecture_proposal` обновлены под
    новый pilot.
+4. `refactor(favorites): move list reads into service` — список избранного
+   читает `view_user_favorites` через `FavoritesService`, а UI получает
+   typed `FavoriteParking` вместо generated Supabase row.
 
 Проверки:
 
@@ -251,7 +254,7 @@ Supabase-контракты.
 Ограничения:
 
 - Supabase local pgTAP/RLS smoke не запускался в рамках Flutter-only этапа;
-- favorites list всё ещё читает `view_user_favorites` напрямую из
-  FlutterFlow-widget и остаётся кандидатом на следующий маленький перенос;
+- favorites list всё ещё использует `FutureBuilder`, поэтому следующий
+  кандидат — feature-scoped controller с immutable state;
 - новые write-capabilities добавлять только отдельными этапами после RLS и
   rollback contract.

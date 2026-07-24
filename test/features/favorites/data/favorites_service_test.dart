@@ -16,6 +16,44 @@ void main() {
       expect(gateway.calls, isEmpty);
     });
 
+    test('returns empty favorites list without querying when user id is empty',
+        () async {
+      final gateway = _FakeFavoritesGateway();
+      final service = FavoritesService(gateway: gateway);
+
+      final result = await service.listFavorites(userId: ' ');
+
+      expect(result, isEmpty);
+      expect(gateway.calls, isEmpty);
+    });
+
+    test('loads favorites for normalized current user id', () async {
+      final gateway = _FakeFavoritesGateway(
+        favorites: const [
+          FavoriteParking(
+            favoriteRecordId: 1,
+            userId: 'user-1',
+            parkingId: 'parking-1',
+            address: 'Address 1',
+            latitude: 10,
+            longitude: 20,
+            rating: 4.5,
+            reviewsCount: 3,
+            photoUrls: ['https://example.test/photo.jpg'],
+          ),
+        ],
+      );
+      final service = FavoritesService(gateway: gateway);
+
+      final result = await service.listFavorites(userId: ' user-1 ');
+
+      expect(result.single.parkingId, 'parking-1');
+      expect(result.single.primaryPhotoUrl, 'https://example.test/photo.jpg');
+      expect(gateway.calls, [
+        'list:user-1',
+      ]);
+    });
+
     test('adds favorite for the current user and parking', () async {
       final gateway = _FakeFavoritesGateway();
       final service = FavoritesService(gateway: gateway);
@@ -66,7 +104,12 @@ void main() {
 }
 
 class _FakeFavoritesGateway implements FavoritesGateway {
+  _FakeFavoritesGateway({
+    this.favorites = const [],
+  });
+
   final calls = <String>[];
+  final List<FavoriteParking> favorites;
 
   @override
   Future<void> addFavorite({
@@ -74,6 +117,14 @@ class _FakeFavoritesGateway implements FavoritesGateway {
     required String userId,
   }) async {
     calls.add('add:$parkingId:$userId');
+  }
+
+  @override
+  Future<List<FavoriteParking>> listFavorites({
+    required String userId,
+  }) async {
+    calls.add('list:$userId');
+    return favorites;
   }
 
   @override

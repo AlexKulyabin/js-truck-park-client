@@ -1,5 +1,5 @@
 import '/auth/supabase_auth/auth_util.dart';
-import '/backend/supabase/supabase.dart';
+import '/features/favorites/data/favorites_service.dart';
 import '/favourites/favourite_card/favourite_card_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -45,12 +45,9 @@ class _FavouritesWidgetState extends State<FavouritesWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<ViewUserFavoritesRow>>(
-      future: ViewUserFavoritesTable().queryRows(
-        queryFn: (q) => q.eqOrNull(
-          'user_id',
-          currentUserUid,
-        ),
+    return FutureBuilder<List<FavoriteParking>>(
+      future: _model.favoritesService.listFavorites(
+        userId: currentUserUid,
       ),
       builder: (context, snapshot) {
         // Customize what your widget looks like when it's loading.
@@ -70,7 +67,7 @@ class _FavouritesWidgetState extends State<FavouritesWidget> {
             ),
           );
         }
-        List<ViewUserFavoritesRow> favouritesViewUserFavoritesRowList =
+        List<FavoriteParking> favouritesViewUserFavoritesRowList =
             snapshot.data!;
 
         return GestureDetector(
@@ -201,7 +198,7 @@ class _FavouritesWidgetState extends State<FavouritesWidget> {
                                     child: FavouriteCardWidget(
                                       key: Key(
                                           'Key21l_${favoritesIndex}_of_${favorites.length}'),
-                                      favoriteRow: favoritesItem,
+                                      favorite: favoritesItem,
                                     ),
                                   );
                                 },

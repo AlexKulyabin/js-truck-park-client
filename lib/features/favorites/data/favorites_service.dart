@@ -11,6 +11,10 @@ class FavoriteActionException implements Exception {
 }
 
 abstract interface class FavoritesGateway {
+  Future<List<FavoriteParking>> listFavorites({
+    required String userId,
+  });
+
   Future<bool> isFavorite({
     required String parkingId,
     required String userId,
@@ -28,17 +32,34 @@ abstract interface class FavoritesGateway {
 }
 
 class SupabaseFavoritesGateway implements FavoritesGateway {
-  SupabaseFavoritesGateway({FavoritesTable? table})
-      : _table = table ?? FavoritesTable();
+  SupabaseFavoritesGateway({
+    FavoritesTable? favoritesTable,
+    ViewUserFavoritesTable? favoritesView,
+  })  : _favoritesTable = favoritesTable ?? FavoritesTable(),
+        _favoritesView = favoritesView ?? ViewUserFavoritesTable();
 
-  final FavoritesTable _table;
+  final FavoritesTable _favoritesTable;
+  final ViewUserFavoritesTable _favoritesView;
+
+  @override
+  Future<List<FavoriteParking>> listFavorites({
+    required String userId,
+  }) async {
+    final rows = await _favoritesView.queryRows(
+      queryFn: (q) => q.eqOrNull(
+        'user_id',
+        userId,
+      ),
+    );
+    return rows.map(FavoriteParking.fromRow).toList();
+  }
 
   @override
   Future<bool> isFavorite({
     required String parkingId,
     required String userId,
   }) async {
-    final rows = await _table.queryRows(
+    final rows = await _favoritesTable.queryRows(
       queryFn: (q) => q
           .eqOrNull(
             'parking_id',
@@ -58,7 +79,7 @@ class SupabaseFavoritesGateway implements FavoritesGateway {
     required String parkingId,
     required String userId,
   }) async {
-    await _table.insert({
+    await _favoritesTable.insert({
       'user_id': userId,
       'parking_id': parkingId,
     });
@@ -69,7 +90,7 @@ class SupabaseFavoritesGateway implements FavoritesGateway {
     required String parkingId,
     required String userId,
   }) async {
-    await _table.delete(
+    await _favoritesTable.delete(
       matchingRows: (rows) => rows
           .eqOrNull(
             'parking_id',
@@ -92,6 +113,17 @@ class FavoritesService {
 
   final FavoritesGateway _gateway;
   final AppConfig _config;
+
+  Future<List<FavoriteParking>> listFavorites({
+    required String userId,
+  }) async {
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) {
+      return const [];
+    }
+
+    return _gateway.listFavorites(userId: normalizedUserId);
+  }
 
   Future<bool> isFavorite({
     required String? parkingId,
@@ -168,4 +200,52 @@ class _FavoriteIds {
 
   final String parkingId;
   final String userId;
+}
+
+class FavoriteParking {
+  const FavoriteParking({
+    required this.favoriteRecordId,
+    required this.userId,
+    required this.parkingId,
+    required this.address,
+    required this.latitude,
+    required this.longitude,
+    required this.rating,
+    required this.reviewsCount,
+    required this.photoUrls,
+  });
+
+  factory FavoriteParking.fromRow(ViewUserFavoritesRow row) {
+    return FavoriteParking(
+      favoriteRecordId: row.favoriteRecordId,
+      userId: row.userId,
+      parkingId: row.parkingId,
+      address: row.address,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      rating: row.rating,
+      reviewsCount: row.reviewsCount,
+      photoUrls: _parsePhotoUrls(row.photos),
+    );
+  }
+
+  final int? favoriteRecordId;
+  final String? userId;
+  final String? parkingId;
+  final String? address;
+  final double? latitude;
+  final double? longitude;
+  final double? rating;
+  final int? reviewsCount;
+  final List<String> photoUrls;
+
+  String? get primaryPhotoUrl => photoUrls.isEmpty ? null : photoUrls.first;
+}
+
+List<String> _parsePhotoUrls(dynamic photos) {
+  if (photos is! Iterable) {
+    return const [];
+  }
+
+  return photos.whereType<String>().toList(growable: false);
 }

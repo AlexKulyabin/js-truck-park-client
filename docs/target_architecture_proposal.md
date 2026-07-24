@@ -120,8 +120,9 @@ Repository не нужен language page, статическим onboarding page
   write path. It validates `parkingId/userId`, checks
   `AppConfig.canPerformWrite(AppWriteOperation.favoriteToggle)`, and scopes
   deletes by both `parking_id` and `user_id`.
-- The favorites list still reads `view_user_favorites` from the FlutterFlow
-  widget and can move behind the same feature boundary in a later stage.
+- Favorites list reads `view_user_favorites` through the same feature service
+  and maps generated rows into the typed `FavoriteParking` read model before
+  reaching FlutterFlow widgets.
 
 ## Где нужен service
 
