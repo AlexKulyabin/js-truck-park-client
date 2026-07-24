@@ -1,10 +1,15 @@
 import '/backend/api_requests/api_calls.dart';
 import '/core/config/app_config.dart';
 import '/create_parking/create_parking_dialog/create_parking_dialog_widget.dart';
+import '/features/map/application/parking_map_controller.dart';
+import '/features/map/data/supabase_parking_map_repository.dart';
+import '/features/map/domain/map_bounds.dart';
+import '/features/map/domain/map_parking_query.dart';
+import '/features/map/domain/parking_map_repository.dart';
+import '/features/map/presentation/map_read_adapter.dart';
 import '/filter/filter/filter_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/parkings_details/parkings_details/parkings_details_widget.dart';
 import '/subscription/guest_dialog/guest_dialog_widget.dart';
 import 'dart:ui';
@@ -28,11 +33,13 @@ class HomePageWidget extends StatefulWidget {
     this.targetParkingId,
     this.targetLat,
     this.targetLng,
+    this.parkingMapRepository,
   });
 
   final String? targetParkingId;
   final double? targetLat;
   final double? targetLng;
+  final ParkingMapRepository? parkingMapRepository;
 
   static String routeName = 'HomePage';
   static String routePath = '/homePage';
@@ -43,6 +50,8 @@ class HomePageWidget extends StatefulWidget {
 
 class _HomePageWidgetState extends State<HomePageWidget> {
   late HomePageModel _model;
+  late final ParkingMapController _parkingMapController;
+  late final ParkingMapController _parkingSearchController;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   LatLng? currentUserLocationValue;
@@ -51,6 +60,14 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => HomePageModel());
+    final parkingMapRepository =
+        widget.parkingMapRepository ?? SupabaseParkingMapRepository();
+    _parkingMapController = ParkingMapController(
+      repository: parkingMapRepository,
+    );
+    _parkingSearchController = ParkingMapController(
+      repository: parkingMapRepository,
+    );
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
@@ -60,7 +77,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       if (FFAppState().isGuest == true) {
         return;
       }
-      if (widget!.targetParkingId != null && widget!.targetParkingId != '') {
+      if (widget.targetParkingId != null && widget.targetParkingId != '') {
         await showModalBottomSheet(
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
@@ -75,7 +92,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
               child: Padding(
                 padding: MediaQuery.viewInsetsOf(context),
                 child: ParkingsDetailsWidget(
-                  parkingId: widget!.targetParkingId!,
+                  parkingId: widget.targetParkingId!,
                 ),
               ),
             );
@@ -98,9 +115,111 @@ class _HomePageWidgetState extends State<HomePageWidget> {
 
   @override
   void dispose() {
+    _parkingMapController.dispose();
+    _parkingSearchController.dispose();
     _model.dispose();
 
     super.dispose();
+  }
+
+  MapFilterSnapshot _currentFilterSnapshot() => MapFilterSnapshot(
+        radiusMeters: FFAppState().isFilterShowNearest
+            ? functions.getMetersFromIndex(FFAppState().filterRadius)
+            : 0.0,
+        minCapacity: FFAppState().filterCapacityFrom,
+        maxCapacity: FFAppState().filterCapacityTo,
+        needGas: FFAppState().isFilterHasGas,
+        needShower: FFAppState().isFilterHasShower,
+        needLaundry: FFAppState().isFilterHasLaundry,
+        needHotel: FFAppState().isFilterHasHotel,
+        needShop: FFAppState().isFilterHasShop,
+        needRecreation: FFAppState().isFilterHasRecreation,
+        isActive: FFAppState().isFilterApplied,
+      );
+
+  MapParkingQuery _buildMapQuery({
+    required double minLat,
+    required double minLng,
+    required double maxLat,
+    required double maxLng,
+    required double zoom,
+    String searchQuery = '',
+  }) =>
+      buildMapParkingQuery(
+        bounds: MapBounds(
+          minLatitude: minLat,
+          minLongitude: minLng,
+          maxLatitude: maxLat,
+          maxLongitude: maxLng,
+        ),
+        zoom: zoom,
+        filter: _currentFilterSnapshot(),
+        searchQuery: searchQuery,
+      );
+
+  MapParkingQuery? _buildCurrentMapQuery({
+    double? zoom,
+    String searchQuery = '',
+  }) {
+    final minLat = _model.latMin;
+    final minLng = _model.lngMin;
+    final maxLat = _model.latMax;
+    final maxLng = _model.lngMax;
+    final currentZoom = zoom ?? _model.currentZoom;
+    if (minLat == null ||
+        minLng == null ||
+        maxLat == null ||
+        maxLng == null ||
+        currentZoom == null) {
+      return null;
+    }
+    return _buildMapQuery(
+      minLat: minLat,
+      minLng: minLng,
+      maxLat: maxLat,
+      maxLng: maxLng,
+      zoom: currentZoom,
+      searchQuery: searchQuery,
+    );
+  }
+
+  Future<void> _loadMapPoints(MapParkingQuery query) async {
+    await _parkingMapController.load(query);
+    if (!mounted) {
+      return;
+    }
+    final state = _parkingMapController.state;
+    if (!identical(state.query, query) ||
+        state.phase != ParkingMapLoadPhase.loaded) {
+      return;
+    }
+    safeSetState(() {
+      _model.parkingsOnMap = toLegacyMapItems(state.points);
+    });
+  }
+
+  Future<void> _loadSearchResults(MapParkingQuery query) async {
+    await _parkingSearchController.load(query);
+    if (!mounted) {
+      return;
+    }
+    final state = _parkingSearchController.state;
+    if (!identical(state.query, query) ||
+        state.phase != ParkingMapLoadPhase.loaded) {
+      return;
+    }
+    safeSetState(() {
+      _model.searchResults = toLegacyMapItems(state.points);
+      _model.isSearching = true;
+    });
+  }
+
+  void _clearSearchResults() {
+    _parkingSearchController.reset();
+    safeSetState(() {
+      _model.isSearching = false;
+      _model.searchResults = [];
+    });
   }
 
   @override
@@ -153,11 +272,11 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                             child: custom_widgets.CustomGoogleMap(
                               width: MediaQuery.sizeOf(context).width * 1.0,
                               height: MediaQuery.sizeOf(context).height * 1.0,
-                              initialLat: widget!.targetLat != null
-                                  ? widget!.targetLat!
+                              initialLat: widget.targetLat != null
+                                  ? widget.targetLat!
                                   : functions.getLat(currentUserLocationValue),
-                              initialLng: widget!.targetLng != null
-                                  ? widget!.targetLng!
+                              initialLng: widget.targetLng != null
+                                  ? widget.targetLng!
                                   : functions.getLng(currentUserLocationValue),
                               initialZoom: 13.0,
                               allowGestures: true,
@@ -204,40 +323,15 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                 _model.lngMax = maxLng;
                                 _model.currentZoom = zoom;
                                 safeSetState(() {});
-                                _model.getFilteredParkings =
-                                    await GetFilteredParkingsCall.call(
-                                  minLat: minLat,
-                                  maxLat: maxLat,
-                                  minLng: minLng,
-                                  maxLng: maxLng,
-                                  isActive: FFAppState().isFilterApplied,
-                                  radius: FFAppState().isFilterShowNearest
-                                      ? functions.getMetersFromIndex(
-                                          FFAppState().filterRadius)
-                                      : 0.0,
-                                  lat: (minLat + maxLat) / 2,
-                                  lng: (minLng + maxLng) / 2,
-                                  minCap: FFAppState().filterCapacityFrom,
-                                  maxCap: FFAppState().filterCapacityTo,
-                                  gas: FFAppState().isFilterHasGas,
-                                  shower: FFAppState().isFilterHasShower,
-                                  laundry: FFAppState().isFilterHasLaundry,
-                                  hotel: FFAppState().isFilterHasHotel,
-                                  shop: FFAppState().isFilterHasShop,
-                                  recreation:
-                                      FFAppState().isFilterHasRecreation,
-                                  zoom: zoom,
+                                await _loadMapPoints(
+                                  _buildMapQuery(
+                                    minLat: minLat,
+                                    minLng: minLng,
+                                    maxLat: maxLat,
+                                    maxLng: maxLng,
+                                    zoom: zoom,
+                                  ),
                                 );
-
-                                if ((_model.getFilteredParkings?.succeeded ??
-                                    true)) {
-                                  _model.parkingsOnMap =
-                                      (_model.getFilteredParkings?.jsonBody ??
-                                          '');
-                                  safeSetState(() {});
-                                }
-
-                                safeSetState(() {});
                               },
                               onLongPress: (longPressedPoint) async {
                                 if (AppConfig.current.integrationReadOnly) {
@@ -460,11 +554,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                   0.0, 8.0, 0.0, 8.0),
                               child: GestureDetector(
                                 onVerticalDragEnd: (details) async {
-                                  _model.isSearching = false;
-                                  safeSetState(() {});
-                                  safeSetState(() {
-                                    _model.textController?.clear();
-                                  });
+                                  _model.textController?.clear();
+                                  _clearSearchResults();
                                 },
                                 child: Container(
                                   width: 36.0,
@@ -509,12 +600,12 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                         parkingsItemItem,
                                                         r'''$.lng''',
                                                       ));
-                                              _model.isSearching = false;
                                               _model.isMapLocked = false;
+                                              _model.textController?.clear();
+                                              _parkingSearchController.reset();
+                                              _model.isSearching = false;
+                                              _model.searchResults = [];
                                               safeSetState(() {});
-                                              safeSetState(() {
-                                                _model.textController?.clear();
-                                              });
                                               await actions.hideKeyboard();
                                               await showModalBottomSheet(
                                                 isScrollControlled: true,
@@ -549,11 +640,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                   safeSetState(() {}));
                                             },
                                             onVerticalDragEnd: (details) async {
-                                              safeSetState(() {
-                                                _model.textController?.clear();
-                                              });
-                                              _model.isSearching = false;
-                                              safeSetState(() {});
+                                              _model.textController?.clear();
+                                              _clearSearchResults();
                                             },
                                             child: Column(
                                               mainAxisSize: MainAxisSize.min,
@@ -644,79 +732,22 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                     Duration(milliseconds: 500),
                                                     () async {
                                                       if (_model.textController
-                                                                  .text !=
-                                                              null &&
-                                                          _model.textController
-                                                                  .text !=
-                                                              '') {
-                                                        _model.getFilteredParkingsOut =
-                                                            await GetFilteredParkingsCall
-                                                                .call(
+                                                          .text.isNotEmpty) {
+                                                        final query =
+                                                            _buildCurrentMapQuery(
+                                                          zoom: 20.0,
                                                           searchQuery: functions
                                                               .textToLower(_model
                                                                   .textController
                                                                   .text),
-                                                          isActive: FFAppState()
-                                                              .isFilterApplied,
-                                                          zoom: 20.0,
-                                                          radius: FFAppState()
-                                                                  .isFilterShowNearest
-                                                              ? functions
-                                                                  .getMetersFromIndex(
-                                                                      FFAppState()
-                                                                          .filterRadius)
-                                                              : 0.0,
-                                                          lat: ((_model
-                                                                      .latMin!) +
-                                                                  (_model
-                                                                      .latMax!)) /
-                                                              2,
-                                                          lng: ((_model
-                                                                      .lngMin!) +
-                                                                  (_model
-                                                                      .lngMax!)) /
-                                                              2,
-                                                          minLat: _model.latMin,
-                                                          maxLat: _model.latMax,
-                                                          minLng: _model.lngMin,
-                                                          maxLng: _model.lngMax,
-                                                          minCap: FFAppState()
-                                                              .filterCapacityFrom,
-                                                          maxCap: FFAppState()
-                                                              .filterCapacityTo,
-                                                          gas: FFAppState()
-                                                              .isFilterHasGas,
-                                                          shower: FFAppState()
-                                                              .isFilterHasShower,
-                                                          laundry: FFAppState()
-                                                              .isFilterHasLaundry,
-                                                          hotel: FFAppState()
-                                                              .isFilterHasHotel,
-                                                          shop: FFAppState()
-                                                              .isFilterHasShop,
-                                                          recreation: FFAppState()
-                                                              .isFilterHasRecreation,
                                                         );
-
-                                                        _model.searchResults =
-                                                            (_model.getFilteredParkingsOut
-                                                                        ?.jsonBody ??
-                                                                    '')
-                                                                .toList()
-                                                                .cast<
-                                                                    dynamic>();
-                                                        _model.isSearching =
-                                                            true;
-                                                        safeSetState(() {});
+                                                        if (query != null) {
+                                                          await _loadSearchResults(
+                                                              query);
+                                                        }
                                                       } else {
-                                                        _model.isSearching =
-                                                            false;
-                                                        _model.searchResults =
-                                                            [];
-                                                        safeSetState(() {});
+                                                        _clearSearchResults();
                                                       }
-
-                                                      safeSetState(() {});
                                                     },
                                                   ),
                                                   autofocus: false,
@@ -879,104 +910,26 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                       color: Color(0xFF6C6C6C),
                                                       size: 20.0,
                                                     ),
-                                                    suffixIcon:
-                                                        _model.textController!
-                                                                .text.isNotEmpty
-                                                            ? InkWell(
-                                                                onTap:
-                                                                    () async {
-                                                                  _model
-                                                                      .textController
-                                                                      ?.clear();
-                                                                  if (_model.textController
-                                                                              .text !=
-                                                                          null &&
-                                                                      _model.textController
-                                                                              .text !=
-                                                                          '') {
-                                                                    _model.getFilteredParkingsOut =
-                                                                        await GetFilteredParkingsCall
-                                                                            .call(
-                                                                      searchQuery: functions.textToLower(_model
-                                                                          .textController
-                                                                          .text),
-                                                                      isActive:
-                                                                          FFAppState()
-                                                                              .isFilterApplied,
-                                                                      zoom:
-                                                                          20.0,
-                                                                      radius: FFAppState()
-                                                                              .isFilterShowNearest
-                                                                          ? functions
-                                                                              .getMetersFromIndex(FFAppState().filterRadius)
-                                                                          : 0.0,
-                                                                      lat: ((_model.latMin!) +
-                                                                              (_model.latMax!)) /
-                                                                          2,
-                                                                      lng: ((_model.lngMin!) +
-                                                                              (_model.lngMax!)) /
-                                                                          2,
-                                                                      minLat: _model
-                                                                          .latMin,
-                                                                      maxLat: _model
-                                                                          .latMax,
-                                                                      minLng: _model
-                                                                          .lngMin,
-                                                                      maxLng: _model
-                                                                          .lngMax,
-                                                                      minCap: FFAppState()
-                                                                          .filterCapacityFrom,
-                                                                      maxCap: FFAppState()
-                                                                          .filterCapacityTo,
-                                                                      gas: FFAppState()
-                                                                          .isFilterHasGas,
-                                                                      shower: FFAppState()
-                                                                          .isFilterHasShower,
-                                                                      laundry:
-                                                                          FFAppState()
-                                                                              .isFilterHasLaundry,
-                                                                      hotel: FFAppState()
-                                                                          .isFilterHasHotel,
-                                                                      shop: FFAppState()
-                                                                          .isFilterHasShop,
-                                                                      recreation:
-                                                                          FFAppState()
-                                                                              .isFilterHasRecreation,
-                                                                    );
-
-                                                                    _model
-                                                                        .searchResults = (_model.getFilteredParkingsOut?.jsonBody ??
-                                                                            '')
-                                                                        .toList()
-                                                                        .cast<
-                                                                            dynamic>();
-                                                                    _model.isSearching =
-                                                                        true;
-                                                                    safeSetState(
-                                                                        () {});
-                                                                  } else {
-                                                                    _model.isSearching =
-                                                                        false;
-                                                                    _model.searchResults =
-                                                                        [];
-                                                                    safeSetState(
-                                                                        () {});
-                                                                  }
-
-                                                                  safeSetState(
-                                                                      () {});
-                                                                  safeSetState(
-                                                                      () {});
-                                                                },
-                                                                child: Icon(
-                                                                  Icons.clear,
-                                                                  color: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .searchMapsHinit,
-                                                                  size: 22,
-                                                                ),
-                                                              )
-                                                            : null,
+                                                    suffixIcon: _model
+                                                            .textController!
+                                                            .text
+                                                            .isNotEmpty
+                                                        ? InkWell(
+                                                            onTap: () async {
+                                                              _model
+                                                                  .textController
+                                                                  ?.clear();
+                                                              _clearSearchResults();
+                                                            },
+                                                            child: Icon(
+                                                              Icons.clear,
+                                                              color: FlutterFlowTheme
+                                                                      .of(context)
+                                                                  .searchMapsHinit,
+                                                              size: 22,
+                                                            ),
+                                                          )
+                                                        : null,
                                                   ),
                                                   style: FlutterFlowTheme.of(
                                                           context)
@@ -1032,12 +985,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                               highlightColor:
                                                   Colors.transparent,
                                               onTap: () async {
-                                                _model.isSearching = false;
-                                                safeSetState(() {});
-                                                safeSetState(() {
-                                                  _model.textController
-                                                      ?.clear();
-                                                });
+                                                _model.textController?.clear();
+                                                _clearSearchResults();
                                                 await showModalBottomSheet(
                                                   isScrollControlled: true,
                                                   backgroundColor:
@@ -1065,60 +1014,13 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                     () => _model.filterOut =
                                                         value));
 
-                                                if (_model.filterOut!) {
-                                                  _model.apiResultund =
-                                                      await GetFilteredParkingsCall
-                                                          .call(
-                                                    minLat: _model.latMin,
-                                                    maxLat: _model.latMax,
-                                                    minLng: _model.lngMin,
-                                                    maxLng: _model.lngMax,
-                                                    radius: FFAppState()
-                                                            .isFilterShowNearest
-                                                        ? functions
-                                                            .getMetersFromIndex(
-                                                                FFAppState()
-                                                                    .filterRadius)
-                                                        : 0.0,
-                                                    minCap: FFAppState()
-                                                        .filterCapacityFrom,
-                                                    maxCap: FFAppState()
-                                                        .filterCapacityTo,
-                                                    gas: FFAppState()
-                                                        .isFilterHasGas,
-                                                    shower: FFAppState()
-                                                        .isFilterHasShower,
-                                                    laundry: FFAppState()
-                                                        .isFilterHasLaundry,
-                                                    hotel: FFAppState()
-                                                        .isFilterHasHotel,
-                                                    shop: FFAppState()
-                                                        .isFilterHasShop,
-                                                    recreation: FFAppState()
-                                                        .isFilterHasRecreation,
-                                                    isActive: FFAppState()
-                                                        .isFilterApplied,
-                                                    zoom: _model.currentZoom,
-                                                    lat: ((_model.latMin!) +
-                                                            (_model.latMax!)) /
-                                                        2,
-                                                    lng: ((_model.lngMin!) +
-                                                            (_model.lngMax!)) /
-                                                        2,
-                                                  );
-
-                                                  if ((_model.apiResultund
-                                                          ?.succeeded ??
-                                                      true)) {
-                                                    _model.parkingsOnMap =
-                                                        (_model.apiResultund
-                                                                ?.jsonBody ??
-                                                            '');
-                                                    safeSetState(() {});
+                                                if (_model.filterOut == true) {
+                                                  final query =
+                                                      _buildCurrentMapQuery();
+                                                  if (query != null) {
+                                                    await _loadMapPoints(query);
                                                   }
                                                 }
-
-                                                safeSetState(() {});
                                               },
                                               child: Container(
                                                 width: 40.0,

@@ -1,5 +1,9 @@
 # Controller-срез чтения парковок для карты
 
+> Исторический отчёт этапа создания controller. Home подключён следующим
+> отдельным этапом; актуальный integration report:
+> `docs/home_map_read_integration.md`.
+
 Дата: 2026-07-24
 
 Ветка: `agent/map-read-controller`

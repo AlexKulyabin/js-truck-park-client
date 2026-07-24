@@ -194,6 +194,20 @@ void main() {
     expect(repository.queries, isEmpty);
   });
 
+  test('reset clears state and invalidates an in-flight response', () async {
+    final repository = _FakeRepository();
+    final controller = ParkingMapController(repository: repository);
+
+    final loading = controller.load(_firstQuery);
+    controller.reset();
+    repository.completions.single.complete(const [_firstPoint]);
+    await loading;
+
+    expect(controller.state.phase, ParkingMapLoadPhase.idle);
+    expect(controller.state.query, isNull);
+    expect(controller.state.points, isEmpty);
+  });
+
   test('maps unexpected errors to a redacted unavailable failure', () async {
     final repository = _FakeRepository()
       ..synchronousError = StateError('raw transport details');

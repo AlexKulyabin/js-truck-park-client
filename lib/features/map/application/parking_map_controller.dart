@@ -84,6 +84,11 @@ class ParkingMapController extends ChangeNotifier {
     return query == null ? Future.value() : load(query);
   }
 
+  void reset() {
+    _loadGeneration++;
+    _publish(const ParkingMapState.initial());
+  }
+
   void _publishFailure({
     required int generation,
     required MapParkingQuery query,
