@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:j_s_truck_park/features/map/application/parking_filter_controller.dart';
 import 'package:j_s_truck_park/features/map/domain/map_bounds.dart';
 import 'package:j_s_truck_park/features/map/domain/map_parking_point.dart';
 import 'package:j_s_truck_park/features/map/presentation/map_marker_item.dart';
@@ -41,6 +42,35 @@ void main() {
     expect(query.needShop, isTrue);
     expect(query.isFilterActive, isTrue);
     expect(query.searchQuery, 'warsaw');
+  });
+
+  test('adapts parking filter state to the map filter snapshot', () {
+    final snapshot = toMapFilterSnapshot(
+      const ParkingFilterState(
+        capacityFrom: 5,
+        capacityTo: 25,
+        hasGas: true,
+        hasShower: true,
+        hasLaundry: false,
+        hasHotel: false,
+        hasShop: true,
+        hasRecreation: true,
+        showNearest: true,
+        radiusIndex: 2,
+        isApplied: true,
+      ),
+    );
+
+    expect(snapshot.radiusMeters, 50000);
+    expect(snapshot.minCapacity, 5);
+    expect(snapshot.maxCapacity, 25);
+    expect(snapshot.needGas, isTrue);
+    expect(snapshot.needShower, isTrue);
+    expect(snapshot.needLaundry, isFalse);
+    expect(snapshot.needHotel, isFalse);
+    expect(snapshot.needShop, isTrue);
+    expect(snapshot.needRecreation, isTrue);
+    expect(snapshot.isActive, isTrue);
   });
 
   test('adapts typed points to immutable map marker items', () {

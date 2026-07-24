@@ -2,6 +2,7 @@ import '/create_parking2/create_parking_dialog2/create_parking_dialog2_widget.da
 import '/features/geocoding/application/reverse_geocoding_service.dart';
 import '/features/geocoding/data/google_reverse_geocoding_repository.dart';
 import '/features/geocoding/domain/reverse_geocoding_repository.dart';
+import '/features/map/application/parking_filter_controller.dart';
 import '/features/map/application/parking_map_controller.dart';
 import '/features/map/data/supabase_parking_map_repository.dart';
 import '/features/map/domain/map_bounds.dart';
@@ -70,19 +71,8 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
     super.dispose();
   }
 
-  MapFilterSnapshot _currentFilterSnapshot() => MapFilterSnapshot(
-        radiusMeters: FFAppState().isFilterShowNearest
-            ? functions.getMetersFromIndex(FFAppState().filterRadius)
-            : 0.0,
-        minCapacity: FFAppState().filterCapacityFrom,
-        maxCapacity: FFAppState().filterCapacityTo,
-        needGas: FFAppState().isFilterHasGas,
-        needShower: FFAppState().isFilterHasShower,
-        needLaundry: FFAppState().isFilterHasLaundry,
-        needHotel: FFAppState().isFilterHasHotel,
-        needShop: FFAppState().isFilterHasShop,
-        needRecreation: FFAppState().isFilterHasRecreation,
-        isActive: FFAppState().isFilterApplied,
+  MapFilterSnapshot _currentFilterSnapshot() => toMapFilterSnapshot(
+        context.read<ParkingFilterController>().state,
       );
 
   MapParkingQuery _buildMapQuery({

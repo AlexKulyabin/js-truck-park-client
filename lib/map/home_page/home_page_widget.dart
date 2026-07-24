@@ -3,6 +3,7 @@ import '/create_parking/create_parking_dialog/create_parking_dialog_widget.dart'
 import '/features/geocoding/application/reverse_geocoding_service.dart';
 import '/features/geocoding/data/google_reverse_geocoding_repository.dart';
 import '/features/geocoding/domain/reverse_geocoding_repository.dart';
+import '/features/map/application/parking_filter_controller.dart';
 import '/features/map/application/parking_map_controller.dart';
 import '/features/map/data/supabase_parking_map_repository.dart';
 import '/features/map/domain/map_bounds.dart';
@@ -131,19 +132,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     super.dispose();
   }
 
-  MapFilterSnapshot _currentFilterSnapshot() => MapFilterSnapshot(
-        radiusMeters: FFAppState().isFilterShowNearest
-            ? functions.getMetersFromIndex(FFAppState().filterRadius)
-            : 0.0,
-        minCapacity: FFAppState().filterCapacityFrom,
-        maxCapacity: FFAppState().filterCapacityTo,
-        needGas: FFAppState().isFilterHasGas,
-        needShower: FFAppState().isFilterHasShower,
-        needLaundry: FFAppState().isFilterHasLaundry,
-        needHotel: FFAppState().isFilterHasHotel,
-        needShop: FFAppState().isFilterHasShop,
-        needRecreation: FFAppState().isFilterHasRecreation,
-        isActive: FFAppState().isFilterApplied,
+  MapFilterSnapshot _currentFilterSnapshot() => toMapFilterSnapshot(
+        context.read<ParkingFilterController>().state,
       );
 
   MapParkingQuery _buildMapQuery({
@@ -321,6 +311,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    final filterState = context.watch<ParkingFilterController>().state;
     if (currentUserLocationValue == null) {
       return Container(
         color: FlutterFlowTheme.of(context).primaryBackground,
@@ -624,7 +615,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                       _model.textControllerValidator.asValidator(context),
                   isSearching: _model.isSearching,
                   results: _model.searchResults,
-                  isFilterApplied: FFAppState().isFilterApplied,
+                  isFilterApplied: filterState.isApplied,
                   onQueryChanged: _handleSearchQueryChanged,
                   onClear: _clearSearchResults,
                   onResultSelected: _handleSearchResultSelected,

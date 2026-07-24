@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../application/parking_filter_controller.dart';
 import '../domain/map_bounds.dart';
 import '../domain/map_parking_point.dart';
 import '../domain/map_parking_query.dart';
@@ -53,6 +54,20 @@ MapParkingQuery buildMapParkingQuery({
       needRecreation: filter.needRecreation,
       isFilterActive: filter.isActive,
       searchQuery: searchQuery,
+    );
+
+MapFilterSnapshot toMapFilterSnapshot(ParkingFilterState state) =>
+    MapFilterSnapshot(
+      radiusMeters: state.radiusMeters,
+      minCapacity: state.capacityFrom,
+      maxCapacity: state.capacityTo,
+      needGas: state.hasGas,
+      needShower: state.hasShower,
+      needLaundry: state.hasLaundry,
+      needHotel: state.hasHotel,
+      needShop: state.hasShop,
+      needRecreation: state.hasRecreation,
+      isActive: state.isApplied,
     );
 
 List<MapMarkerItem> toMapMarkerItems(

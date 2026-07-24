@@ -53,9 +53,14 @@ void main() {
     expect(source, isNot(contains('GetAddressFromCoordsCall')));
     expect(source, contains('_parkingMapController'));
     expect(source, contains('_reverseGeocodingService'));
+    expect(source, contains('toMapFilterSnapshot('));
+    expect(source, contains('ParkingFilterController'));
     expect(source, contains('CreateParkingDialog2Widget'));
     expect(source, contains('toMapMarkerItems(state.points)'));
     expect(source, contains('markers: _model.parkingsOnMap'));
     expect(source, isNot(contains('markerData:')));
+    expect(source, isNot(contains('FFAppState().isFilterShowNearest')));
+    expect(source, isNot(contains('FFAppState().filterCapacityFrom')));
+    expect(source, isNot(contains('FFAppState().isFilterApplied')));
   });
 }

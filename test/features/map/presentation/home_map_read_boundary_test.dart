@@ -53,6 +53,8 @@ void main() {
     expect(source, contains('_parkingMapController'));
     expect(source, contains('_parkingSearchController'));
     expect(source, contains('_reverseGeocodingService'));
+    expect(source, contains('toMapFilterSnapshot('));
+    expect(source, contains('ParkingFilterController'));
     expect(source, contains('toMapMarkerItems(state.points)'));
     expect(source, contains('toMapSearchResultItems(state.points)'));
     expect(source, contains('markers: _model.parkingsOnMap'));
@@ -63,5 +65,8 @@ void main() {
     expect(source, isNot(contains('toLegacyMapItems')));
     expect(source, isNot(contains('getJsonField(')));
     expect(source, isNot(contains('EasyDebounce.debounce')));
+    expect(source, isNot(contains('FFAppState().isFilterShowNearest')));
+    expect(source, isNot(contains('FFAppState().filterCapacityFrom')));
+    expect(source, isNot(contains('FFAppState().isFilterApplied')));
   });
 }
