@@ -114,6 +114,8 @@ Impact: authenticated user может менять или удалять чуж�
 
 Fix: единый path `users/<auth.uid()>/...`; INSERT/UPDATE/DELETE проверяют соответствующий segment. Не полагаться на UI path generation как на security boundary.
 
+Локальная реализация: начата в `20260724103000_restrict_avatar_storage_policies.sql`; migration удаляет bucket-only `Avatar_Upload`, `Avatar_Update`, `Avatar_Delete` и создаёт owner-scoped policies для `avatars/users/<auth.uid()>/...`. pgTAP test добавлен в `storage_avatars_authorization_test.sql`, но локальный запуск Supabase tests пока зависит от доступности Docker daemon. Production status: не применено.
+
 ### P1 — SECURITY DEFINER без безопасного `search_path`
 
 Без fixed search path работают `aggregate_parking_stats_after`, `delete_user_account`, `get_filtered_parkings`, `get_parkings_by_location`, `handle_review_score_before`, `is_admin`, `process_referral`, `sync_user_data_to_auth`.

@@ -186,7 +186,7 @@ Flutter paths:
 - `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>` для review;
 - hardcoded public `assets/icnLocation.png` для marker icon.
 
-Есть stale Storage policies для отсутствующего bucket `parking-images`. Policies `Avatar_Update` и `Avatar_Delete` проверяют только bucket, но не owner path; authenticated user потенциально может менять чужие avatars. Политики `parking_content` частично дублируются и не задают единый owner contract.
+Есть stale Storage policies для отсутствующего bucket `parking-images`. Policies `Avatar_Update` и `Avatar_Delete` проверяют только bucket, но не owner path; authenticated user потенциально может менять чужие avatars. Локальная migration `20260724103000_restrict_avatar_storage_policies.sql` заменяет avatar writes на owner path `avatars/users/<auth.uid()>/...`; production schema пока не изменялась. Политики `parking_content` частично дублируются и не задают единый owner contract.
 
 ## Realtime
 
