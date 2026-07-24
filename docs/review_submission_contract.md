@@ -22,9 +22,10 @@ This stage does not change or call that production flow.
 - a single `ReviewSubmissionGateway.submitAtomically` operation.
 
 `SupabaseReviewSubmissionGateway` currently supports the no-photo path as one
-direct `reviews` insert behind `AppWriteOperation.reviewCreate`. It explicitly
-rejects photo submissions until the staged upload and compensation contract is
-implemented. There is intentionally no UI wiring in this stage.
+direct `reviews` insert behind `AppWriteOperation.reviewCreate`. The review
+create UI calls this service when the guarded test-write capability is enabled.
+It explicitly rejects photo submissions until the staged upload and
+compensation contract is implemented.
 
 ## Partial failure rule
 

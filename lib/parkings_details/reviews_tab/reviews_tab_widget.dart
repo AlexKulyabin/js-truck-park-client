@@ -590,7 +590,8 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                       Expanded(
                         child: Builder(
                           builder: (context) => FFButtonWidget(
-                            onPressed: AppConfig.current.integrationReadOnly ||
+                            onPressed: !AppConfig.current.canPerformWrite(
+                                        AppWriteOperation.reviewCreate) ||
                                     functions.hasUserReviewed(
                                         containerViewReviewsWithUsersRowList
                                             .map((e) => e.userId)

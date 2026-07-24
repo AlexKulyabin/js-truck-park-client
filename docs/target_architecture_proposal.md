@@ -157,8 +157,8 @@ Repository не нужен language page, статическим onboarding page
 - Review submission now has a typed validation and gateway contract in
   `ReviewSubmissionService`. The Supabase gateway supports no-photo review
   inserts behind the guarded review-create capability, while photo submissions
-  still wait for the staged upload and compensation stage; the legacy
-  production UI is not wired to it yet.
+  still wait for the staged upload and compensation stage; the review-create UI
+  now calls this service instead of the legacy direct insert/upload loop.
 - Profile header, edit initial form and post-OTP profile-completion check now
   consume `PublicUserProfile` (`id`, `fullName`, `avatarUrl`) through
   `features/profile/data/UserProfileService`. Invite referral lookup uses the

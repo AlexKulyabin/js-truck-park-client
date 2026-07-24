@@ -277,6 +277,11 @@ Supabase-контракты.
     `ReviewSubmissionService` получил Supabase gateway для одного атомарного
     insert в `reviews` без фото. Photo payload пока явно отклоняется до
     staged upload/compensation этапа; UI ещё не подключён.
+12. `refactor(reviews): wire no-photo review create UI` — кнопка Leave a
+    review теперь проверяет `AppWriteOperation.reviewCreate` и вызывает
+    `ReviewSubmissionService`; legacy direct review insert/upload loop удалён
+    из button action. Выбранные фото пока дают явную ошибку до photo-flow
+    этапа.
 
 Проверки:
 
