@@ -616,6 +616,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                   maxHeight: searchPanelMaxHeight(
                     screenHeight: mediaQuery.size.height,
                     keyboardInset: keyboardInset,
+                    topSafeAreaInset: mediaQuery.padding.top,
                   ),
                   textController: _model.textController!,
                   focusNode: _model.textFieldFocusNode!,

@@ -30,7 +30,9 @@ UI и debounce, оставив query, navigation, dialogs, Supabase и state own
 
 - панель выровнена по нижнему краю и ограничена
   `searchPanelMaxHeight`;
-- без клавиатуры высота не больше 80% экрана, с клавиатурой — видимая высота;
+- без клавиатуры высота не больше 80% экрана, с клавиатурой — видимая высота
+  минус safe-area и небольшой верхний gutter, чтобы результаты не прилипали к
+  status bar;
 - drag по handle или result очищает поиск;
 - результаты показываются только при `isSearching`;
 - nullable address отображается как `No address`;
