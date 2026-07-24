@@ -269,6 +269,10 @@ Supabase-контракты.
    менять только `comment` и пять rating fields, owner/admin могут удалить
    review row. Identity, parking, timestamp и calculated `average_score`
    закрыты для прямого client update. Production write-команды не выполнялись.
+10. `refactor(config): guard test write pilots` — добавлен
+    `APP_ENABLE_TEST_WRITES`; review-create capability включается только в
+    Debug/Profile integration build и только при non-production Supabase URL.
+    По умолчанию `reviewCreate` остаётся выключенным.
 
 Проверки:
 

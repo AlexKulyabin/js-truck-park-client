@@ -33,12 +33,17 @@ Currently allowed:
 
 Reserved but disabled in every build:
 
-- `reviewCreate`: the typed client contract exists, but it has no gateway/UI
-  wiring and cannot be enabled before the atomic submission prerequisites in
-  `review_submission_contract.md` are complete.
 - `profileUpdate`: the typed client contract exists, but it has no gateway/UI
   wiring and cannot be enabled before the profile/avatar prerequisites in
   `profile_update_contract.md` are complete.
+
+Test-write pilot:
+
+- `reviewCreate` stays disabled by default. It can be enabled only in a
+  Debug/Profile integration build with
+  `--dart-define=APP_ENABLE_TEST_WRITES=true` and a non-production
+  `SUPABASE_URL`. Startup fails if this flag is used in Release or with the
+  production Supabase host.
 
 ## Allowed integration routes
 
@@ -63,6 +68,16 @@ flutter run \
   --dart-define=APP_ENV=integration \
   --dart-define=SUPABASE_URL=https://PROJECT.supabase.co \
   --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_REDACTED
+```
+
+For local/staging review-write testing only:
+
+```bash
+flutter run \
+  --dart-define=APP_ENV=integration \
+  --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_REDACTED \
+  --dart-define=APP_ENABLE_TEST_WRITES=true
 ```
 
 Supported `APP_ENV` values are `integration` and `production`. Never pass a
