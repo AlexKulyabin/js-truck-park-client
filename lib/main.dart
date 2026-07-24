@@ -13,6 +13,7 @@ import '/core/config/app_config.dart';
 import '/core/localization/shared_preferences_locale_store.dart';
 import '/core/theme/shared_preferences_theme_store.dart';
 import '/features/language/application/language_controller.dart';
+import '/features/map/application/parking_filter_controller.dart';
 import '/features/settings/application/theme_controller.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
@@ -35,6 +36,7 @@ void main() async {
   final localeStore = await SharedPreferencesLocaleStore.create();
   await FFLocalizations.initialize(localeStore: localeStore);
   final languageController = LanguageController(localeStore: localeStore);
+  final parkingFilterController = ParkingFilterController();
 
   final appState = FFAppState(); // Initialize FFAppState
   await appState.initializePersistedState();
@@ -52,6 +54,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => appState),
         ChangeNotifierProvider(create: (_) => languageController),
+        ChangeNotifierProvider(create: (_) => parkingFilterController),
         ChangeNotifierProvider(create: (_) => themeController),
       ],
       child: MyApp(),
