@@ -114,6 +114,15 @@ Repository возвращает typed DTO/entity или `Result<T, AppFailure>`,
 
 Repository не нужен language page, статическим onboarding pages и простому UI-only dialog.
 
+### Current migration notes
+
+- Favorites toggle now uses `features/favorites/data/FavoritesService` for the
+  write path. It validates `parkingId/userId`, checks
+  `AppConfig.canPerformWrite(AppWriteOperation.favoriteToggle)`, and scopes
+  deletes by both `parking_id` and `user_id`.
+- The favorites list still reads `view_user_favorites` from the FlutterFlow
+  widget and can move behind the same feature boundary in a later stage.
+
 ## Где нужен service
 
 Service/adapter нужен для внешней capability, не являющейся CRUD aggregate:

@@ -53,26 +53,11 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
 
     // On component load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.isFavoriteOut = await FavoritesTable().queryRows(
-        queryFn: (q) => q
-            .eqOrNull(
-              'parking_id',
-              widget!.parkingId,
-            )
-            .eqOrNull(
-              'user_id',
-              currentUserUid,
-            ),
+      _model.isFavorite = await _model.favoritesService.isFavorite(
+        parkingId: widget.parkingId,
+        userId: currentUserUid,
       );
-      if ((_model.isFavoriteOut != null &&
-              (_model.isFavoriteOut)!.isNotEmpty) ==
-          true) {
-        _model.isFavorite = true;
-        safeSetState(() {});
-      } else {
-        _model.isFavorite = false;
-        safeSetState(() {});
-      }
+      safeSetState(() {});
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
@@ -88,6 +73,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    final canToggleFavorite =
+        AppConfig.current.canPerformWrite(AppWriteOperation.favoriteToggle);
 
     return SingleChildScrollView(
       child: Column(
@@ -526,10 +513,9 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                   focusColor: Colors.transparent,
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
-                                  onTap: AppConfig.current.integrationReadOnly
+                                  onTap: !canToggleFavorite
                                       ? null
                                       : () async {
-                                          var _shouldSetState = false;
                                           if (FFAppState().isGuest == true) {
                                             await showDialog(
                                               barrierColor:
@@ -552,50 +538,44 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                 );
                                               },
                                             );
-
-                                            if (_shouldSetState) {
-                                              safeSetState(() {});
-                                            }
                                             return;
                                           }
-                                          if (_model.isFavorite == true) {
-                                            _model.isFavorite = false;
-                                            safeSetState(() {});
-                                            _model.deletefavoriteOut =
-                                                await FavoritesTable().delete(
-                                              matchingRows: (rows) =>
-                                                  rows.eqOrNull(
-                                                'parking_id',
-                                                widget!.parkingId,
-                                              ),
-                                              returnRows: true,
-                                            );
-                                            _shouldSetState = true;
-                                          } else {
-                                            _model.isFavorite = true;
-                                            safeSetState(() {});
-                                            _model.addFavoriteOut =
-                                                await FavoritesTable().insert({
-                                              'user_id': currentUserUid,
-                                              'parking_id': widget!.parkingId,
-                                            });
-                                            _shouldSetState = true;
-                                          }
 
-                                          if (_shouldSetState) {
+                                          final previousValue =
+                                              _model.isFavorite ?? false;
+                                          _model.isFavorite = !previousValue;
+                                          safeSetState(() {});
+
+                                          try {
+                                            _model.isFavorite = await _model
+                                                .favoritesService
+                                                .toggleFavorite(
+                                              parkingId: widget.parkingId,
+                                              userId: currentUserUid,
+                                              currentlyFavorite: previousValue,
+                                            );
                                             safeSetState(() {});
+                                          } catch (_) {
+                                            _model.isFavorite = previousValue;
+                                            safeSetState(() {});
+                                            if (!context.mounted) {
+                                              return;
+                                            }
+                                            showSnackbar(
+                                              context,
+                                              'Could not update favorites. Please try again.',
+                                            );
                                           }
                                         },
                                   child: Container(
                                     width: 56.0,
                                     height: 56.0,
                                     decoration: BoxDecoration(
-                                      color:
-                                          AppConfig.current.integrationReadOnly
-                                              ? FlutterFlowTheme.of(context)
-                                                  .inactiveButton
-                                              : FlutterFlowTheme.of(context)
-                                                  .buttons,
+                                      color: !canToggleFavorite
+                                          ? FlutterFlowTheme.of(context)
+                                              .inactiveButton
+                                          : FlutterFlowTheme.of(context)
+                                              .buttons,
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
                                     child: Align(

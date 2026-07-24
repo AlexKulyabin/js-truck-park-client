@@ -1,6 +1,5 @@
-import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
+import '/features/favorites/data/favorites_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -32,8 +31,7 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
 
   ///  State fields for stateful widgets in this component.
 
-  // Stores action output result for [Backend Call - Query Rows] action in ParkingsDetails widget.
-  List<FavoritesRow>? isFavoriteOut;
+  final favoritesService = FavoritesService();
   // State field(s) for PageView widget.
   PageController? pageViewController;
 
@@ -42,10 +40,6 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
           pageViewController!.page != null
       ? pageViewController!.page!.round()
       : 0;
-  // Stores action output result for [Backend Call - Delete Row(s)] action in FavoriteButton widget.
-  List<FavoritesRow>? deletefavoriteOut;
-  // Stores action output result for [Backend Call - Insert Row] action in FavoriteButton widget.
-  FavoritesRow? addFavoriteOut;
   // Model for InfoTab component.
   late InfoTabModel infoTabModel;
   // Model for ReviewsTab component.

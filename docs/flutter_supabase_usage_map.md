@@ -53,8 +53,8 @@ Versioned `supabase/migrations/` всё ещё отсутствуют. Dump яв
 | `profile/profile/profile_widget.dart` / referral | `users` | select by id → `referral_code` | `List<UsersRow>` | force unwrap first row/code | высокий |
 | `profile/edit_profile/edit_profile_widget.dart` | `users` | querySingle; update `full_name`, optional `avatar_url`, `updated_at` by id | `UsersRow` list / update rows | FutureBuilder spinner; no explicit DB catch | высокий |
 | `favourites/favourites/favourites_widget.dart` | `view_user_favorites` | select where `user_id = currentUserUid` | `List<ViewUserFavoritesRow>` | empty state есть; error отдельно не показан | средний |
-| `parkings_details/parkings_details/parkings_details_widget.dart` / initial toggle | `favorites` | select where `parking_id` and `user_id` | `List<FavoritesRow>` | empty → false; no explicit error | высокий |
-| тот же / toggle | `favorites` | delete by `parking_id`; insert `user_id`, `parking_id` | `List<FavoritesRow>` | optimistic local bool до await; rollback/error UI нет; delete не фильтрует user в client predicate, security зависит от RLS | критический |
+| `features/favorites/data/favorites_service.dart` / details initial toggle | `favorites` | select where `parking_id` and `user_id`, limit 1 | `bool` | empty/invalid ids → false | средний |
+| тот же / details toggle | `favorites` | delete by `parking_id` + `user_id`; insert `user_id`, `parking_id` | `bool` new state | UI uses optimistic local bool with rollback/snackbar on failure; action gated by `AppConfig.canPerformWrite(AppWriteOperation.favoriteToggle)` | средний |
 | тот же / details | `view_full_parking_details` | querySingle where `id = parkingId` | `List<ViewFullParkingDetailsRow>` | spinner on no data; nullable row handling частичное | высокий |
 | `parkings_details/parkings_details` и request detail screens | `parking_photos` | select where `parking_id`, иногда order `created_at` | `List<ParkingPhotosRow>` | empty supported; error not distinct | средний |
 | `parkings_details/info_tab`, accepted/moderation/rejected | `reviews` | select where `parking_id` | `List<ReviewsRow>` | aggregate/display defaults; error not distinct | средний |
