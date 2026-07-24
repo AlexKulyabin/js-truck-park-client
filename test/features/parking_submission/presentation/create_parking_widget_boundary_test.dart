@@ -32,7 +32,9 @@ void main() {
     ).readAsString();
 
     expect(source, contains('ParkingSubmissionDraft.fromLegacyForm'));
-    expect(source, contains('_parkingSubmissionRepository.submit'));
+    expect(source, contains('ParkingSubmissionController'));
+    expect(source, contains('_parkingSubmissionController.submit'));
+    expect(source, contains('state.isSubmitting'));
     expect(source, contains('SubmittedModerationWidget'));
     expect(source, isNot(contains('ParkingsTable().insert')));
     expect(source, isNot(contains('ParkingPhotosTable().insert')));

@@ -1,4 +1,5 @@
 import '/create_parking/submitted_moderation/submitted_moderation_widget.dart';
+import '/features/parking_submission/application/parking_submission_controller.dart';
 import '/features/parking_submission/data/supabase_parking_submission_repository.dart';
 import '/features/parking_submission/domain/parking_submission_draft.dart';
 import '/features/parking_submission/domain/parking_submission_repository.dart';
@@ -31,7 +32,7 @@ class CreateParkingWidget extends StatefulWidget {
 
 class _CreateParkingWidgetState extends State<CreateParkingWidget> {
   late CreateParkingModel _model;
-  late final ParkingSubmissionRepository _parkingSubmissionRepository;
+  late final ParkingSubmissionController _parkingSubmissionController;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -39,8 +40,10 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => CreateParkingModel());
-    _parkingSubmissionRepository = widget.parkingSubmissionRepository ??
-        SupabaseParkingSubmissionRepository();
+    _parkingSubmissionController = ParkingSubmissionController(
+      repository: widget.parkingSubmissionRepository ??
+          SupabaseParkingSubmissionRepository(),
+    )..addListener(_handleParkingSubmissionStateChanged);
 
     _model.capasityTextController ??= TextEditingController();
     _model.capasityFocusNode ??= FocusNode();
@@ -50,9 +53,19 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
 
   @override
   void dispose() {
+    _parkingSubmissionController
+      ..removeListener(_handleParkingSubmissionStateChanged)
+      ..dispose();
     _model.dispose();
 
     super.dispose();
+  }
+
+  void _handleParkingSubmissionStateChanged() {
+    if (!mounted) {
+      return;
+    }
+    safeSetState(() {});
   }
 
   ParkingSubmissionDraft _buildSubmissionDraft() {
@@ -80,10 +93,10 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
   }
 
   Future<void> _submitParking() async {
-    try {
-      await _parkingSubmissionRepository.submit(_buildSubmissionDraft());
-    } on ParkingSubmissionException {
-      safeSetState(() {});
+    final outcome = await _parkingSubmissionController.submit(
+      _buildSubmissionDraft(),
+    );
+    if (outcome != ParkingSubmissionOutcome.submitted) {
       return;
     }
     if (!mounted) {
@@ -1458,9 +1471,12 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
                               padding: EdgeInsetsDirectional.fromSTEB(
                                   0.0, 0.0, 0.0, 60.0),
                               child: FFButtonWidget(
-                                onPressed: () async {
-                                  await _submitParking();
-                                },
+                                onPressed: _parkingSubmissionController
+                                        .state.isSubmitting
+                                    ? null
+                                    : () async {
+                                        await _submitParking();
+                                      },
                                 text: FFLocalizations.of(context).getText(
                                   '2np859v5' /* Add */,
                                 ),
