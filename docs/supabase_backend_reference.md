@@ -183,6 +183,10 @@ Trigger-only functions: `handle_new_auth_user`, `handle_new_user`, `handle_revie
 
 В базе остаётся вторая функция `handle_new_user`, но активный Auth trigger вызывает `handle_new_auth_user`. Это подтверждённый legacy/dead contract, удалять его без проверки истории нельзя.
 
+Закрытие broad direct `SELECT` на `public.users` должно проходить через
+`profile_select_rollout_checklist.md`; текущий reference описывает подготовленный
+contract, а не выполненный production revoke.
+
 ## Storage
 
 | Bucket | Public | Limit | MIME |
