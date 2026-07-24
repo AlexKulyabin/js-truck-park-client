@@ -26,7 +26,7 @@ Read-only часть публичной карточки парковки:
 - favorite flag из `is_favorited` той же view;
 - список отзывов `view_reviews_with_users`;
 - hosting share URL парковки;
-- compatibility с generated info/reviews/photos tabs и photo viewers.
+- compatibility с generated photo viewers и write-capable review/report modals.
 
 ## Почему он выбран
 
@@ -69,8 +69,8 @@ Map / Favorites / hosted deep link
                                 -> generated Supabase views
 
 typed ParkingDetails / ParkingReview
-  -> typed presentation widgets where migrated
-  -> narrow legacy adapters for remaining FlutterFlow compatibility widgets
+  -> public parking details shell
+  -> typed info/reviews/photos presentation widgets
 ```
 
 Направление зависимостей:
@@ -86,7 +86,6 @@ domain/application  -X-> Supabase / FlutterFlow rows
 - `lib/features/parking_details/domain/parking_details.dart`;
 - `lib/features/parking_details/domain/parking_details_repository.dart`;
 - `lib/features/parking_details/data/supabase_parking_details_repository.dart`;
-- `lib/features/parking_details/data/legacy_parking_details_adapter.dart`;
 - `lib/features/parking_details/application/parking_details_controller.dart`;
 - `lib/features/parking_details/presentation/parking_details_links.dart`;
 - `lib/features/parking_details/presentation/parking_review_card.dart`;
@@ -99,8 +98,9 @@ domain/application  -X-> Supabase / FlutterFlow rows
 ## Изменённые файлы
 
 - `lib/parkings_details/parkings_details/parkings_details_widget.dart` —
-  direct SELECT заменены controller/repository boundary; favorite writes и UI
-  сохранены;
+  direct SELECT заменены controller/repository boundary; header gallery, tab
+  counters, route/share actions и child tab arguments читаются из typed
+  `ParkingDetails`; favorite writes и UI сохранены;
 - `lib/parkings_details/parkings_details/parkings_details_model.dart` — удалён
   ставший ненужным favorite query output и unused imports;
 - `lib/parkings_details/info_tab/info_tab_widget.dart` — адрес, рейтинг,
@@ -109,8 +109,9 @@ domain/application  -X-> Supabase / FlutterFlow rows
   rows;
 - `lib/parkings_details/info_tab/info_tab_model.dart` — только cleanup imports;
 - `lib/parkings_details/reviews_tab/reviews_tab_widget.dart` — отзывы
-  загружаются через общий controller/repository и отображаются из typed
-  `ParkingReview`, без обратного преобразования в `ViewReviewsWithUsersRow`;
+  загружаются через общий controller/repository; rating summary, write-modal
+  parking ID и карточки отображаются из typed `ParkingDetails`/`ParkingReview`,
+  без обратного преобразования в generated rows;
 - `lib/parkings_details/reviews_tab/reviews_tab_model.dart` — только cleanup
   imports;
 - `lib/parkings_details/photos_tab/photos_tab_widget.dart` — фотографии
@@ -199,8 +200,8 @@ Realtime, migrations, grants и RLS не менялись.
 - raw Supabase exception и row payload не сохраняются и не показываются;
 - malformed/mismatched rows преобразуются в typed `invalidData` failure;
 - details/reviews responses после dispose или более нового request игнорируются;
-- UI получает минимальные domain objects, а generated rows создаются только в
-  narrow compatibility adapter;
+- UI получает минимальные domain objects; legacy generated rows больше не
+  создаются для публичной карточки парковки;
 - удалены три лишних SELECT: favorite lookup, photo rows для counter и review
   rows для counter;
 - hosting share URL вынесен в pure builder и защищён exact contract test.
@@ -212,9 +213,8 @@ Realtime, migrations, grants и RLS не менялись.
 - generated parent/tab models пока сохранены;
 - `FlutterFlowTheme`, `FFLocalizations`, generated buttons, guest/subscription
   dialogs и navigation serialization продолжают использоваться;
-- существующий `ViewFullParkingDetailsRow` временно создаётся compatibility
-  adapter для parent gallery/actions и remaining Reviews tab summary; публичные
-  Info, Reviews и Photos tabs уже используют typed
+- `ViewFullParkingDetailsRow` больше не создаётся в публичной карточке
+  парковки; Info, Reviews и Photos tabs используют typed
   `ParkingDetails`/`ParkingReview`;
 - photo parameters `photoPath`, `index`, `address`, `photoCount`, `photoRef`,
   `data` не менялись;
@@ -253,7 +253,7 @@ Realtime, migrations, grants и RLS не менялись.
 - marker tap открывает прежний bottom sheet;
 - hosting parking link открывает HomePage и ту же карточку;
 - favorite icon получает то же user-specific значение из уже существующей view;
-- Info, Reviews и Photo tabs, counters и generated cards сохранены;
+- Info, Reviews и Photo tabs, counters и review cards сохранены;
 - reviews загружаются лениво при первом создании Reviews tab;
 - фотографии продолжают открывать прежние photo viewers;
 - parking/photo share URL contracts не меняются;

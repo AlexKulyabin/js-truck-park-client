@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:j_s_truck_park/features/parking_details/data/legacy_parking_details_adapter.dart';
 import 'package:j_s_truck_park/features/parking_details/data/supabase_parking_details_repository.dart';
 import 'package:j_s_truck_park/features/parking_details/domain/parking_details.dart';
 import 'package:j_s_truck_park/features/parking_details/domain/parking_details_repository.dart';
@@ -183,35 +182,5 @@ void main() {
         ),
       );
     }
-  });
-
-  test('legacy adapters preserve photo and review viewer contracts', () {
-    const details = ParkingDetails(
-      id: 'parking-1',
-      isFavorited: false,
-      photos: [
-        ParkingDetailsPhoto(
-          url: 'https://example.com/photo.jpg',
-          photoDate: '23.07.2026',
-        ),
-      ],
-    );
-    const review = ParkingReview(
-      id: 1,
-      parkingId: 'parking-1',
-      reviewPhotos: ['https://example.com/review.jpg'],
-    );
-
-    final detailsRow = parkingDetailsToLegacyRow(details);
-    final reviewRow = parkingReviewToLegacyRow(review);
-
-    expect(detailsRow.allPhotos, [
-      {
-        'url': 'https://example.com/photo.jpg',
-        'photo_date': '23.07.2026',
-      },
-    ]);
-    expect(reviewRow.parkingId, 'parking-1');
-    expect(reviewRow.reviewPhotos, ['https://example.com/review.jpg']);
   });
 }

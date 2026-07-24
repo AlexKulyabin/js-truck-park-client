@@ -1,9 +1,7 @@
 import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/database/tables/view_full_parking_details.dart';
 import '/core/config/app_config.dart';
 import '/features/parking_details/application/parking_favorite_controller.dart';
 import '/features/parking_details/application/parking_details_controller.dart';
-import '/features/parking_details/data/legacy_parking_details_adapter.dart';
 import '/features/parking_details/data/supabase_parking_favorite_repository.dart';
 import '/features/parking_details/data/supabase_parking_details_repository.dart';
 import '/features/parking_details/domain/parking_favorite_repository.dart';
@@ -199,9 +197,6 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                   ),
                 );
               }
-              final ViewFullParkingDetailsRow?
-                  mainContainerViewFullParkingDetailsRow =
-                  parkingDetailsToLegacyRow(details);
 
               return SafeArea(
                 child: Container(
@@ -286,16 +281,10 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                             key: ParkingsDetailsWidget.photoGalleryKey,
                             child: Builder(
                               builder: (context) {
-                                if (mainContainerViewFullParkingDetailsRow
-                                        ?.allPhotos !=
-                                    null) {
+                                if (details.photos != null) {
                                   return Builder(
                                     builder: (context) {
-                                      final photos =
-                                          mainContainerViewFullParkingDetailsRow
-                                                  ?.allPhotos
-                                                  ?.toList() ??
-                                              [];
+                                      final photos = details.photos ?? const [];
 
                                       return Container(
                                         width: double.infinity,
@@ -334,10 +323,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                       queryParameters: {
                                                         'photoPath':
                                                             serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.url''',
-                                                          ).toString(),
+                                                          photosItem.url,
                                                           ParamType.String,
                                                         ),
                                                         'index': serializeParam(
@@ -346,29 +332,21 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                         ),
                                                         'address':
                                                             serializeParam(
-                                                          mainContainerViewFullParkingDetailsRow
-                                                              ?.address,
+                                                          details.address,
                                                           ParamType.String,
                                                         ),
                                                         'photoCount':
                                                             serializeParam(
-                                                          mainContainerViewFullParkingDetailsRow
-                                                              ?.photosCount,
+                                                          details.photosCount,
                                                           ParamType.int,
                                                         ),
                                                         'photoRef':
                                                             serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.url''',
-                                                          ).toString(),
+                                                          photosItem.url,
                                                           ParamType.String,
                                                         ),
                                                         'data': serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.date_display''',
-                                                          ).toString(),
+                                                          photosItem.photoDate,
                                                           ParamType.String,
                                                         ),
                                                       }.withoutNulls,
@@ -379,10 +357,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                         BorderRadius.circular(
                                                             8.0),
                                                     child: Image.network(
-                                                      getJsonField(
-                                                        photosItem,
-                                                        r'''$.url''',
-                                                      ).toString(),
+                                                      photosItem.url,
                                                       width: double.infinity,
                                                       height: 194.0,
                                                       fit: BoxFit.cover,
@@ -510,10 +485,9 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                       if (FFAppState().premiumUntil != null) {
                                         await actions.openGoogleMapsRoute(
                                           functions.convertToLatLng(
-                                              mainContainerViewFullParkingDetailsRow!
-                                                  .latitude!,
-                                              mainContainerViewFullParkingDetailsRow!
-                                                  .longitude!),
+                                            details.latitude!,
+                                            details.longitude!,
+                                          ),
                                         );
                                       } else {
                                         await showDialog(
@@ -533,12 +507,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                           Directionality.of(
                                                               context)),
                                               child: SubscriptionDialogWidget(
-                                                lat:
-                                                    mainContainerViewFullParkingDetailsRow!
-                                                        .latitude!,
-                                                lng:
-                                                    mainContainerViewFullParkingDetailsRow!
-                                                        .longitude!,
+                                                lat: details.latitude!,
+                                                lng: details.longitude!,
                                               ),
                                             );
                                           },
@@ -736,9 +706,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
 
                                       return;
                                     }
-                                    if (mainContainerViewFullParkingDetailsRow
-                                            ?.allPhotos !=
-                                        null) {
+                                    if (details.photos != null) {
                                       await Share.share(
                                         buildParkingShareUrl(details),
                                         sharePositionOrigin:
@@ -904,9 +872,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                   10.0, 2.0, 10.0, 2.0),
                                           child: Text(
                                             valueOrDefault<String>(
-                                              mainContainerViewFullParkingDetailsRow
-                                                  ?.reviewsCount
-                                                  ?.toString(),
+                                              details.reviewsCount?.toString(),
                                               '0',
                                             ),
                                             style: FlutterFlowTheme.of(context)
@@ -1017,9 +983,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                   10.0, 2.0, 10.0, 2.0),
                                           child: Text(
                                             valueOrDefault<String>(
-                                              mainContainerViewFullParkingDetailsRow
-                                                  ?.photosCount
-                                                  ?.toString(),
+                                              details.photosCount?.toString(),
                                               '0',
                                             ),
                                             style: FlutterFlowTheme.of(context)
@@ -1090,8 +1054,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                     model: _model.reviewsTabModel,
                                     updateCallback: () => safeSetState(() {}),
                                     child: ReviewsTabWidget(
-                                      parkingRow:
-                                          mainContainerViewFullParkingDetailsRow!,
+                                      details: details,
                                       detailsController: _controller,
                                     ),
                                   ),

@@ -1,7 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
-import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
 import '/features/parking_details/application/parking_details_controller.dart';
+import '/features/parking_details/domain/parking_details.dart';
 import '/features/parking_details/presentation/parking_review_card.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -24,11 +24,11 @@ export 'reviews_tab_model.dart';
 class ReviewsTabWidget extends StatefulWidget {
   const ReviewsTabWidget({
     super.key,
-    required this.parkingRow,
+    required this.details,
     required this.detailsController,
   });
 
-  final ViewFullParkingDetailsRow? parkingRow;
+  final ParkingDetails details;
   final ParkingDetailsController detailsController;
 
   static const loadingKey = Key('public-parking-reviews-loading');
@@ -137,7 +137,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                         children: [
                           Text(
                             valueOrDefault<String>(
-                              widget!.parkingRow?.rating?.toString(),
+                              widget.details.rating?.toString(),
                               '4.0',
                             ),
                             style: FlutterFlowTheme.of(context)
@@ -286,12 +286,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars5!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars5 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -307,12 +307,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -352,12 +352,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -397,12 +397,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -442,12 +442,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -578,7 +578,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                                           padding:
                                               MediaQuery.viewInsetsOf(context),
                                           child: ReportCreateWidget(
-                                            parkingId: widget!.parkingRow!.id!,
+                                            parkingId: widget.details.id,
                                           ),
                                         );
                                       },
@@ -665,7 +665,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                                           padding:
                                               MediaQuery.viewInsetsOf(context),
                                           child: ReviewCreateWidget(
-                                            parkingId: widget!.parkingRow!.id!,
+                                            parkingId: widget.details.id,
                                           ),
                                         );
                                       },

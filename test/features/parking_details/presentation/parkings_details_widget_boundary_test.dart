@@ -157,6 +157,28 @@ void main() {
     expect(source, isNot(contains('/backend/supabase/supabase.dart')));
   });
 
+  test('keeps the details shell on typed parking details without legacy rows',
+      () {
+    final source = File(
+      'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+    ).readAsStringSync();
+
+    expect(source, isNot(contains('parkingDetailsToLegacyRow')));
+    expect(source, isNot(contains('legacy_parking_details_adapter')));
+    expect(source, isNot(contains('ViewFullParkingDetailsRow')));
+    expect(source, isNot(contains('getJsonField')));
+  });
+
+  test('renders reviews tab summary from the typed parking details model', () {
+    final source = File(
+      'lib/parkings_details/reviews_tab/reviews_tab_widget.dart',
+    ).readAsStringSync();
+
+    expect(source, contains('ParkingDetails'));
+    expect(source, isNot(contains('ViewFullParkingDetailsRow')));
+    expect(source, isNot(contains('/backend/supabase/supabase.dart')));
+  });
+
   testWidgets('loads the bottom sheet through the repository boundary',
       (tester) async {
     final repository = _FakeRepository()
