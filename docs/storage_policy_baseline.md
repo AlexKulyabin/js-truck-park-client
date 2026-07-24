@@ -25,8 +25,8 @@ does not mean public write.
 |---|---|---|
 | Registration avatar | `avatars` | `users/<auth.uid()>/<filename>` |
 | Edit profile avatar | `avatars` | `users/<auth.uid()>/<filename>` |
-| Create parking photos | `parking_content` | `parkings/<parkingId>/<index-or-filename>` |
-| Create review photos | `parking_content` | `parkings/<parkingId>/reviews/<reviewId>/<index-or-filename>` |
+| Create parking photos | `parking_content` | `parkings/<parkingId>/<index>/<timestamp>.<ext>` |
+| Create review photos | `parking_content` | `parkings/<parkingId>/reviews/<reviewId>/<index>/<timestamp>.<ext>` |
 | Marker asset | `assets` | `icnLocation.png` |
 
 The upload helper returns public URLs and does not provide signed URLs. The
@@ -56,8 +56,9 @@ restricting writes:
 
 - avatars: authenticated users may insert, update, and delete only objects under
   `users/<auth.uid()>/...`;
-- parking content: authenticated users may insert/update/delete only objects
-  whose path is tied to a parking they own or to a review they authored;
+- parking content: authenticated users may insert/update/delete direct parking
+  objects only for a parking they own, and review objects only for a review they
+  authored;
 - `assets` stays read-only for the mobile client.
 
 ## Verification checklist

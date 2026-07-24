@@ -200,24 +200,23 @@ git status --short
 
 ## Текущая следующая сессия
 
-Статус: начат второй backend-hardening блок; production не затрагивать.
+Статус: второй backend-hardening блок продолжается; production не затрагивать.
 Локальный `supabase db reset` сейчас заблокирован окружением: Docker daemon недоступен. До rollout обязательно повторить pgTAP на локальном Supabase или staging clone.
 
-Выбранные три этапа:
+Выполненные локальные этапы:
 
 1. удалить broad parking update policy и ограничить прямые client update grants;
 2. harden `process_referral` и перевести Flutter RPC call на authenticated bearer;
-3. ограничить broad DB policies для `parking_photos`; Storage ownership вынести в следующий этап после фиксации storage baseline.
-
-Результат этапа 3 этой сессии должен считаться DB-only: object-level Storage policies для `parking_content` остаются открытым пунктом, пока они не будут выгружены в versioned baseline и проверены отдельно.
+3. ограничить broad DB policies для `parking_photos`;
+4. зафиксировать Storage baseline;
+5. ограничить avatar Storage mutations owner path;
+6. ограничить `parking_content` Storage mutations owner/review-author path.
 
 ## Следующие отдельные этапы
 
-После успешного первого коммита, каждый отдельно:
+Каждый отдельно:
 
-1. удалить broad parking update policy;
-2. harden `process_referral` и grants;
-3. ограничить DB/Storage photo ownership;
-4. ввести public/private profile projections;
-5. harden SECURITY DEFINER search paths;
-6. добавить domain constraints после data audit.
+1. перед production rollout сделать read-only diff hosted Storage policies и подтвердить parity;
+2. ввести public/private profile projections;
+3. harden SECURITY DEFINER search paths;
+4. добавить domain constraints после data audit.

@@ -106,6 +106,8 @@ Fix: owner/admin delete; insert должен требовать `user_id=auth.ui
 
 Локальная реализация DB-части: начата в `20260724102000_restrict_parking_photo_policies.sql`; broad insert/delete policies удалены, `photos_insert` требует `auth.uid() = user_id`, `photos_delete` оставляет owner/admin. Storage ownership не менялся, потому что storage policies пока не зафиксированы в versioned baseline. pgTAP test добавлен, но локальный запуск сейчас заблокирован недоступным Docker daemon. Production status: не применено.
 
+Локальная реализация Storage-части: начата в `20260724104000_restrict_parking_content_storage_policies.sql`; migration удаляет mutation policies для `parking_content`/stale `parking-images`, если они найдены в `pg_policies`, и создаёт owner-scoped insert/update/delete для direct parking paths и review-author paths. pgTAP test добавлен в `storage_parking_content_authorization_test.sql`. Production status: не применено.
+
 ### P1 — Storage avatars не ограничены владельцем
 
 Policies `Avatar_Update` и `Avatar_Delete` проверяют только `bucket_id='avatars'`; `Avatar_Upload` также не проверяет path owner.
@@ -155,7 +157,7 @@ Impact: некорректные агрегаты, невозможные коо
 
 ### P2 — публичные buckets и stale policies
 
-`assets`, `avatars`, `parking_content` публичные. Это может быть намеренно для UI, но URL не должен считаться приватным. В policies остались правила для отсутствующего `parking-images`; правила `parking_content` дублируются и используют разные path assumptions.
+`assets`, `avatars`, `parking_content` публичные. Это может быть намеренно для UI, но URL не должен считаться приватным. Локальные migrations теперь закрывают avatar и parking_content write/delete по owner path; до production rollout нужен read-only diff hosted Storage policies, чтобы подтвердить отсутствие дополнительных permissive rules.
 
 ### P2 — неограниченные read RPC
 

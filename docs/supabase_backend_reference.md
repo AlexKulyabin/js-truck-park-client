@@ -182,11 +182,11 @@ Trigger-only functions: `handle_new_auth_user`, `handle_new_user`, `handle_revie
 Flutter paths:
 
 - `avatars/users/<uid>/...` для регистрации и редактирования профиля;
-- `parking_content/parkings/<parkingId>/<index>` для парковки;
-- `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>` для review;
+- `parking_content/parkings/<parkingId>/<index>/<timestamp>.<ext>` для парковки;
+- `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>/<timestamp>.<ext>` для review;
 - hardcoded public `assets/icnLocation.png` для marker icon.
 
-Есть stale Storage policies для отсутствующего bucket `parking-images`. Policies `Avatar_Update` и `Avatar_Delete` проверяют только bucket, но не owner path; authenticated user потенциально может менять чужие avatars. Локальная migration `20260724103000_restrict_avatar_storage_policies.sql` заменяет avatar writes на owner path `avatars/users/<auth.uid()>/...`; production schema пока не изменялась. Политики `parking_content` частично дублируются и не задают единый owner contract.
+Есть stale Storage policies для отсутствующего bucket `parking-images`. Policies `Avatar_Update` и `Avatar_Delete` проверяют только bucket, но не owner path; authenticated user потенциально может менять чужие avatars. Локальная migration `20260724103000_restrict_avatar_storage_policies.sql` заменяет avatar writes на owner path `avatars/users/<auth.uid()>/...`; локальная migration `20260724104000_restrict_parking_content_storage_policies.sql` заменяет parking_content writes на owner/review-author path contract. Production schema пока не изменялась.
 
 ## Realtime
 
