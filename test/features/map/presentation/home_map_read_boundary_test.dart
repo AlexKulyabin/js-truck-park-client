@@ -50,13 +50,14 @@ void main() {
 
     expect(source, isNot(contains('GetFilteredParkingsCall')));
     expect(source, isNot(contains('GetAddressFromCoordsCall')));
-    expect(source, contains('_parkingMapController'));
-    expect(source, contains('_parkingSearchController'));
+    expect(source, contains('_homeMapReadController'));
     expect(source, contains('_reverseGeocodingService'));
     expect(source, contains('toMapFilterSnapshot('));
     expect(source, contains('ParkingFilterController'));
-    expect(source, contains('toMapMarkerItems(state.points)'));
-    expect(source, contains('toMapSearchResultItems(state.points)'));
+    expect(source, contains('loadViewport(query)'));
+    expect(source, contains('loadSearch(query)'));
+    expect(source, contains('toMapMarkerItems(points)'));
+    expect(source, contains('toMapSearchResultItems(points)'));
     expect(source, contains('markers: _model.parkingsOnMap'));
     expect(source, contains('HomeMapSearchPanel('));
     expect(source, contains('onQueryChanged: _handleSearchQueryChanged'));

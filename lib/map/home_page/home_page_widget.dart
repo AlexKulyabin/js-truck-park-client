@@ -3,8 +3,8 @@ import '/create_parking/create_parking_dialog/create_parking_dialog_widget.dart'
 import '/features/geocoding/application/reverse_geocoding_service.dart';
 import '/features/geocoding/data/google_reverse_geocoding_repository.dart';
 import '/features/geocoding/domain/reverse_geocoding_repository.dart';
+import '/features/map/application/home_map_read_controller.dart';
 import '/features/map/application/parking_filter_controller.dart';
-import '/features/map/application/parking_map_controller.dart';
 import '/features/map/data/supabase_parking_map_repository.dart';
 import '/features/map/domain/map_bounds.dart';
 import '/features/map/domain/map_parking_query.dart';
@@ -54,8 +54,7 @@ class HomePageWidget extends StatefulWidget {
 
 class _HomePageWidgetState extends State<HomePageWidget> {
   late HomePageModel _model;
-  late final ParkingMapController _parkingMapController;
-  late final ParkingMapController _parkingSearchController;
+  late final HomeMapReadController _homeMapReadController;
   late final ReverseGeocodingService _reverseGeocodingService;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
@@ -67,10 +66,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     _model = createModel(context, () => HomePageModel());
     final parkingMapRepository =
         widget.parkingMapRepository ?? SupabaseParkingMapRepository();
-    _parkingMapController = ParkingMapController(
-      repository: parkingMapRepository,
-    );
-    _parkingSearchController = ParkingMapController(
+    _homeMapReadController = HomeMapReadController(
       repository: parkingMapRepository,
     );
     _reverseGeocodingService = ReverseGeocodingService(
@@ -125,8 +121,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
 
   @override
   void dispose() {
-    _parkingMapController.dispose();
-    _parkingSearchController.dispose();
+    _homeMapReadController.dispose();
     _model.dispose();
 
     super.dispose();
@@ -183,38 +178,34 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   }
 
   Future<void> _loadMapPoints(MapParkingQuery query) async {
-    await _parkingMapController.load(query);
+    final points = await _homeMapReadController.loadViewport(query);
     if (!mounted) {
       return;
     }
-    final state = _parkingMapController.state;
-    if (!identical(state.query, query) ||
-        state.phase != ParkingMapLoadPhase.loaded) {
+    if (points == null) {
       return;
     }
     safeSetState(() {
-      _model.parkingsOnMap = toMapMarkerItems(state.points);
+      _model.parkingsOnMap = toMapMarkerItems(points);
     });
   }
 
   Future<void> _loadSearchResults(MapParkingQuery query) async {
-    await _parkingSearchController.load(query);
+    final points = await _homeMapReadController.loadSearch(query);
     if (!mounted) {
       return;
     }
-    final state = _parkingSearchController.state;
-    if (!identical(state.query, query) ||
-        state.phase != ParkingMapLoadPhase.loaded) {
+    if (points == null) {
       return;
     }
     safeSetState(() {
-      _model.searchResults = toMapSearchResultItems(state.points);
+      _model.searchResults = toMapSearchResultItems(points);
       _model.isSearching = true;
     });
   }
 
   void _clearSearchResults() {
-    _parkingSearchController.reset();
+    _homeMapReadController.resetSearch();
     safeSetState(() {
       _model.isSearching = false;
       _model.searchResults = [];
@@ -241,7 +232,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     _model.searchCoord = LatLng(result.latitude, result.longitude);
     _model.isMapLocked = false;
     _model.textController?.clear();
-    _parkingSearchController.reset();
+    _homeMapReadController.resetSearch();
     _model.isSearching = false;
     _model.searchResults = [];
     safeSetState(() {});

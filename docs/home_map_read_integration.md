@@ -32,8 +32,9 @@ backend contracts.
 
 ```text
 HomePage
-  ├─ ParkingMapController       camera + filter marker reads
-  ├─ ParkingMapController       search reads
+  ├─ HomeMapReadController      viewport + search read coordination
+  │    ├─ ParkingMapController  camera + filter marker reads
+  │    └─ ParkingMapController  search reads
   ├─ MapFilterSnapshot          единый snapshot FlutterFlow state
   └─ map_read_adapter           typed points -> legacy custom-map shape
              │
@@ -47,9 +48,11 @@ HomePage
  public.get_filtered_parkings
 ```
 
-Два controller нужны намеренно: поиск и viewport — независимые потоки. Ответ
-поиска не может заменить маркеры карты, а ответ camera idle не может заменить
-список подсказок. Оба используют один stateless repository instance.
+Два нижних controller нужны намеренно: поиск и viewport — независимые потоки.
+Ответ поиска не может заменить маркеры карты, а ответ camera idle не может
+заменить список подсказок. `HomeMapReadController` теперь является локальным
+owner этих двух потоков и отдаёт Home только актуальный successful typed
+result. Оба нижних controller используют один stateless repository instance.
 
 `ChangeNotifier` остаётся локальным application controller, а не глобальным
 state manager приложения. Domain и data layers не зависят от FlutterFlow,
@@ -76,6 +79,7 @@ Provider или конкретной state-management библиотеки.
 - `lib/features/map/domain/map_parking_point.dart`;
 - `lib/features/map/domain/parking_map_repository.dart`;
 - `lib/features/map/data/supabase_parking_map_repository.dart`;
+- `lib/features/map/application/home_map_read_controller.dart`;
 - `lib/features/map/application/parking_map_controller.dart`.
 
 Presentation и Home:
@@ -230,7 +234,9 @@ Home slice был подтверждён и `SelectParking` подключён �
 этапом без изменения write-flow. Актуальный отчёт:
 `docs/select_parking_map_read_integration.md`. Переход `CustomGoogleMap` на
 typed marker API выполнен следующим этапом; актуальный отчёт:
-`docs/typed_map_marker_contract.md`.
+`docs/typed_map_marker_contract.md`. Локальная координация двух Home read
+streams вынесена в `HomeMapReadController`; актуальный отчёт:
+`docs/home_map_read_controller_coordination.md`.
 
 ## Предлагаемое сообщение Git-коммита
 
