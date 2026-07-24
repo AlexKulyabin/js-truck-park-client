@@ -9,7 +9,7 @@ void main() {
       final gateway = _FakeUserProfileGateway();
       final service = UserProfileService(gateway: gateway);
 
-      final result = await service.listProfilesByUserId(userId: ' ');
+      final result = await service.listPublicProfilesByUserId(userId: ' ');
 
       expect(result, isEmpty);
       expect(gateway.calls, isEmpty);
@@ -17,8 +17,15 @@ void main() {
 
     test('loads profile with normalized user id', () async {
       final gateway = _FakeUserProfileGateway(
-        profiles: const [
-          UserProfile(
+        publicProfiles: const [
+          PublicUserProfile(
+            id: 'user-1',
+            fullName: 'Driver One',
+            avatarUrl: 'https://example.test/avatar.jpg',
+          ),
+        ],
+        privateProfiles: const [
+          PrivateUserProfile(
             id: 'user-1',
             fullName: 'Driver One',
             avatarUrl: 'https://example.test/avatar.jpg',
@@ -33,27 +40,45 @@ void main() {
       );
       final service = UserProfileService(gateway: gateway);
 
-      final result = await service.getProfileByUserId(userId: ' user-1 ');
+      final result = await service.getPublicProfileByUserId(userId: ' user-1 ');
 
       expect(result?.fullName, 'Driver One');
-      expect(result?.referralCode, 'ABC123');
-      expect(gateway.calls, ['list:user-1']);
+      expect(gateway.calls, ['public:user-1']);
+    });
+
+    test('loads private referral code through explicit private boundary',
+        () async {
+      final gateway = _FakeUserProfileGateway(
+        privateProfiles: const [
+          PrivateUserProfile(
+            id: 'user-1',
+            fullName: 'Driver One',
+            avatarUrl: 'https://example.test/avatar.jpg',
+            phone: '+10000000000',
+            isPremium: true,
+            referralCode: 'ABC123',
+            theme: 'light',
+            status: 'active',
+            isAdmin: false,
+          ),
+        ],
+      );
+      final service = UserProfileService(gateway: gateway);
+
+      final result = await service.getReferralCodeByUserId(userId: ' user-1 ');
+
+      expect(result, 'ABC123');
+      expect(gateway.calls, ['private:user-1']);
     });
 
     test('reports profile completion from full name', () async {
       final service = UserProfileService(
         gateway: _FakeUserProfileGateway(
-          profiles: const [
-            UserProfile(
+          publicProfiles: const [
+            PublicUserProfile(
               id: 'user-1',
               fullName: 'Driver One',
               avatarUrl: null,
-              phone: null,
-              isPremium: null,
-              referralCode: null,
-              theme: null,
-              status: null,
-              isAdmin: null,
             ),
           ],
         ),
@@ -66,17 +91,11 @@ void main() {
 
     test('treats absent or empty full name as incomplete profile', () async {
       final gateway = _FakeUserProfileGateway(
-        profiles: const [
-          UserProfile(
+        publicProfiles: const [
+          PublicUserProfile(
             id: 'user-1',
             fullName: '',
             avatarUrl: null,
-            phone: null,
-            isPremium: null,
-            referralCode: null,
-            theme: null,
-            status: null,
-            isAdmin: null,
           ),
         ],
       );
@@ -178,18 +197,28 @@ void main() {
 
 class _FakeUserProfileGateway implements UserProfileGateway {
   _FakeUserProfileGateway({
-    this.profiles = const [],
+    this.publicProfiles = const [],
+    this.privateProfiles = const [],
   });
 
   final calls = <String>[];
-  final List<UserProfile> profiles;
+  final List<PublicUserProfile> publicProfiles;
+  final List<PrivateUserProfile> privateProfiles;
 
   @override
-  Future<List<UserProfile>> listProfilesByUserId({
+  Future<List<PublicUserProfile>> listPublicProfilesByUserId({
     required String userId,
   }) async {
-    calls.add('list:$userId');
-    return profiles;
+    calls.add('public:$userId');
+    return publicProfiles;
+  }
+
+  @override
+  Future<List<PrivateUserProfile>> listPrivateProfilesByUserId({
+    required String userId,
+  }) async {
+    calls.add('private:$userId');
+    return privateProfiles;
   }
 }
 
@@ -197,11 +226,11 @@ class _FakeUserProfileUpdateGateway implements UserProfileUpdateGateway {
   int calls = 0;
 
   @override
-  Future<UserProfile> updateProfileAtomically({
+  Future<PrivateUserProfile> updateProfileAtomically({
     required PreparedUserProfileUpdate update,
   }) async {
     calls += 1;
-    return UserProfile(
+    return PrivateUserProfile(
       id: update.userId,
       fullName: update.fullName,
       avatarUrl: null,

@@ -64,7 +64,11 @@ class PreparedUserProfileUpdate {
 }
 
 abstract interface class UserProfileGateway {
-  Future<List<UserProfile>> listProfilesByUserId({
+  Future<List<PublicUserProfile>> listPublicProfilesByUserId({
+    required String userId,
+  });
+
+  Future<List<PrivateUserProfile>> listPrivateProfilesByUserId({
     required String userId,
   });
 }
@@ -72,7 +76,7 @@ abstract interface class UserProfileGateway {
 abstract interface class UserProfileUpdateGateway {
   // Implementations must update the user row and avatar object as one
   // server-owned operation, or compensate every completed step before failing.
-  Future<UserProfile> updateProfileAtomically({
+  Future<PrivateUserProfile> updateProfileAtomically({
     required PreparedUserProfileUpdate update,
   });
 }
@@ -85,7 +89,7 @@ class SupabaseUserProfileGateway implements UserProfileGateway {
   final UsersTable _usersTable;
 
   @override
-  Future<List<UserProfile>> listProfilesByUserId({
+  Future<List<PublicUserProfile>> listPublicProfilesByUserId({
     required String userId,
   }) async {
     final rows = await _usersTable.querySingleRow(
@@ -94,7 +98,20 @@ class SupabaseUserProfileGateway implements UserProfileGateway {
         userId,
       ),
     );
-    return rows.map(UserProfile.fromRow).toList();
+    return rows.map(PublicUserProfile.fromRow).toList();
+  }
+
+  @override
+  Future<List<PrivateUserProfile>> listPrivateProfilesByUserId({
+    required String userId,
+  }) async {
+    final rows = await _usersTable.querySingleRow(
+      queryFn: (q) => q.eqOrNull(
+        'id',
+        userId,
+      ),
+    );
+    return rows.map(PrivateUserProfile.fromRow).toList();
   }
 }
 
@@ -111,7 +128,7 @@ class UserProfileService {
   final UserProfileUpdateGateway? _updateGateway;
   final AppConfig _config;
 
-  Future<List<UserProfile>> listProfilesByUserId({
+  Future<List<PublicUserProfile>> listPublicProfilesByUserId({
     required String? userId,
   }) async {
     final normalizedUserId = userId?.trim();
@@ -119,20 +136,45 @@ class UserProfileService {
       return const [];
     }
 
-    return _gateway.listProfilesByUserId(userId: normalizedUserId);
+    return _gateway.listPublicProfilesByUserId(userId: normalizedUserId);
   }
 
-  Future<UserProfile?> getProfileByUserId({
+  Future<PublicUserProfile?> getPublicProfileByUserId({
     required String? userId,
   }) async {
-    final profiles = await listProfilesByUserId(userId: userId);
+    final profiles = await listPublicProfilesByUserId(userId: userId);
     return profiles.isEmpty ? null : profiles.first;
+  }
+
+  Future<List<PrivateUserProfile>> listPrivateProfilesByUserId({
+    required String? userId,
+  }) async {
+    final normalizedUserId = userId?.trim();
+    if (normalizedUserId == null || normalizedUserId.isEmpty) {
+      return const [];
+    }
+
+    return _gateway.listPrivateProfilesByUserId(userId: normalizedUserId);
+  }
+
+  Future<PrivateUserProfile?> getPrivateProfileByUserId({
+    required String? userId,
+  }) async {
+    final profiles = await listPrivateProfilesByUserId(userId: userId);
+    return profiles.isEmpty ? null : profiles.first;
+  }
+
+  Future<String?> getReferralCodeByUserId({
+    required String? userId,
+  }) async {
+    final profile = await getPrivateProfileByUserId(userId: userId);
+    return profile?.referralCode;
   }
 
   Future<bool> hasCompletedProfile({
     required String? userId,
   }) async {
-    final profile = await getProfileByUserId(userId: userId);
+    final profile = await getPublicProfileByUserId(userId: userId);
     return profile?.hasCompletedProfile ?? false;
   }
 
@@ -164,7 +206,7 @@ class UserProfileService {
     );
   }
 
-  Future<UserProfile> updateProfile(
+  Future<PrivateUserProfile> updateProfile(
     UpdateUserProfileCommand command,
   ) async {
     if (!_config.canPerformWrite(AppWriteOperation.profileUpdate)) {
@@ -186,8 +228,30 @@ class UserProfileService {
   }
 }
 
-class UserProfile {
-  const UserProfile({
+class PublicUserProfile {
+  const PublicUserProfile({
+    required this.id,
+    required this.fullName,
+    required this.avatarUrl,
+  });
+
+  factory PublicUserProfile.fromRow(UsersRow row) {
+    return PublicUserProfile(
+      id: row.id,
+      fullName: row.fullName,
+      avatarUrl: row.avatarUrl,
+    );
+  }
+
+  final String id;
+  final String? fullName;
+  final String? avatarUrl;
+
+  bool get hasCompletedProfile => fullName != null && fullName!.isNotEmpty;
+}
+
+class PrivateUserProfile {
+  const PrivateUserProfile({
     required this.id,
     required this.fullName,
     required this.avatarUrl,
@@ -199,8 +263,8 @@ class UserProfile {
     required this.isAdmin,
   });
 
-  factory UserProfile.fromRow(UsersRow row) {
-    return UserProfile(
+  factory PrivateUserProfile.fromRow(UsersRow row) {
+    return PrivateUserProfile(
       id: row.id,
       fullName: row.fullName,
       avatarUrl: row.avatarUrl,

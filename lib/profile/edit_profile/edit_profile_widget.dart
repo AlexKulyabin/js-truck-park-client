@@ -50,8 +50,8 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<UserProfile>>(
-      future: UserProfileService().listProfilesByUserId(
+    return FutureBuilder<List<PublicUserProfile>>(
+      future: UserProfileService().listPublicProfilesByUserId(
         userId: currentUserUid,
       ),
       builder: (context, snapshot) {
@@ -72,7 +72,7 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
             ),
           );
         }
-        List<UserProfile> editProfileUsersRowList = snapshot.data!;
+        List<PublicUserProfile> editProfileUsersRowList = snapshot.data!;
 
         final editProfileUsersRow = editProfileUsersRowList.isNotEmpty
             ? editProfileUsersRowList.first

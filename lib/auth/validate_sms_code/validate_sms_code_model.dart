@@ -49,7 +49,7 @@ class ValidateSmsCodeModel extends FlutterFlowModel<ValidateSmsCodeWidget> {
   // Stores action output result for [Custom Action - verifyOtp] action in Button widget.
   bool? verifyIsSuccess;
   // Stores action output result for [Backend Call - Query Rows] action in Button widget.
-  UserProfile? currentUser;
+  PublicUserProfile? currentUser;
 
   @override
   void initState(BuildContext context) {

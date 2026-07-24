@@ -511,7 +511,7 @@ class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
                                   ),
                                 );
                                 _model.currentUser = await UserProfileService()
-                                    .getProfileByUserId(
+                                    .getPublicProfileByUserId(
                                   userId: currentUserUid,
                                 );
                                 FFAppState().isGuest = false;

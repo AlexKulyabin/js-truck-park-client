@@ -158,10 +158,12 @@ Repository не нужен language page, статическим onboarding page
   `ReviewSubmissionService`. `AppWriteOperation.reviewCreate` remains disabled,
   no Supabase gateway exists and the legacy production UI is not wired to it;
   activation prerequisites are recorded in `review_submission_contract.md`.
-- Profile header, invite referral lookup and post-OTP profile-completion check
-  now read `users` through `features/profile/data/UserProfileService`. The UI
-  receives typed `UserProfile` data, while edit/registration writes remain in
-  the legacy generated screens until a separate guarded write contract stage.
+- Profile header, edit initial form and post-OTP profile-completion check now
+  consume `PublicUserProfile` (`id`, `fullName`, `avatarUrl`) through
+  `features/profile/data/UserProfileService`. Invite referral lookup uses the
+  explicit private profile boundary for `referralCode`. The underlying gateway
+  still reads the legacy `users` table until the reviewed Supabase projection
+  rollout is complete.
 - Profile page local invite visibility state now lives in
   `features/profile/application/ProfileController` with immutable state. This is
   intentionally narrow and preserves the generated screen behavior while moving

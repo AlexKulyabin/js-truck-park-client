@@ -150,8 +150,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                     children: [
                       Stack(
                         children: [
-                          FutureBuilder<List<UserProfile>>(
-                            future: UserProfileService().listProfilesByUserId(
+                          FutureBuilder<List<PublicUserProfile>>(
+                            future:
+                                UserProfileService().listPublicProfilesByUserId(
                               userId: currentUserUid,
                             ),
                             builder: (context, snapshot) {
@@ -169,7 +170,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                   ),
                                 );
                               }
-                              List<UserProfile> containerUsersRowList =
+                              List<PublicUserProfile> containerUsersRowList =
                                   snapshot.data!;
 
                               final containerUsersRow =
@@ -1179,21 +1180,17 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                       );
                                     },
                                   );
-
-                                  if (_shouldSetState) safeSetState(() {});
                                   return;
                                 }
-                                _model.currentUserOut =
+                                _model.currentUserReferralCode =
                                     await UserProfileService()
-                                        .listProfilesByUserId(
+                                        .getReferralCodeByUserId(
                                   userId: currentUserUid,
                                 );
                                 _shouldSetState = true;
                                 _model.referralLink =
                                     await actions.createReferralLink(
-                                  _model.currentUserOut!
-                                      .elementAtOrNull(0)!
-                                      .referralCode!,
+                                  _model.currentUserReferralCode!,
                                 );
                                 _shouldSetState = true;
                                 await showDialog(

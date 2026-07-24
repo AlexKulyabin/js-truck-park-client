@@ -1,6 +1,5 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
-import '/features/profile/data/user_profile_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -22,8 +21,8 @@ class ProfileModel extends FlutterFlowModel<ProfileWidget> {
 
   ///  State fields for stateful widgets in this page.
 
-  // Stores action output result for [Backend Call - Query Rows] action in InviteContainer widget.
-  List<UserProfile>? currentUserOut;
+  // Stores action output result for [Profile service - Referral Code] action in InviteContainer widget.
+  String? currentUserReferralCode;
   // Stores action output result for [Custom Action - createReferralLink] action in InviteContainer widget.
   String? referralLink;
 
