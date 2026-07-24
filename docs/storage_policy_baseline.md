@@ -65,6 +65,8 @@ restricting writes:
 
 - owner avatar upload/update/delete succeeds;
 - cross-user avatar insert/update/delete fails;
+- profile update activation follows
+  `docs/profile_security_activation_checklist.md`;
 - owner parking photo upload/update/delete succeeds for
   `parkings/<parkingId>/...`;
 - review author upload/update/delete succeeds for

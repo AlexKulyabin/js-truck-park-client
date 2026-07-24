@@ -49,3 +49,6 @@ orphaned avatar objects.
 - staging verification without production writes;
 - a separate commit that implements the gateway and wires the UI;
 - a separate reviewed change that enables `AppWriteOperation.profileUpdate`.
+
+The concrete policy gate and stop conditions are tracked in
+`profile_security_activation_checklist.md`.
