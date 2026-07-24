@@ -75,6 +75,7 @@ Guard не описан декларативно на каждом route. `AppSt
 - Поиск lower-case, debounce 500 ms; результат приводится к `List<dynamic>` без typed DTO.
 - Клиентской пагинации/range нет. Schema snapshot подтвердил zoom-grid clustering, spherical radius filter, GiST geography index и отсутствие hard result limit/сортировки в `get_filtered_parkings`; подробности в `supabase_backend_reference.md`.
 - Reverse geocode выполняется через Google endpoint и берёт `results[0].formatted_address` без отдельной typed/null-safe модели.
+- Characterization-контракт bounds/query/marker добавлен в `features/map/domain`, но production Home/SelectParking пока намеренно остаются на generated dynamic caller. Риски и последовательность переключения описаны в `map_read_contract_characterization.md`.
 
 ## Локализация и темы
 
