@@ -9,6 +9,7 @@ import '/features/parking_details/data/supabase_parking_details_repository.dart'
 import '/features/parking_details/domain/parking_favorite_repository.dart';
 import '/features/parking_details/domain/parking_details_repository.dart';
 import '/features/parking_details/presentation/parking_details_links.dart';
+import '/features/parking_details/presentation/parking_details_dismissal.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -47,6 +48,7 @@ class ParkingsDetailsWidget extends StatefulWidget {
   static const loadingKey = Key('public-parking-details-loading');
   static const failureKey = Key('public-parking-details-failure');
   static const emptyKey = Key('public-parking-details-empty');
+  static const dragHandleKey = Key('public-parking-details-drag-handle');
   static const favoriteButtonKey = Key('public-parking-favorite-button');
   static const favoriteUpdatingKey = Key('public-parking-favorite-updating');
 
@@ -220,9 +222,14 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                           children: [
                             GestureDetector(
                               onVerticalDragEnd: (details) async {
-                                Navigator.pop(context);
+                                if (shouldDismissParkingDetails(
+                                  primaryVelocity: details.primaryVelocity,
+                                )) {
+                                  Navigator.pop(context);
+                                }
                               },
                               child: Container(
+                                key: ParkingsDetailsWidget.dragHandleKey,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: FlutterFlowTheme.of(context)
@@ -443,8 +450,13 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
                                     child: GestureDetector(
-                                      onVerticalDragDown: (details) async {
-                                        Navigator.pop(context);
+                                      onVerticalDragEnd: (details) async {
+                                        if (shouldDismissParkingDetails(
+                                          primaryVelocity:
+                                              details.primaryVelocity,
+                                        )) {
+                                          Navigator.pop(context);
+                                        }
                                       },
                                       child: Icon(
                                         Icons.no_photography,

@@ -42,6 +42,17 @@ void main() {
       }
     });
 
+    test('allows the read-only profile shell', () {
+      expect(
+        integrationReadOnlyRedirect(
+          enabled: true,
+          loggedIn: true,
+          requestedPath: '/profile',
+        ),
+        isNull,
+      );
+    });
+
     test('redirects authenticated users away from write-capable routes', () {
       for (final path in [
         '/registration',

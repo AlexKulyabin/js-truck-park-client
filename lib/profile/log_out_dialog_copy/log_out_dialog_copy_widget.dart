@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/api_requests/api_calls.dart';
+import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -171,6 +172,9 @@ class _LogOutDialogCopyWidgetState extends State<LogOutDialogCopyWidget> {
                     hoverColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     onTap: () async {
+                      if (AppConfig.current.integrationReadOnly) {
+                        return;
+                      }
                       Function() _navigate = () {};
                       _model.apiResultrdu = await DeleteUserAccountCall.call(
                         userToken: currentJwtToken,

@@ -25,12 +25,14 @@ banner.
 - `/onboard1`, `/onboard2`, `/onboard3`;
 - `/enterPhoneNumber`, `/validateSmsCode`;
 - `/homePage`;
+- `/profile` (read-only shell; account deletion is blocked);
+- `/photoDetailed`, `/photoDetailedReviews`;
 - `/language`.
 
 All other routes redirect to Home for an authenticated test user or to phone
 authentication for a signed-out user. In particular, registration, profile
-editing, account deletion, parking/review/report creation, parking details with
-favorite toggles, referrals, requests and subscription screens are unavailable.
+editing, account deletion, parking/review/report creation, favorite writes,
+referrals, requests and subscription screens are unavailable.
 
 ## Configuration
 
@@ -64,9 +66,10 @@ identity.
 6. Exercise viewport, search and filters without opening write-capable screens.
 7. Confirm Language can switch between `en` and `ru`.
 8. Confirm RevenueCat and production deep links do not initialize.
-9. Do not create a missing profile; registration is intentionally blocked.
-10. Sign out by clearing the dev app or through a future integration-only safe
-    control; do not use account deletion.
+9. Open Profile and confirm its read-only information is visible while
+   write-capable child screens return to Home and account deletion cannot run.
+10. Do not create a missing profile; registration is intentionally blocked.
+11. Sign out through Profile when needed; do not use account deletion.
 
 ## Verification commands
 

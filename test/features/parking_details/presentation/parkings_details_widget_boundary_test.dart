@@ -70,6 +70,41 @@ Widget _buildSubject(
       ),
     );
 
+Widget _buildRoutedSubject(_FakeRepository repository) =>
+    ChangeNotifierProvider.value(
+      value: FFAppState(),
+      child: MaterialApp(
+        localizationsDelegates: const [
+          FFLocalizationsDelegate(),
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en'), Locale('ru')],
+        locale: const Locale('en'),
+        theme: ThemeData(brightness: Brightness.light, useMaterial3: false),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      body: ParkingsDetailsWidget(
+                        parkingId: 'parking-1',
+                        detailsRepository: repository,
+                      ),
+                    ),
+                  ),
+                ),
+                child: const Text('Open details'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
 void main() {
   setUp(FFAppState.reset);
 
@@ -175,6 +210,38 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(favoriteRepository.calls, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('dismisses only when the drag handle is swiped down',
+      (tester) async {
+    final repository = _FakeRepository()
+      ..details = const ParkingDetails(
+        id: 'parking-1',
+        isFavorited: false,
+        address: 'Gesture test parking',
+        stars1: 0,
+        stars2: 0,
+        stars3: 0,
+        stars4: 0,
+        stars5: 0,
+      );
+
+    await tester.pumpWidget(_buildRoutedSubject(repository));
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+
+    final handle = find.byKey(ParkingsDetailsWidget.dragHandleKey);
+    expect(handle, findsOneWidget);
+
+    await tester.fling(handle, const Offset(0, -200), 1000);
+    await tester.pumpAndSettle();
+    expect(find.text('Gesture test parking'), findsOneWidget);
+
+    await tester.fling(handle, const Offset(0, 200), 1000);
+    await tester.pumpAndSettle();
+    expect(find.text('Gesture test parking'), findsNothing);
+    expect(find.text('Open details'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
