@@ -41,6 +41,7 @@ Versioned `supabase/migrations/` всё ещё отсутствуют. Dump яв
 7. Клиент не задаёт `limit`, `range`, page/cursor. В generated table adapter limit существует, но эти RPC wrappers его не передают.
 8. RPC использует zoom grid clustering и spherical distance formula; сортировки по расстоянию и hard result limit в `get_filtered_parkings` нет.
 9. Characterization fixtures и typed domain contract добавлены без переключения production consumers; полный план: `docs/map_read_contract_characterization.md`.
+10. Repository/data-source boundary поверх прежнего anonymous RPC добавлен, но Home/SelectParking пока не переключены; этап: `docs/map_read_repository_slice.md`.
 
 ## Tables и views: фактические callers
 

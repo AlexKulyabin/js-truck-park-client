@@ -305,9 +305,11 @@ Production consumers не изменены и новые domain types пока �
 Каждый пункт ниже — отдельный пригодный к Git-коммиту этап:
 
 1. Добавить `ParkingMapRepository` и injectable RPC data source вокруг
-   неизменённого `get_filtered_parkings`.
-2. Написать repository tests на все 18 params, authenticated/anonymous policy,
-   typed parsing, redacted transport failure и immutable result.
+   неизменённого `get_filtered_parkings`. Выполнено в следующем отдельном
+   коммите.
+2. Написать repository tests на все 18 params, anonymous policy, typed parsing,
+   redacted transport failure и immutable result. Выполнено; authenticated
+   transport остаётся отдельным security-sensitive изменением.
 3. Добавить локальный `ParkingMapController` с loading/loaded/failure,
    generation guard и retry; не подключать UI.
 4. Подключить только Home marker reads через composition boundary; сохранить
