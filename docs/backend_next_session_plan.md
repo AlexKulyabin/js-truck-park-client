@@ -220,3 +220,38 @@ git status --short
 2. ввести public/private profile projections;
 3. harden SECURITY DEFINER search paths;
 4. добавить domain constraints после data audit.
+
+## Текущий Flutter write-pilot: favorites
+
+Статус: реализовано локально отдельными коммитами; production write-команды не
+выполнялись. Цель этапа — начать разрешать только малые user-owned изменения
+данных через явную client-side capability и typed service boundary, не меняя
+Supabase-контракты.
+
+Выполненные этапы:
+
+1. `refactor(config): gate allowed write operations` — добавлен
+   `AppWriteOperation.favoriteToggle` и единая проверка
+   `AppConfig.canPerformWrite(...)`.
+2. `refactor(favorites): move toggle writes into service` — toggle избранного
+   вынесен в `features/favorites/data/FavoritesService`; delete теперь
+   фильтруется по `parking_id` и `user_id`; UI делает optimistic update с
+   rollback/snackbar.
+3. Документация и verification — `integration_runbook`,
+   `flutter_supabase_usage_map` и `target_architecture_proposal` обновлены под
+   новый pilot.
+
+Проверки:
+
+- `dart format --output=none --set-exit-if-changed lib test`;
+- `flutter analyze --no-fatal-infos --no-fatal-warnings`;
+- `flutter test`;
+- `git diff --check`.
+
+Ограничения:
+
+- Supabase local pgTAP/RLS smoke не запускался в рамках Flutter-only этапа;
+- favorites list всё ещё читает `view_user_favorites` напрямую из
+  FlutterFlow-widget и остаётся кандидатом на следующий маленький перенос;
+- новые write-capabilities добавлять только отдельными этапами после RLS и
+  rollback contract.
