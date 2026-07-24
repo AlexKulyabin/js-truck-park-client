@@ -154,10 +154,11 @@ Repository не нужен language page, статическим onboarding page
 - Main parking detail reads now use `ParkingDetailsService`. The detail sheet
   and its info/reviews/photos tabs receive typed `ParkingDetails` and
   `ParkingDetailPhoto` data instead of the generated Supabase view row.
-- Review submission now has a typed validation and atomic gateway contract in
-  `ReviewSubmissionService`. `AppWriteOperation.reviewCreate` remains disabled,
-  no Supabase gateway exists and the legacy production UI is not wired to it;
-  activation prerequisites are recorded in `review_submission_contract.md`.
+- Review submission now has a typed validation and gateway contract in
+  `ReviewSubmissionService`. The Supabase gateway supports no-photo review
+  inserts behind the guarded review-create capability, while photo submissions
+  still wait for the staged upload and compensation stage; the legacy
+  production UI is not wired to it yet.
 - Profile header, edit initial form and post-OTP profile-completion check now
   consume `PublicUserProfile` (`id`, `fullName`, `avatarUrl`) through
   `features/profile/data/UserProfileService`. Invite referral lookup uses the

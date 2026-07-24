@@ -273,6 +273,10 @@ Supabase-контракты.
     `APP_ENABLE_TEST_WRITES`; review-create capability включается только в
     Debug/Profile integration build и только при non-production Supabase URL.
     По умолчанию `reviewCreate` остаётся выключенным.
+11. `refactor(reviews): add no-photo submit gateway` —
+    `ReviewSubmissionService` получил Supabase gateway для одного атомарного
+    insert в `reviews` без фото. Photo payload пока явно отклоняется до
+    staged upload/compensation этапа; UI ещё не подключён.
 
 Проверки:
 

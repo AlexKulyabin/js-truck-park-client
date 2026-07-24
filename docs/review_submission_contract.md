@@ -21,9 +21,10 @@ This stage does not change or call that production flow.
   build;
 - a single `ReviewSubmissionGateway.submitAtomically` operation.
 
-There is intentionally no Supabase gateway implementation and no UI wiring in
-this stage. The gateway contract forbids exposing the current client-side
-insert/upload loop as the new architecture.
+`SupabaseReviewSubmissionGateway` currently supports the no-photo path as one
+direct `reviews` insert behind `AppWriteOperation.reviewCreate`. It explicitly
+rejects photo submissions until the staged upload and compensation contract is
+implemented. There is intentionally no UI wiring in this stage.
 
 ## Partial failure rule
 
@@ -45,5 +46,6 @@ are visible together. Retrying the same submission must not create duplicates.
 - failure tests for every upload and insert boundary;
 - idempotency and cleanup tests;
 - staging verification without production writes;
-- a separate commit that implements the gateway and wires the UI;
-- a separate reviewed change that enables `AppWriteOperation.reviewCreate`.
+- a separate commit that wires the UI to `ReviewSubmissionService`;
+- a separate photo-flow commit with compensation before photo submission is
+  enabled.

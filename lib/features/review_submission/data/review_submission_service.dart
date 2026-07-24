@@ -1,4 +1,5 @@
 import '/core/config/app_config.dart';
+import '/backend/supabase/database/database.dart';
 
 enum ReviewSubmissionFailure {
   disabled,
@@ -105,14 +106,51 @@ abstract interface class ReviewSubmissionGateway {
   });
 }
 
+class SupabaseReviewSubmissionGateway implements ReviewSubmissionGateway {
+  SupabaseReviewSubmissionGateway({
+    ReviewsTable? reviewsTable,
+  }) : _reviewsTable = reviewsTable ?? ReviewsTable();
+
+  final ReviewsTable _reviewsTable;
+
+  @override
+  Future<ReviewSubmissionResult> submitAtomically({
+    required PreparedReviewSubmission submission,
+  }) async {
+    if (submission.requiresAtomicPhotoHandling) {
+      throw const ReviewSubmissionException(
+        failure: ReviewSubmissionFailure.invalidPhoto,
+        message: 'Review photos are not enabled for this write path yet.',
+      );
+    }
+
+    final row = await _reviewsTable.insert({
+      'parking_id': submission.parkingId,
+      'comment': submission.comment,
+      'rating_impression': submission.ratingImpression,
+      'rating_arrival': submission.ratingArrival,
+      'rating_security': submission.ratingSecurity,
+      'rating_infrastructure': submission.ratingInfrastructure,
+      'rating_comfort': submission.ratingComfort,
+      'created_at': supaSerialize<DateTime>(submission.createdAt),
+      'user_id': submission.userId,
+    });
+
+    return ReviewSubmissionResult(
+      reviewId: row.id,
+      createdPhotoCount: 0,
+    );
+  }
+}
+
 class ReviewSubmissionService {
   ReviewSubmissionService({
-    required ReviewSubmissionGateway gateway,
+    ReviewSubmissionGateway? gateway,
     AppConfig? config,
   })  : _gateway = gateway,
         _config = config ?? AppConfig.current;
 
-  final ReviewSubmissionGateway _gateway;
+  final ReviewSubmissionGateway? _gateway;
   final AppConfig _config;
 
   PreparedReviewSubmission prepare(ReviewSubmissionCommand command) {
@@ -184,6 +222,7 @@ class ReviewSubmissionService {
       );
     }
 
-    return _gateway.submitAtomically(submission: prepare(command));
+    final gateway = _gateway ?? SupabaseReviewSubmissionGateway();
+    return gateway.submitAtomically(submission: prepare(command));
   }
 }
