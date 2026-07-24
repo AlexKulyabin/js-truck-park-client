@@ -123,6 +123,10 @@ Repository не нужен language page, статическим onboarding page
 - Favorites list reads `view_user_favorites` through the same feature service
   and maps generated rows into the typed `FavoriteParking` read model before
   reaching FlutterFlow widgets.
+- The favorites page now uses feature-scoped `FavoritesController` +
+  immutable `FavoritesState` on top of the existing `provider` package for
+  list loading state. This keeps the transitional state-management strategy
+  local to one feature.
 
 ## Где нужен service
 

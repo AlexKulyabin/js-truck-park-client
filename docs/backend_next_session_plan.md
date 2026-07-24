@@ -243,6 +243,10 @@ Supabase-контракты.
 4. `refactor(favorites): move list reads into service` — список избранного
    читает `view_user_favorites` через `FavoritesService`, а UI получает
    typed `FavoriteParking` вместо generated Supabase row.
+5. `refactor(favorites): introduce list controller state` — страница
+   избранного использует feature-scoped `FavoritesController` и immutable
+   `FavoritesState` через текущий `provider`, без глобальной замены state
+   manager.
 
 Проверки:
 
@@ -254,7 +258,8 @@ Supabase-контракты.
 Ограничения:
 
 - Supabase local pgTAP/RLS smoke не запускался в рамках Flutter-only этапа;
-- favorites list всё ещё использует `FutureBuilder`, поэтому следующий
-  кандидат — feature-scoped controller с immutable state;
+- favorite toggle в parking details всё ещё хранит локальный bool в
+  FlutterFlow model; перенос optimistic action в controller лучше делать
+  отдельным этапом после read-side pilots;
 - новые write-capabilities добавлять только отдельными этапами после RLS и
   rollback contract.
