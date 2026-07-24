@@ -75,6 +75,6 @@ flutter test test/features/parking_submission
 
 ## Следующий этап
 
-Подключить `create_parking2/CreateParkingWidget` к repository через маленький
-UI adapter, сохранив dialog/navigation и старую геометрию. Старый
-`create_parking/add_parking` не трогать в том же коммите.
+`create_parking2/CreateParkingWidget` подключён следующим отдельным этапом
+через маленький UI adapter, с сохранением dialog/navigation и старой геометрии.
+Старый `create_parking/add_parking` не тронут в том же коммите.

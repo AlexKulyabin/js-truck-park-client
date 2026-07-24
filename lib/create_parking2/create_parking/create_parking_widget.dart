@@ -1,13 +1,11 @@
-import '/auth/supabase_auth/auth_util.dart';
-import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
 import '/create_parking/submitted_moderation/submitted_moderation_widget.dart';
+import '/features/parking_submission/data/supabase_parking_submission_repository.dart';
+import '/features/parking_submission/domain/parking_submission_draft.dart';
+import '/features/parking_submission/domain/parking_submission_repository.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/flutter_flow/upload_data.dart';
-import 'dart:ui';
-import '/flutter_flow/custom_functions.dart' as functions;
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -17,7 +15,12 @@ import 'create_parking_model.dart';
 export 'create_parking_model.dart';
 
 class CreateParkingWidget extends StatefulWidget {
-  const CreateParkingWidget({super.key});
+  const CreateParkingWidget({
+    super.key,
+    this.parkingSubmissionRepository,
+  });
+
+  final ParkingSubmissionRepository? parkingSubmissionRepository;
 
   static String routeName = 'CreateParking';
   static String routePath = '/createParking';
@@ -28,6 +31,7 @@ class CreateParkingWidget extends StatefulWidget {
 
 class _CreateParkingWidgetState extends State<CreateParkingWidget> {
   late CreateParkingModel _model;
+  late final ParkingSubmissionRepository _parkingSubmissionRepository;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -35,6 +39,8 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => CreateParkingModel());
+    _parkingSubmissionRepository = widget.parkingSubmissionRepository ??
+        SupabaseParkingSubmissionRepository();
 
     _model.capasityTextController ??= TextEditingController();
     _model.capasityFocusNode ??= FocusNode();
@@ -47,6 +53,64 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  ParkingSubmissionDraft _buildSubmissionDraft() {
+    return ParkingSubmissionDraft.fromLegacyForm(
+      capacityText: _model.capasityTextController.text,
+      address: FFAppState().tempAddress,
+      latitude: FFAppState().tempLat,
+      longitude: FFAppState().tempLng,
+      hasGasStation: _model.gasStationValue,
+      hasShower: _model.showerValue,
+      hasLaundry: _model.laundryValue,
+      hasHotel: _model.hotelValue,
+      hasShop: _model.shopValue,
+      hasRecreationArea: _model.recreationAreaValue,
+      photos: _model.photos
+          .map(
+            (file) => ParkingSubmissionPhoto(
+              name: file.name ?? file.originalFilename,
+              bytes: file.bytes ?? Uint8List(0),
+              originalFilename: file.originalFilename,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Future<void> _submitParking() async {
+    try {
+      await _parkingSubmissionRepository.submit(_buildSubmissionDraft());
+    } on ParkingSubmissionException {
+      safeSetState(() {});
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    await showDialog(
+      barrierColor: FlutterFlowTheme.of(context).overlay,
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          elevation: 0,
+          insetPadding: EdgeInsets.zero,
+          backgroundColor: Colors.transparent,
+          alignment: AlignmentDirectional(0.0, 0.0)
+              .resolve(Directionality.of(context)),
+          child: GestureDetector(
+            onTap: () {
+              FocusScope.of(dialogContext).unfocus();
+              FocusManager.instance.primaryFocus?.unfocus();
+            },
+            child: SubmittedModerationWidget(),
+          ),
+        );
+      },
+    );
+
+    safeSetState(() {});
   }
 
   @override
@@ -1395,114 +1459,7 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
                                   0.0, 0.0, 0.0, 60.0),
                               child: FFButtonWidget(
                                 onPressed: () async {
-                                  _model.createParkingsOut =
-                                      await ParkingsTable().insert({
-                                    'total_spaces': int.tryParse(
-                                        _model.capasityTextController.text),
-                                    'has_gas_station': _model.gasStationValue,
-                                    'has_shower': _model.showerValue,
-                                    'has_laundry': _model.laundryValue,
-                                    'has_hotel': _model.hotelValue,
-                                    'has_shop': _model.shopValue,
-                                    'has_recreation_area':
-                                        _model.recreationAreaValue,
-                                    'address': FFAppState().tempAddress,
-                                    'latitude': FFAppState().tempLat,
-                                    'longitude': FFAppState().tempLng,
-                                    'address_lower': functions
-                                        .textToLower(FFAppState().tempAddress),
-                                    'created_by': currentUserUid,
-                                    'created_at': supaSerialize<DateTime>(
-                                        getCurrentTimestamp),
-                                    'status': StatusParking.pending.name,
-                                  });
-                                  if ((_model.photos.isNotEmpty) == true) {
-                                    for (int loop1Index = 0;
-                                        loop1Index < _model.photos.length;
-                                        loop1Index++) {
-                                      final currentLoop1Item =
-                                          _model.photos[loop1Index];
-                                      {
-                                        safeSetState(() => _model
-                                                .isDataUploading_uploadDataFbo =
-                                            true);
-                                        var selectedUploadedFiles =
-                                            <FFUploadedFile>[];
-                                        var selectedMedia = <SelectedFile>[];
-                                        var downloadUrls = <String>[];
-                                        try {
-                                          selectedUploadedFiles =
-                                              currentLoop1Item.bytes!.isNotEmpty
-                                                  ? [currentLoop1Item]
-                                                  : <FFUploadedFile>[];
-                                          selectedMedia =
-                                              selectedFilesFromUploadedFiles(
-                                            selectedUploadedFiles,
-                                            storageFolderPath:
-                                                'parkings/${_model.createParkingsOut?.id}/${loop1Index.toString()}',
-                                          );
-                                          downloadUrls =
-                                              await uploadSupabaseStorageFiles(
-                                            bucketName: 'parking_content',
-                                            selectedFiles: selectedMedia,
-                                          );
-                                        } finally {
-                                          _model.isDataUploading_uploadDataFbo =
-                                              false;
-                                        }
-                                        if (selectedUploadedFiles.length ==
-                                                selectedMedia.length &&
-                                            downloadUrls.length ==
-                                                selectedMedia.length) {
-                                          safeSetState(() {
-                                            _model.uploadedLocalFile_uploadDataFbo =
-                                                selectedUploadedFiles.first;
-                                            _model.uploadedFileUrl_uploadDataFbo =
-                                                downloadUrls.first;
-                                          });
-                                        } else {
-                                          safeSetState(() {});
-                                          return;
-                                        }
-                                      }
-
-                                      _model.createParkingPhotos =
-                                          await ParkingPhotosTable().insert({
-                                        'url': _model
-                                            .uploadedFileUrl_uploadDataFbo,
-                                        'parking_id':
-                                            _model.createParkingsOut?.id,
-                                        'user_id': currentUserUid,
-                                      });
-                                    }
-                                  }
-                                  await showDialog(
-                                    barrierColor:
-                                        FlutterFlowTheme.of(context).overlay,
-                                    context: context,
-                                    builder: (dialogContext) {
-                                      return Dialog(
-                                        elevation: 0,
-                                        insetPadding: EdgeInsets.zero,
-                                        backgroundColor: Colors.transparent,
-                                        alignment:
-                                            AlignmentDirectional(0.0, 0.0)
-                                                .resolve(
-                                                    Directionality.of(context)),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            FocusScope.of(dialogContext)
-                                                .unfocus();
-                                            FocusManager.instance.primaryFocus
-                                                ?.unfocus();
-                                          },
-                                          child: SubmittedModerationWidget(),
-                                        ),
-                                      );
-                                    },
-                                  );
-
-                                  safeSetState(() {});
+                                  await _submitParking();
                                 },
                                 text: FFLocalizations.of(context).getText(
                                   '2np859v5' /* Add */,

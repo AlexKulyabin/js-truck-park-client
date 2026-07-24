@@ -1,19 +1,6 @@
-import '/auth/supabase_auth/auth_util.dart';
-import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
-import '/create_parking/submitted_moderation/submitted_moderation_widget.dart';
-import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/flutter_flow/upload_data.dart';
-import 'dart:ui';
-import '/flutter_flow/custom_functions.dart' as functions;
-import '/index.dart';
 import 'create_parking_widget.dart' show CreateParkingWidget;
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 class CreateParkingModel extends FlutterFlowModel<CreateParkingWidget> {
   ///  Local state fields for this page.
@@ -49,16 +36,6 @@ class CreateParkingModel extends FlutterFlowModel<CreateParkingWidget> {
   bool? shopValue;
   // State field(s) for RecreationArea widget.
   bool? recreationAreaValue;
-  // Stores action output result for [Backend Call - Insert Row] action in Button widget.
-  ParkingsRow? createParkingsOut;
-  bool isDataUploading_uploadDataFbo = false;
-  FFUploadedFile uploadedLocalFile_uploadDataFbo =
-      FFUploadedFile(bytes: Uint8List.fromList([]), originalFilename: '');
-  String uploadedFileUrl_uploadDataFbo = '';
-
-  // Stores action output result for [Backend Call - Insert Row] action in Button widget.
-  ParkingPhotosRow? createParkingPhotos;
-
   @override
   void initState(BuildContext context) {}
 

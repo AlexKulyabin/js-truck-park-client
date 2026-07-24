@@ -75,7 +75,7 @@ Generated helper: `backend/supabase/storage/storage.dart`. Upload делает `
 | Caller | Bucket/path | Операция | Error/atomicity | Security dependency |
 |---|---|---|---|---|
 | registration, edit profile | `avatars/users/<uid>/...` | upload, public URL stored in `users.avatar_url` | upload list length проверяется; DB update отдельно | bucket public, 5 MiB images; write/delete policies не проверяют owner path — P1 |
-| create parking flows | `parking_content/parkings/<parkingId>/<index>` | upload, then insert `parking_photos` | нет transaction/compensation; orphan object/partial rows возможны; typed draft/repository boundary добавлен без production UI подключения | bucket public, 5 MiB images; дублирующие path policies |
+| create parking flows | `parking_content/parkings/<parkingId>/<index>` | upload, then insert `parking_photos` | нет transaction/compensation; orphan object/partial rows возможны; `create_parking2/CreateParkingWidget` пишет через typed repository boundary, старый `add_parking` пока legacy direct write | bucket public, 5 MiB images; дублирующие path policies |
 | create review | `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>` | upload, then insert row | review создаётся до uploads; partial state возможен | DB photo policies допускают broad authenticated insert/delete |
 | marker asset | public `assets` URL hardcoded в Home | read | fallback default marker on load error | bucket подтверждён public; это часть текущего UI contract |
 
