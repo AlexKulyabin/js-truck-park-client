@@ -71,6 +71,51 @@ void main() {
         'list:parking-1',
       ]);
     });
+
+    test(
+        'returns empty user review list without querying when user id is empty',
+        () async {
+      final gateway = _FakeReviewsGateway();
+      final service = ReviewsService(gateway: gateway);
+
+      final result = await service.listUserReviews(userId: ' ');
+
+      expect(result, isEmpty);
+      expect(gateway.calls, isEmpty);
+    });
+
+    test('loads user reviews for normalized user id', () async {
+      final gateway = _FakeReviewsGateway(
+        reviews: [
+          ParkingReview(
+            id: 1,
+            createdAt: DateTime(2026, 1, 1),
+            userId: 'user-1',
+            parkingId: 'parking-1',
+            comment: 'Good',
+            ratingImpression: 5,
+            ratingArrival: 4,
+            ratingSecurity: 4,
+            ratingInfrastructure: 3,
+            ratingComfort: 5,
+            averageScore: 4.2,
+            parkingAddress: 'Address 1',
+            authorName: 'Driver',
+            authorAvatar: null,
+            photoUrls: const ['https://example.test/review.jpg'],
+            hasPhotoPayload: true,
+          ),
+        ],
+      );
+      final service = ReviewsService(gateway: gateway);
+
+      final result = await service.listUserReviews(userId: ' user-1 ');
+
+      expect(result.single.parkingAddress, 'Address 1');
+      expect(gateway.calls, [
+        'listUser:user-1',
+      ]);
+    });
   });
 }
 
@@ -97,6 +142,14 @@ class _FakeReviewsGateway implements ReviewsGateway {
     required String parkingId,
   }) async {
     calls.add('list:$parkingId');
+    return reviews;
+  }
+
+  @override
+  Future<List<ParkingReview>> listUserReviews({
+    required String userId,
+  }) async {
+    calls.add('listUser:$userId');
     return reviews;
   }
 }

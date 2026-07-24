@@ -8,6 +8,10 @@ abstract interface class ReviewsGateway {
   Future<List<ParkingReview>> listParkingReviews({
     required String parkingId,
   });
+
+  Future<List<ParkingReview>> listUserReviews({
+    required String userId,
+  });
 }
 
 class SupabaseReviewsGateway implements ReviewsGateway {
@@ -47,6 +51,21 @@ class SupabaseReviewsGateway implements ReviewsGateway {
     );
     return rows.map(ParkingReview.fromRow).toList();
   }
+
+  @override
+  Future<List<ParkingReview>> listUserReviews({
+    required String userId,
+  }) async {
+    final rows = await _reviewsView.queryRows(
+      queryFn: (q) => q
+          .eqOrNull(
+            'user_id',
+            userId,
+          )
+          .order('created_at'),
+    );
+    return rows.map(ParkingReview.fromRow).toList();
+  }
 }
 
 class ReviewsService {
@@ -76,6 +95,17 @@ class ReviewsService {
     }
 
     return _gateway.listParkingReviews(parkingId: normalizedParkingId);
+  }
+
+  Future<List<ParkingReview>> listUserReviews({
+    required String? userId,
+  }) async {
+    final normalizedUserId = userId?.trim();
+    if (normalizedUserId == null || normalizedUserId.isEmpty) {
+      return const [];
+    }
+
+    return _gateway.listUserReviews(userId: normalizedUserId);
   }
 }
 

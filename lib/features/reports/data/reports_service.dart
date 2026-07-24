@@ -64,14 +64,21 @@ abstract interface class ReportsGateway {
   Future<CreatedReport> createReport({
     required CreateReportRequest request,
   });
+
+  Future<List<UserReport>> listUserReports({
+    required String userId,
+  });
 }
 
 class SupabaseReportsGateway implements ReportsGateway {
   SupabaseReportsGateway({
     ReportsTable? table,
-  }) : _table = table ?? ReportsTable();
+    ViewReportsDetailedTable? reportsView,
+  })  : _table = table ?? ReportsTable(),
+        _reportsView = reportsView ?? ViewReportsDetailedTable();
 
   final ReportsTable _table;
+  final ViewReportsDetailedTable _reportsView;
 
   @override
   Future<CreatedReport> createReport({
@@ -86,6 +93,21 @@ class SupabaseReportsGateway implements ReportsGateway {
       'created_at': supaSerialize<DateTime>(request.createdAt),
     });
     return CreatedReport.fromRow(row);
+  }
+
+  @override
+  Future<List<UserReport>> listUserReports({
+    required String userId,
+  }) async {
+    final rows = await _reportsView.queryRows(
+      queryFn: (q) => q
+          .eqOrNull(
+            'reporter_id',
+            userId,
+          )
+          .order('report_date'),
+    );
+    return rows.map(UserReport.fromRow).toList();
   }
 }
 
@@ -132,4 +154,59 @@ class ReportsService {
       ),
     );
   }
+
+  Future<List<UserReport>> listUserReports({
+    required String? userId,
+  }) async {
+    final normalizedUserId = userId?.trim();
+    if (normalizedUserId == null || normalizedUserId.isEmpty) {
+      return const [];
+    }
+
+    return _gateway.listUserReports(userId: normalizedUserId);
+  }
+}
+
+class UserReport {
+  const UserReport({
+    required this.reportId,
+    required this.reporterId,
+    required this.reportDate,
+    required this.reportType,
+    required this.reportComment,
+    required this.parkingId,
+    required this.parkingAddress,
+    required this.parkingPhotos,
+    required this.photosCount,
+    required this.reporterName,
+    required this.reporterPhone,
+  });
+
+  factory UserReport.fromRow(ViewReportsDetailedRow row) {
+    return UserReport(
+      reportId: row.reportId,
+      reporterId: row.reporterId,
+      reportDate: row.reportDate,
+      reportType: row.reportType,
+      reportComment: row.reportComment,
+      parkingId: row.parkingId,
+      parkingAddress: row.parkingAddress,
+      parkingPhotos: row.parkingPhotos,
+      photosCount: row.photosCount,
+      reporterName: row.reporterName,
+      reporterPhone: row.reporterPhone,
+    );
+  }
+
+  final int? reportId;
+  final String? reporterId;
+  final DateTime? reportDate;
+  final String? reportType;
+  final String? reportComment;
+  final String? parkingId;
+  final String? parkingAddress;
+  final dynamic parkingPhotos;
+  final int? photosCount;
+  final String? reporterName;
+  final String? reporterPhone;
 }

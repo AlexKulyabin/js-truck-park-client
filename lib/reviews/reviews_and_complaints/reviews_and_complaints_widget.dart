@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
-import '/backend/supabase/supabase.dart';
+import '/features/reports/data/reports_service.dart';
+import '/features/reviews/data/reviews_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -29,6 +30,8 @@ class _ReviewsAndComplaintsWidgetState
   late ReviewsAndComplaintsModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  final _reportsService = ReportsService();
+  final _reviewsService = ReviewsService();
 
   @override
   void initState() {
@@ -347,14 +350,9 @@ class _ReviewsAndComplaintsWidgetState
                 child: Builder(
                   builder: (context) {
                     if (_model.isReviewsTabOn) {
-                      return FutureBuilder<List<ViewReviewsWithUsersRow>>(
-                        future: ViewReviewsWithUsersTable().queryRows(
-                          queryFn: (q) => q
-                              .eqOrNull(
-                                'user_id',
-                                currentUserUid,
-                              )
-                              .order('created_at'),
+                      return FutureBuilder<List<ParkingReview>>(
+                        future: _reviewsService.listUserReviews(
+                          userId: currentUserUid,
                         ),
                         builder: (context, snapshot) {
                           // Customize what your widget looks like when it's loading.
@@ -371,25 +369,20 @@ class _ReviewsAndComplaintsWidgetState
                               ),
                             );
                           }
-                          List<ViewReviewsWithUsersRow>
-                              reviewsViewReviewsWithUsersRowList =
-                              snapshot.data!;
+                          List<ParkingReview> reviewsList = snapshot.data!;
 
                           return Container(
                             width: double.infinity,
                             decoration: BoxDecoration(),
                             child: Builder(
                               builder: (context) {
-                                if (reviewsViewReviewsWithUsersRowList.length >
-                                    0) {
+                                if (reviewsList.length > 0) {
                                   return Padding(
                                     padding: EdgeInsetsDirectional.fromSTEB(
                                         16.0, 0.0, 16.0, 0.0),
                                     child: Builder(
                                       builder: (context) {
-                                        final reviews =
-                                            reviewsViewReviewsWithUsersRowList
-                                                .toList();
+                                        final reviews = reviewsList.toList();
 
                                         return ListView.separated(
                                           padding: EdgeInsets.zero,
@@ -463,14 +456,9 @@ class _ReviewsAndComplaintsWidgetState
                         },
                       );
                     } else {
-                      return FutureBuilder<List<ViewReportsDetailedRow>>(
-                        future: ViewReportsDetailedTable().queryRows(
-                          queryFn: (q) => q
-                              .eqOrNull(
-                                'reporter_id',
-                                currentUserUid,
-                              )
-                              .order('report_date'),
+                      return FutureBuilder<List<UserReport>>(
+                        future: _reportsService.listUserReports(
+                          userId: currentUserUid,
                         ),
                         builder: (context, snapshot) {
                           // Customize what your widget looks like when it's loading.
@@ -487,25 +475,20 @@ class _ReviewsAndComplaintsWidgetState
                               ),
                             );
                           }
-                          List<ViewReportsDetailedRow>
-                              reportsViewReportsDetailedRowList =
-                              snapshot.data!;
+                          List<UserReport> reportsList = snapshot.data!;
 
                           return Container(
                             width: double.infinity,
                             decoration: BoxDecoration(),
                             child: Builder(
                               builder: (context) {
-                                if (reportsViewReportsDetailedRowList.length >
-                                    0) {
+                                if (reportsList.length > 0) {
                                   return Padding(
                                     padding: EdgeInsetsDirectional.fromSTEB(
                                         16.0, 0.0, 16.0, 0.0),
                                     child: Builder(
                                       builder: (context) {
-                                        final reviews =
-                                            reportsViewReportsDetailedRowList
-                                                .toList();
+                                        final reviews = reportsList.toList();
 
                                         return ListView.separated(
                                           padding: EdgeInsets.zero,

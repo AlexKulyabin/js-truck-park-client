@@ -134,6 +134,9 @@ Repository не нужен language page, статическим onboarding page
   `AppWriteOperation.reportCreate`. The service preserves the current insert
   payload, validates the user/parking/report/status boundary and returns a
   typed `CreatedReport`.
+- Profile reviews/complaints reads now go through `ReviewsService` and
+  `ReportsService`. The UI receives typed `ParkingReview`/`UserReport`
+  objects instead of querying generated Supabase views directly.
 
 ## Где нужен service
 
