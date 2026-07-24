@@ -56,8 +56,12 @@ void main() {
     expect(source, contains('toMapMarkerItems(state.points)'));
     expect(source, contains('toMapSearchResultItems(state.points)'));
     expect(source, contains('markers: _model.parkingsOnMap'));
+    expect(source, contains('HomeMapSearchPanel('));
+    expect(source, contains('onQueryChanged: _handleSearchQueryChanged'));
+    expect(source, contains('onResultSelected: _handleSearchResultSelected'));
     expect(source, isNot(contains('markerData:')));
     expect(source, isNot(contains('toLegacyMapItems')));
     expect(source, isNot(contains('getJsonField(')));
+    expect(source, isNot(contains('EasyDebounce.debounce')));
   });
 }

@@ -75,7 +75,11 @@ Guard не описан декларативно на каждом route. `AppSt
   создаёт immutable `MapMarkerItem`; `CustomGoogleMap` больше не читает
   dynamic map keys. Search panel также использует immutable
   `MapSearchResultItem` и не разбирает JSONPath.
-- Поиск lower-case, debounce 500 ms; результат приводится к `List<dynamic>` без typed DTO.
+- Поиск lower-case, debounce 500 ms; результат представлен immutable
+  `MapSearchResultItem`.
+- Search panel выделен в `HomeMapSearchPanel`: он получает immutable typed
+  results и callbacks, а query/controller/dialog/navigation ownership остаётся
+  в Home.
 - Клиентской пагинации/range нет. Schema snapshot подтвердил zoom-grid clustering, spherical radius filter, GiST geography index и отсутствие hard result limit/сортировки в `get_filtered_parkings`; подробности в `supabase_backend_reference.md`.
 - Reverse geocode Home/SelectParking проходит через общий typed repository и application service; generated Google call из widgets удалён. Credential/config остаётся отдельным security debt, см. `docs/reverse_geocoding_read_integration.md`.
 - Production Home/SelectParking используют typed repository/controller и

@@ -8,7 +8,9 @@ import '/features/map/data/supabase_parking_map_repository.dart';
 import '/features/map/domain/map_bounds.dart';
 import '/features/map/domain/map_parking_query.dart';
 import '/features/map/domain/parking_map_repository.dart';
+import '/features/map/presentation/home_map_search_panel.dart';
 import '/features/map/presentation/map_read_adapter.dart';
+import '/features/map/presentation/map_search_result_item.dart';
 import '/filter/filter/filter_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -20,11 +22,8 @@ import '/custom_code/widgets/index.dart' as custom_widgets;
 import '/flutter_flow/custom_functions.dart' as functions;
 import '/index.dart';
 import 'search_panel_layout.dart';
-import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'home_page_model.dart';
 export 'home_page_model.dart';
@@ -229,6 +228,80 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       _model.isSearching = false;
       _model.searchResults = [];
     });
+  }
+
+  Future<void> _handleSearchQueryChanged(String queryText) async {
+    if (queryText.isEmpty) {
+      _clearSearchResults();
+      return;
+    }
+    final query = _buildCurrentMapQuery(
+      zoom: 20.0,
+      searchQuery: functions.textToLower(queryText),
+    );
+    if (query != null) {
+      await _loadSearchResults(query);
+    }
+  }
+
+  Future<void> _handleSearchResultSelected(
+    MapSearchResultItem result,
+  ) async {
+    _model.searchCoord = LatLng(result.latitude, result.longitude);
+    _model.isMapLocked = false;
+    _model.textController?.clear();
+    _parkingSearchController.reset();
+    _model.isSearching = false;
+    _model.searchResults = [];
+    safeSetState(() {});
+    await actions.hideKeyboard();
+    if (!mounted) {
+      return;
+    }
+    await showModalBottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      enableDrag: false,
+      context: context,
+      builder: (context) => GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Padding(
+          padding: MediaQuery.viewInsetsOf(context),
+          child: ParkingsDetailsWidget(parkingId: result.id),
+        ),
+      ),
+    ).then((_) => safeSetState(() {}));
+  }
+
+  Future<void> _handleFilterSelected() async {
+    await showModalBottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      enableDrag: false,
+      context: context,
+      builder: (context) => GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Padding(
+          padding: MediaQuery.viewInsetsOf(context),
+          child: FilterWidget(),
+        ),
+      ),
+    ).then(
+      (value) => safeSetState(() => _model.filterOut = value),
+    );
+    if (!mounted || _model.filterOut != true) {
+      return;
+    }
+    final query = _buildCurrentMapQuery();
+    if (query != null) {
+      await _loadMapPoints(query);
+    }
   }
 
   Future<void> _updateTemporaryAddress({
@@ -538,572 +611,25 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                       ),
                     ],
                   ),
-                Align(
-                  alignment: AlignmentDirectional(0.0, 1.0),
-                  child: Container(
-                    width: double.infinity,
-                    constraints: BoxConstraints(
-                      maxHeight: searchPanelMaxHeight(
-                        screenHeight: mediaQuery.size.height,
-                        keyboardInset: keyboardInset,
-                      ),
-                    ),
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(10.0),
-                        topRight: Radius.circular(10.0),
-                      ),
-                    ),
-                    child: Stack(
-                      alignment: AlignmentDirectional(0.0, 1.0),
-                      children: [
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  0.0, 8.0, 0.0, 8.0),
-                              child: GestureDetector(
-                                onVerticalDragEnd: (details) async {
-                                  _model.textController?.clear();
-                                  _clearSearchResults();
-                                },
-                                child: Container(
-                                  width: 36.0,
-                                  height: 5.0,
-                                  decoration: BoxDecoration(
-                                    color: FlutterFlowTheme.of(context).divider,
-                                    borderRadius: BorderRadius.circular(24.0),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (_model.isSearching)
-                              Flexible(
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      16.0, 0.0, 16.0, 0.0),
-                                  child: Builder(
-                                    builder: (context) {
-                                      final parkingsItem =
-                                          _model.searchResults.toList();
-
-                                      return ListView.separated(
-                                        padding: EdgeInsets.zero,
-                                        shrinkWrap: true,
-                                        scrollDirection: Axis.vertical,
-                                        itemCount: parkingsItem.length,
-                                        separatorBuilder: (_, __) =>
-                                            SizedBox(height: 2.0),
-                                        itemBuilder:
-                                            (context, parkingsItemIndex) {
-                                          final parkingsItemItem =
-                                              parkingsItem[parkingsItemIndex];
-                                          return GestureDetector(
-                                            onTap: () async {
-                                              _model.searchCoord = LatLng(
-                                                parkingsItemItem.latitude,
-                                                parkingsItemItem.longitude,
-                                              );
-                                              _model.isMapLocked = false;
-                                              _model.textController?.clear();
-                                              _parkingSearchController.reset();
-                                              _model.isSearching = false;
-                                              _model.searchResults = [];
-                                              safeSetState(() {});
-                                              await actions.hideKeyboard();
-                                              await showModalBottomSheet(
-                                                isScrollControlled: true,
-                                                backgroundColor:
-                                                    Colors.transparent,
-                                                enableDrag: false,
-                                                context: context,
-                                                builder: (context) {
-                                                  return GestureDetector(
-                                                    onTap: () {
-                                                      FocusScope.of(context)
-                                                          .unfocus();
-                                                      FocusManager
-                                                          .instance.primaryFocus
-                                                          ?.unfocus();
-                                                    },
-                                                    child: Padding(
-                                                      padding: MediaQuery
-                                                          .viewInsetsOf(
-                                                              context),
-                                                      child:
-                                                          ParkingsDetailsWidget(
-                                                        parkingId:
-                                                            parkingsItemItem.id,
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ).then((value) =>
-                                                  safeSetState(() {}));
-                                            },
-                                            onVerticalDragEnd: (details) async {
-                                              _model.textController?.clear();
-                                              _clearSearchResults();
-                                            },
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  valueOrDefault<String>(
-                                                    parkingsItemItem.address,
-                                                    'No address',
-                                                  ),
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                        fontSize: 17.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                                Divider(
-                                                  thickness: 2.0,
-                                                  color: FlutterFlowTheme.of(
-                                                          context)
-                                                      .checksFormsButtons,
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            Align(
-                              alignment: AlignmentDirectional(0.0, 1.0),
-                              child: Container(
-                                decoration: BoxDecoration(),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          16.0, 0.0, 16.0, 20.0),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              height: 40.0,
-                                              decoration: BoxDecoration(),
-                                              child: Container(
-                                                width: double.infinity,
-                                                child: TextFormField(
-                                                  controller:
-                                                      _model.textController,
-                                                  focusNode:
-                                                      _model.textFieldFocusNode,
-                                                  onChanged: (_) =>
-                                                      EasyDebounce.debounce(
-                                                    '_model.textController',
-                                                    Duration(milliseconds: 500),
-                                                    () async {
-                                                      if (_model.textController
-                                                          .text.isNotEmpty) {
-                                                        final query =
-                                                            _buildCurrentMapQuery(
-                                                          zoom: 20.0,
-                                                          searchQuery: functions
-                                                              .textToLower(_model
-                                                                  .textController
-                                                                  .text),
-                                                        );
-                                                        if (query != null) {
-                                                          await _loadSearchResults(
-                                                              query);
-                                                        }
-                                                      } else {
-                                                        _clearSearchResults();
-                                                      }
-                                                    },
-                                                  ),
-                                                  autofocus: false,
-                                                  enabled: true,
-                                                  obscureText: false,
-                                                  decoration: InputDecoration(
-                                                    isDense: true,
-                                                    labelStyle:
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .labelMedium
-                                                            .override(
-                                                              font: GoogleFonts
-                                                                  .roboto(
-                                                                fontWeight: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .labelMedium
-                                                                    .fontWeight,
-                                                                fontStyle: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .labelMedium
-                                                                    .fontStyle,
-                                                              ),
-                                                              color: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .searchMapsHinit,
-                                                              letterSpacing:
-                                                                  0.0,
-                                                              fontWeight:
-                                                                  FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .labelMedium
-                                                                      .fontWeight,
-                                                              fontStyle:
-                                                                  FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .labelMedium
-                                                                      .fontStyle,
-                                                            ),
-                                                    hintText:
-                                                        FFLocalizations.of(
-                                                                context)
-                                                            .getText(
-                                                      '601bzdk7' /* Search Maps */,
-                                                    ),
-                                                    hintStyle: FlutterFlowTheme
-                                                            .of(context)
-                                                        .labelLarge
-                                                        .override(
-                                                          font: GoogleFonts
-                                                              .roboto(
-                                                            fontWeight:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .labelLarge
-                                                                    .fontWeight,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .labelLarge
-                                                                    .fontStyle,
-                                                          ),
-                                                          color:
-                                                              Color(0xFF6C6C6C),
-                                                          fontSize: 17.0,
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                    enabledBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                        color:
-                                                            Color(0x00000000),
-                                                        width: 1.0,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                      ),
-                                                    ),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                        color:
-                                                            Color(0x00000000),
-                                                        width: 1.0,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                      ),
-                                                    ),
-                                                    errorBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                        color:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .error,
-                                                        width: 1.0,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                      ),
-                                                    ),
-                                                    focusedErrorBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                        color:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .error,
-                                                        width: 1.0,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                      ),
-                                                    ),
-                                                    filled: true,
-                                                    fillColor: FlutterFlowTheme
-                                                            .of(context)
-                                                        .secondaryBackground,
-                                                    contentPadding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(6.0, 0.0,
-                                                                0.0, 0.0),
-                                                    prefixIcon: Icon(
-                                                      FFIcons.kicnSearch,
-                                                      color: Color(0xFF6C6C6C),
-                                                      size: 20.0,
-                                                    ),
-                                                    suffixIcon: _model
-                                                            .textController!
-                                                            .text
-                                                            .isNotEmpty
-                                                        ? InkWell(
-                                                            onTap: () async {
-                                                              _model
-                                                                  .textController
-                                                                  ?.clear();
-                                                              _clearSearchResults();
-                                                            },
-                                                            child: Icon(
-                                                              Icons.clear,
-                                                              color: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .searchMapsHinit,
-                                                              size: 22,
-                                                            ),
-                                                          )
-                                                        : null,
-                                                  ),
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodyLarge
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                        fontSize: 17.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyLarge
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyLarge
-                                                                .fontStyle,
-                                                      ),
-                                                  cursorColor:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .primaryText,
-                                                  enableInteractiveSelection:
-                                                      true,
-                                                  validator: _model
-                                                      .textControllerValidator
-                                                      .asValidator(context),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    0.0, 0.0, 10.0, 0.0),
-                                            child: InkWell(
-                                              splashColor: Colors.transparent,
-                                              focusColor: Colors.transparent,
-                                              hoverColor: Colors.transparent,
-                                              highlightColor:
-                                                  Colors.transparent,
-                                              onTap: () async {
-                                                _model.textController?.clear();
-                                                _clearSearchResults();
-                                                await showModalBottomSheet(
-                                                  isScrollControlled: true,
-                                                  backgroundColor:
-                                                      Colors.transparent,
-                                                  enableDrag: false,
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return GestureDetector(
-                                                      onTap: () {
-                                                        FocusScope.of(context)
-                                                            .unfocus();
-                                                        FocusManager.instance
-                                                            .primaryFocus
-                                                            ?.unfocus();
-                                                      },
-                                                      child: Padding(
-                                                        padding: MediaQuery
-                                                            .viewInsetsOf(
-                                                                context),
-                                                        child: FilterWidget(),
-                                                      ),
-                                                    );
-                                                  },
-                                                ).then((value) => safeSetState(
-                                                    () => _model.filterOut =
-                                                        value));
-
-                                                if (_model.filterOut == true) {
-                                                  final query =
-                                                      _buildCurrentMapQuery();
-                                                  if (query != null) {
-                                                    await _loadMapPoints(query);
-                                                  }
-                                                }
-                                              },
-                                              child: Container(
-                                                width: 40.0,
-                                                height: 40.0,
-                                                decoration: BoxDecoration(
-                                                  color: FlutterFlowTheme.of(
-                                                          context)
-                                                      .secondaryBackground,
-                                                  borderRadius:
-                                                      BorderRadius.only(
-                                                    topRight:
-                                                        Radius.circular(10.0),
-                                                    bottomRight:
-                                                        Radius.circular(10.0),
-                                                  ),
-                                                ),
-                                                child: Align(
-                                                  alignment:
-                                                      AlignmentDirectional(
-                                                          0.0, 0.0),
-                                                  child: Icon(
-                                                    FFIcons.ksetting4,
-                                                    color: FFAppState()
-                                                            .isFilterApplied
-                                                        ? FlutterFlowTheme.of(
-                                                                context)
-                                                            .primary
-                                                        : Color(0xFF8E8E93),
-                                                    size: 20.0,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          InkWell(
-                                            splashColor: Colors.transparent,
-                                            focusColor: Colors.transparent,
-                                            hoverColor: Colors.transparent,
-                                            highlightColor: Colors.transparent,
-                                            onTap: () async {
-                                              context.pushNamed(
-                                                  ProfileWidget.routeName);
-                                            },
-                                            child: Container(
-                                              width: 36.0,
-                                              height: 36.0,
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    FlutterFlowTheme.of(context)
-                                                        .secondaryBackground,
-                                                borderRadius:
-                                                    BorderRadius.circular(10.0),
-                                              ),
-                                              child: ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(0.0),
-                                                child: SvgPicture.asset(
-                                                  'assets/images/menu.svg',
-                                                  width: 24.0,
-                                                  height: 24.0,
-                                                  fit: BoxFit.none,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    custom_widgets.BottomSpacer(
-                                      width: double.infinity,
-                                      height: 10.0,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                HomeMapSearchPanel(
+                  maxHeight: searchPanelMaxHeight(
+                    screenHeight: mediaQuery.size.height,
+                    keyboardInset: keyboardInset,
                   ),
+                  textController: _model.textController!,
+                  focusNode: _model.textFieldFocusNode!,
+                  validator:
+                      _model.textControllerValidator.asValidator(context),
+                  isSearching: _model.isSearching,
+                  results: _model.searchResults,
+                  isFilterApplied: FFAppState().isFilterApplied,
+                  onQueryChanged: _handleSearchQueryChanged,
+                  onClear: _clearSearchResults,
+                  onResultSelected: _handleSearchResultSelected,
+                  onFilterSelected: _handleFilterSelected,
+                  onProfileSelected: () {
+                    context.pushNamed(ProfileWidget.routeName);
+                  },
                 ),
               ],
             ),

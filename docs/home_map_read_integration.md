@@ -113,6 +113,7 @@ Presentation и Home:
 - `safeSetState`, generated navigation и dialogs сохранены;
 - `CustomGoogleMap` позднее переведён на immutable typed marker list, а search
   results — на отдельный `MapSearchResultItem`;
+- search panel позднее выделен в `HomeMapSearchPanel` с typed callbacks;
 - reverse geocoding позднее вынесен в typed shared boundary; актуальный отчёт:
   `docs/reverse_geocoding_read_integration.md`;
 - FlutterFlow dependencies не удалялись, пока они используются.

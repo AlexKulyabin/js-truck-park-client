@@ -217,10 +217,9 @@ Backend rollback не требуется.
 
 ## Следующий отдельный этап
 
-После real-device smoke test следует выбрать следующий bounded module по карте:
-либо типизированные callback value objects для viewport/long press, либо
-выделение search panel из большого generated Home widget. Второй вариант
-требует более тщательной widget-characterization.
+Search panel выделен из большого generated Home widget следующим отдельным
+этапом с typed callbacks. Актуальный отчёт:
+`docs/home_map_search_panel_extraction.md`.
 
 ## Предлагаемое сообщение Git-коммита
 
