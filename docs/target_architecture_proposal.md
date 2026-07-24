@@ -163,6 +163,10 @@ Repository не нужен language page, статическим onboarding page
   behind the guarded review-update capability. The service only accepts mutable
   review content (`comment` and five ratings) and scopes the Supabase update by
   both `id` and `user_id`; UI wiring remains a separate stage.
+- Review owner deletion is prepared in `ReviewsService.deleteReview(...)`
+  behind the guarded review-delete capability. It deletes the owner-scoped
+  review row and performs best-effort cleanup of associated public Storage
+  objects, reporting cleanup failures without reintroducing the deleted row.
 - Profile header, edit initial form and post-OTP profile-completion check now
   consume `PublicUserProfile` (`id`, `fullName`, `avatarUrl`) through
   `features/profile/data/UserProfileService`. Invite referral lookup uses the

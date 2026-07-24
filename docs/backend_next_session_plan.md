@@ -287,6 +287,12 @@ Supabase-контракты.
     typed `ReviewsService.updateReview(...)`. Сервис валидирует review id,
     owner id, content и ratings; Supabase gateway обновляет только `comment`
     и пять rating fields с фильтром по `id` + `user_id`. UI ещё не подключён.
+14. `refactor(reviews): add owner delete service` — добавлен
+    `ReviewsService.deleteReview(...)` за `AppWriteOperation.reviewDelete`.
+    Gateway сначала читает owner-scoped photo URLs, затем удаляет review row
+    по `id` + `user_id`, после чего best-effort чистит public Storage objects
+    и возвращает счётчик успешных/неуспешных cleanup операций. UI ещё не
+    подключён.
 
 Проверки:
 

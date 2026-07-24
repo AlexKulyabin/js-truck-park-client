@@ -1,4 +1,5 @@
 import '/backend/supabase/database/database.dart';
+import '/backend/supabase/storage/storage.dart';
 import '/core/config/app_config.dart';
 
 class ReviewMutationException implements Exception {
@@ -30,6 +31,16 @@ class UpdateReviewRequest {
   final int ratingSecurity;
   final int ratingInfrastructure;
   final int ratingComfort;
+}
+
+class DeleteReviewRequest {
+  const DeleteReviewRequest({
+    required this.reviewId,
+    required this.userId,
+  });
+
+  final int? reviewId;
+  final String userId;
 }
 
 class UpdatedReview {
@@ -67,6 +78,20 @@ class UpdatedReview {
   final double? averageScore;
 }
 
+class DeletedReview {
+  const DeletedReview({
+    required this.id,
+    required this.deletedStorageObjectCount,
+    required this.storageCleanupFailedCount,
+  });
+
+  final int id;
+  final int deletedStorageObjectCount;
+  final int storageCleanupFailedCount;
+}
+
+typedef PublicUrlDelete = Future<void> Function(String publicUrl);
+
 abstract interface class ReviewsGateway {
   Future<int> countParkingReviews({
     required String parkingId,
@@ -83,17 +108,27 @@ abstract interface class ReviewsGateway {
   Future<UpdatedReview> updateReview({
     required UpdateReviewRequest request,
   });
+
+  Future<DeletedReview> deleteReview({
+    required DeleteReviewRequest request,
+  });
 }
 
 class SupabaseReviewsGateway implements ReviewsGateway {
   SupabaseReviewsGateway({
     ReviewsTable? reviewsTable,
     ViewReviewsWithUsersTable? reviewsView,
+    ParkingPhotosTable? parkingPhotosTable,
+    PublicUrlDelete? deletePublicUrl,
   })  : _reviewsTable = reviewsTable ?? ReviewsTable(),
-        _reviewsView = reviewsView ?? ViewReviewsWithUsersTable();
+        _reviewsView = reviewsView ?? ViewReviewsWithUsersTable(),
+        _parkingPhotosTable = parkingPhotosTable ?? ParkingPhotosTable(),
+        _deletePublicUrl = deletePublicUrl ?? deleteSupabaseFileFromPublicUrl;
 
   final ReviewsTable _reviewsTable;
   final ViewReviewsWithUsersTable _reviewsView;
+  final ParkingPhotosTable _parkingPhotosTable;
+  final PublicUrlDelete _deletePublicUrl;
 
   @override
   Future<int> countParkingReviews({
@@ -166,6 +201,56 @@ class SupabaseReviewsGateway implements ReviewsGateway {
       throw const ReviewMutationException('Review was not updated.');
     }
     return UpdatedReview.fromRow(rows.first);
+  }
+
+  @override
+  Future<DeletedReview> deleteReview({
+    required DeleteReviewRequest request,
+  }) async {
+    final photoRows = await _parkingPhotosTable.queryRows(
+      queryFn: (q) => q
+          .eqOrNull(
+            'review_id',
+            request.reviewId,
+          )
+          .eqOrNull(
+            'user_id',
+            request.userId,
+          ),
+    );
+    final photoUrls = photoRows.map((photo) => photo.url).toList();
+    final deletedRows = await _reviewsTable.delete(
+      matchingRows: (q) => q
+          .eqOrNull(
+            'id',
+            request.reviewId,
+          )
+          .eqOrNull(
+            'user_id',
+            request.userId,
+          ),
+      returnRows: true,
+    );
+    if (deletedRows.isEmpty) {
+      throw const ReviewMutationException('Review was not deleted.');
+    }
+
+    var deletedStorageObjectCount = 0;
+    var storageCleanupFailedCount = 0;
+    for (final photoUrl in photoUrls) {
+      try {
+        await _deletePublicUrl(photoUrl);
+        deletedStorageObjectCount += 1;
+      } catch (_) {
+        storageCleanupFailedCount += 1;
+      }
+    }
+
+    return DeletedReview(
+      id: deletedRows.first.id,
+      deletedStorageObjectCount: deletedStorageObjectCount,
+      storageCleanupFailedCount: storageCleanupFailedCount,
+    );
   }
 }
 
@@ -258,6 +343,31 @@ class ReviewsService {
         ratingSecurity: request.ratingSecurity,
         ratingInfrastructure: request.ratingInfrastructure,
         ratingComfort: request.ratingComfort,
+      ),
+    );
+  }
+
+  Future<DeletedReview> deleteReview(DeleteReviewRequest request) async {
+    if (!_config.canPerformWrite(AppWriteOperation.reviewDelete)) {
+      throw const ReviewMutationException(
+        'Review deletion is disabled for this build.',
+      );
+    }
+
+    final normalizedReviewId = request.reviewId;
+    final normalizedUserId = request.userId.trim();
+    if (normalizedReviewId == null ||
+        normalizedReviewId <= 0 ||
+        normalizedUserId.isEmpty) {
+      throw const ReviewMutationException(
+        'Sign in again before deleting a review.',
+      );
+    }
+
+    return _gateway.deleteReview(
+      request: DeleteReviewRequest(
+        reviewId: normalizedReviewId,
+        userId: normalizedUserId,
       ),
     );
   }

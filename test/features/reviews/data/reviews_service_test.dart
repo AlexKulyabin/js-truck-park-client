@@ -185,6 +185,51 @@ void main() {
       expect(gateway.lastUpdateRequest?.userId, 'user-1');
       expect(gateway.calls, ['update:7:user-1']);
     });
+
+    test('rejects review deletes when capability is disabled', () async {
+      final gateway = _FakeReviewsGateway();
+      final service = ReviewsService(gateway: gateway);
+
+      await expectLater(
+        service.deleteReview(_deleteRequest()),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      expect(gateway.calls, isEmpty);
+    });
+
+    test('rejects invalid review delete payloads without querying', () async {
+      final gateway = _FakeReviewsGateway();
+      final service = _writeEnabledService(gateway);
+
+      await expectLater(
+        service.deleteReview(_deleteRequest(reviewId: 0)),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      await expectLater(
+        service.deleteReview(_deleteRequest(userId: ' ')),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      expect(gateway.calls, isEmpty);
+    });
+
+    test('deletes owner review for normalized owner identity', () async {
+      final gateway = _FakeReviewsGateway(
+        deletedReview: const DeletedReview(
+          id: 7,
+          deletedStorageObjectCount: 2,
+          storageCleanupFailedCount: 0,
+        ),
+      );
+      final service = _writeEnabledService(gateway);
+
+      final result = await service.deleteReview(
+        _deleteRequest(userId: ' user-1 '),
+      );
+
+      expect(result.deletedStorageObjectCount, 2);
+      expect(gateway.lastDeleteRequest?.userId, 'user-1');
+      expect(gateway.calls, ['delete:7:user-1']);
+    });
   });
 }
 
@@ -221,18 +266,31 @@ UpdateReviewRequest _updateRequest({
   );
 }
 
+DeleteReviewRequest _deleteRequest({
+  int? reviewId = 7,
+  String userId = 'user-1',
+}) {
+  return DeleteReviewRequest(
+    reviewId: reviewId,
+    userId: userId,
+  );
+}
+
 class _FakeReviewsGateway implements ReviewsGateway {
   _FakeReviewsGateway({
     this.reviewCount = 0,
     this.reviews = const [],
     this.updatedReview,
+    this.deletedReview,
   });
 
   final int reviewCount;
   final List<ParkingReview> reviews;
   final UpdatedReview? updatedReview;
+  final DeletedReview? deletedReview;
   final calls = <String>[];
   UpdateReviewRequest? lastUpdateRequest;
+  DeleteReviewRequest? lastDeleteRequest;
 
   @override
   Future<int> countParkingReviews({
@@ -274,6 +332,20 @@ class _FakeReviewsGateway implements ReviewsGateway {
           ratingInfrastructure: request.ratingInfrastructure,
           ratingComfort: request.ratingComfort,
           averageScore: 3,
+        );
+  }
+
+  @override
+  Future<DeletedReview> deleteReview({
+    required DeleteReviewRequest request,
+  }) async {
+    calls.add('delete:${request.reviewId}:${request.userId}');
+    lastDeleteRequest = request;
+    return deletedReview ??
+        DeletedReview(
+          id: request.reviewId!,
+          deletedStorageObjectCount: 0,
+          storageCleanupFailedCount: 0,
         );
   }
 }

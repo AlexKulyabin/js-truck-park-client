@@ -40,6 +40,12 @@ A future implementation must use one of these reviewed backend strategies:
 Returning success is allowed only when the review and every requested photo
 are visible together. Retrying the same submission must not create duplicates.
 
+Review deletion uses the inverse cleanup order in the prepared client service:
+capture owner-scoped photo URLs, delete the owner-scoped review row, then remove
+public Storage objects best-effort. If Storage cleanup fails after the row is
+gone, the result records failed cleanup count; a future backend job can retry
+orphan cleanup without restoring the deleted review.
+
 ## Activation prerequisites
 
 - version-controlled backend contract and migrations;
