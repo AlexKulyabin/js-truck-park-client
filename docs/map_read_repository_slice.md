@@ -206,7 +206,8 @@ Backend rollback не требуется.
 
 ## Следующий отдельный этап
 
-Добавить локальный `ParkingMapController` и immutable state без подключения UI:
+Добавить локальный `ParkingMapController` и immutable state без подключения UI
+(выполнено следующим отдельным коммитом):
 
 - generation token для stale responses;
 - loading/loaded/failure/retry;

@@ -311,7 +311,7 @@ Production consumers не изменены и новые domain types пока �
    redacted transport failure и immutable result. Выполнено; authenticated
    transport остаётся отдельным security-sensitive изменением.
 3. Добавить локальный `ParkingMapController` с loading/loaded/failure,
-   generation guard и retry; не подключать UI.
+   generation guard и retry; не подключать UI. Выполнено отдельным коммитом.
 4. Подключить только Home marker reads через composition boundary; сохранить
    search/filter/deep-link поведение и custom map presentation.
 5. После device regression test подключить SelectParking reads к тому же
