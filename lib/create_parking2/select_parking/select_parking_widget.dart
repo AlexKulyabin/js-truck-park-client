@@ -1,5 +1,7 @@
-import '/backend/api_requests/api_calls.dart';
 import '/create_parking2/create_parking_dialog2/create_parking_dialog2_widget.dart';
+import '/features/geocoding/application/reverse_geocoding_service.dart';
+import '/features/geocoding/data/google_reverse_geocoding_repository.dart';
+import '/features/geocoding/domain/reverse_geocoding_repository.dart';
 import '/features/map/application/parking_map_controller.dart';
 import '/features/map/data/supabase_parking_map_repository.dart';
 import '/features/map/domain/map_bounds.dart';
@@ -22,9 +24,11 @@ class SelectParkingWidget extends StatefulWidget {
   const SelectParkingWidget({
     super.key,
     this.parkingMapRepository,
+    this.reverseGeocodingRepository,
   });
 
   final ParkingMapRepository? parkingMapRepository;
+  final ReverseGeocodingRepository? reverseGeocodingRepository;
 
   static String routeName = 'SelectParking';
   static String routePath = '/selectParking';
@@ -36,6 +40,7 @@ class SelectParkingWidget extends StatefulWidget {
 class _SelectParkingWidgetState extends State<SelectParkingWidget> {
   late SelectParkingModel _model;
   late final ParkingMapController _parkingMapController;
+  late final ReverseGeocodingService _reverseGeocodingService;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   LatLng? currentUserLocationValue;
@@ -46,6 +51,10 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
     _model = createModel(context, () => SelectParkingModel());
     _parkingMapController = ParkingMapController(
       repository: widget.parkingMapRepository ?? SupabaseParkingMapRepository(),
+    );
+    _reverseGeocodingService = ReverseGeocodingService(
+      repository: widget.reverseGeocodingRepository ??
+          GoogleReverseGeocodingRepository(),
     );
 
     getCurrentUserLocation(defaultLocation: LatLng(0.0, 0.0), cached: true)
@@ -107,6 +116,19 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
     safeSetState(() {
       _model.parkingsOnMap = toLegacyMapItems(state.points);
     });
+  }
+
+  Future<void> _updateTemporaryAddress({
+    required double latitude,
+    required double longitude,
+  }) async {
+    FFAppState().tempAddress = await _reverseGeocodingService.resolveAddress(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    if (mounted) {
+      safeSetState(() {});
+    }
   }
 
   @override
@@ -211,19 +233,12 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
                           FFAppState().tempLng =
                               functions.getLng(longPressedPoint);
                           safeSetState(() {});
-                          _model.getAddressFromCoordsRes =
-                              await GetAddressFromCoordsCall.call(
-                            lat: FFAppState().tempLat,
-                            lng: FFAppState().tempLng,
+                          await _updateTemporaryAddress(
+                            latitude: FFAppState().tempLat,
+                            longitude: FFAppState().tempLng,
                           );
-
-                          if ((_model.getAddressFromCoordsRes?.succeeded ??
-                              true)) {
-                            FFAppState().tempAddress = getJsonField(
-                              (_model.getAddressFromCoordsRes?.jsonBody ?? ''),
-                              r'''$.results[0].formatted_address''',
-                            ).toString();
-                            safeSetState(() {});
+                          if (!mounted) {
+                            return;
                           }
                           await showDialog(
                             barrierColor: Color(0x66000000),

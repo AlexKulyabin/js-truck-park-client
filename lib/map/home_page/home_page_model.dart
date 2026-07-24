@@ -1,4 +1,3 @@
-import '/backend/api_requests/api_calls.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import 'home_page_widget.dart' show HomePageWidget;
 import 'package:flutter/material.dart';
@@ -40,8 +39,6 @@ class HomePageModel extends FlutterFlowModel<HomePageWidget> {
 
   // Stores action output result for [Custom Action - fetchPremiumExpirationDate] action in HomePage widget.
   DateTime? fetchPremiumExpirationDateOut;
-  // Stores action output result for [Backend Call - API (GetAddressFromCoords)] action in CustomGoogleMap widget.
-  ApiCallResponse? getAddressFromCoordsRes;
   // Stores action output result for [Alert Dialog - Custom Dialog] action in CustomGoogleMap widget.
   bool? closeCreateParkingDialogOut;
   // State field(s) for TextField widget.

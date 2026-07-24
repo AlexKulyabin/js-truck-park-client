@@ -106,7 +106,8 @@ Write-path создания парковки на этом этапе не ан�
 - `FFAppState` остаётся источником map filter values и временных координат;
 - `SelectParkingModel`, `createModel` и `safeSetState` сохранены;
 - `CustomGoogleMap` пока принимает legacy `List<dynamic>`;
-- `GetAddressFromCoordsCall` остаётся generated API call;
+- reverse geocoding позднее вынесен в typed shared boundary; generated call
+  остался только внутри data source;
 - `CreateParkingDialog2Widget` остаётся generated write-flow;
 - FlutterFlow dependencies не удалялись, пока они используются.
 
@@ -150,7 +151,8 @@ Write-path создания парковки на этом этапе не ан�
 - repository можно инъецировать;
 - SelectParking source не вызывает `GetFilteredParkingsCall` напрямую;
 - controller и adapter присутствуют на read boundary;
-- `GetAddressFromCoordsCall` и `CreateParkingDialog2Widget` остаются;
+- direct `GetAddressFromCoordsCall` отсутствует, а
+  `CreateParkingDialog2Widget` остаётся;
 - map domain/data/controller contracts продолжают проходить;
 - полный regression suite.
 
@@ -210,15 +212,10 @@ Backend rollback не требуется: сервер и production data не �
 
 ## Следующий отдельный этап
 
-После real-device smoke test выбрать один из двух независимых этапов:
-
-1. Изолировать reverse geocoding read transport в typed repository, не меняя
-   create write-flow.
-2. Начать typed API для `CustomGoogleMap`, устраняя последний
-   `List<dynamic>` presentation adapter.
-
-Безопаснее начать с reverse geocoding: это меньший boundary и не требует
-одновременно менять renderer двух карт.
+Reverse geocoding изолирован следующим отдельным этапом без изменения create
+write-flow. Актуальный отчёт: `docs/reverse_geocoding_read_integration.md`.
+Следующий возможный этап — typed API для `CustomGoogleMap`, устраняющий
+последний `List<dynamic>` presentation adapter.
 
 ## Предлагаемое сообщение Git-коммита
 

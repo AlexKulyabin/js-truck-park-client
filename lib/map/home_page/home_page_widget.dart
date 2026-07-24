@@ -1,6 +1,8 @@
-import '/backend/api_requests/api_calls.dart';
 import '/core/config/app_config.dart';
 import '/create_parking/create_parking_dialog/create_parking_dialog_widget.dart';
+import '/features/geocoding/application/reverse_geocoding_service.dart';
+import '/features/geocoding/data/google_reverse_geocoding_repository.dart';
+import '/features/geocoding/domain/reverse_geocoding_repository.dart';
 import '/features/map/application/parking_map_controller.dart';
 import '/features/map/data/supabase_parking_map_repository.dart';
 import '/features/map/domain/map_bounds.dart';
@@ -34,12 +36,14 @@ class HomePageWidget extends StatefulWidget {
     this.targetLat,
     this.targetLng,
     this.parkingMapRepository,
+    this.reverseGeocodingRepository,
   });
 
   final String? targetParkingId;
   final double? targetLat;
   final double? targetLng;
   final ParkingMapRepository? parkingMapRepository;
+  final ReverseGeocodingRepository? reverseGeocodingRepository;
 
   static String routeName = 'HomePage';
   static String routePath = '/homePage';
@@ -52,6 +56,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   late HomePageModel _model;
   late final ParkingMapController _parkingMapController;
   late final ParkingMapController _parkingSearchController;
+  late final ReverseGeocodingService _reverseGeocodingService;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   LatLng? currentUserLocationValue;
@@ -67,6 +72,10 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     );
     _parkingSearchController = ParkingMapController(
       repository: parkingMapRepository,
+    );
+    _reverseGeocodingService = ReverseGeocodingService(
+      repository: widget.reverseGeocodingRepository ??
+          GoogleReverseGeocodingRepository(),
     );
 
     // On page load action.
@@ -222,6 +231,19 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     });
   }
 
+  Future<void> _updateTemporaryAddress({
+    required double latitude,
+    required double longitude,
+  }) async {
+    FFAppState().tempAddress = await _reverseGeocodingService.resolveAddress(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    if (mounted) {
+      safeSetState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
@@ -342,21 +364,12 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                 FFAppState().tempLng =
                                     functions.getLng(longPressedPoint);
                                 safeSetState(() {});
-                                _model.getAddressFromCoordsRes =
-                                    await GetAddressFromCoordsCall.call(
-                                  lat: FFAppState().tempLat,
-                                  lng: FFAppState().tempLng,
+                                await _updateTemporaryAddress(
+                                  latitude: FFAppState().tempLat,
+                                  longitude: FFAppState().tempLng,
                                 );
-
-                                if ((_model
-                                        .getAddressFromCoordsRes?.succeeded ??
-                                    true)) {
-                                  FFAppState().tempAddress = getJsonField(
-                                    (_model.getAddressFromCoordsRes?.jsonBody ??
-                                        ''),
-                                    r'''$.results[0].formatted_address''',
-                                  ).toString();
-                                  safeSetState(() {});
+                                if (!mounted) {
+                                  return;
                                 }
                                 FFAppState().isMapUnLocked = false;
                                 safeSetState(() {});

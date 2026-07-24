@@ -112,7 +112,8 @@ Presentation и Home:
 - `HomePageModel` и `createModel` остаются частью lifecycle экрана;
 - `safeSetState`, generated navigation и dialogs сохранены;
 - `CustomGoogleMap` пока принимает legacy `List<dynamic>`;
-- generated `GetAddressFromCoordsCall` остаётся для reverse geocoding;
+- reverse geocoding позднее вынесен в typed shared boundary; актуальный отчёт:
+  `docs/reverse_geocoding_read_integration.md`;
 - FlutterFlow dependencies не удалялись, пока они используются.
 
 ## Созданные файлы
