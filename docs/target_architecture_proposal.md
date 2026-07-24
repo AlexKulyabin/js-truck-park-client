@@ -137,6 +137,9 @@ Repository не нужен language page, статическим onboarding page
 - Profile reviews/complaints reads now go through `ReviewsService` and
   `ReportsService`. The UI receives typed `ParkingReview`/`UserReport`
   objects instead of querying generated Supabase views directly.
+- Parking photo reads for details/request detail screens now use
+  `features/parking_photos/data/ParkingPhotosService`. Photo uploads remain in
+  the legacy create/review flows until a separate transactional write stage.
 
 ## Где нужен service
 

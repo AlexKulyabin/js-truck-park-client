@@ -2,6 +2,7 @@ import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/features/parking_photos/data/parking_photos_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -39,6 +40,7 @@ class ParkingsDetailsWidget extends StatefulWidget {
 
 class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late ParkingsDetailsModel _model;
+  final _parkingPhotosService = ParkingPhotosService();
 
   @override
   void setState(VoidCallback callback) {
@@ -908,12 +910,10 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                               ),
                                         ),
                                       ),
-                                      FutureBuilder<List<ParkingPhotosRow>>(
-                                        future: ParkingPhotosTable().queryRows(
-                                          queryFn: (q) => q.eqOrNull(
-                                            'parking_id',
-                                            widget!.parkingId,
-                                          ),
+                                      FutureBuilder<List<ParkingPhoto>>(
+                                        future: _parkingPhotosService
+                                            .listParkingPhotos(
+                                          parkingId: widget!.parkingId,
                                         ),
                                         builder: (context, snapshot) {
                                           // Customize what your widget looks like when it's loading.
@@ -934,10 +934,6 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                               ),
                                             );
                                           }
-                                          List<ParkingPhotosRow>
-                                              containerParkingPhotosRowList =
-                                              snapshot.data!;
-
                                           return Container(
                                             decoration: BoxDecoration(
                                               color:

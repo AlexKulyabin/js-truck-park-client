@@ -1,4 +1,5 @@
 import '/backend/supabase/supabase.dart';
+import '/features/parking_photos/data/parking_photos_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -32,6 +33,7 @@ class _ModerationParkingWidgetState extends State<ModerationParkingWidget> {
   late ModerationParkingModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  final _parkingPhotosService = ParkingPhotosService();
 
   @override
   void initState() {
@@ -173,14 +175,10 @@ class _ModerationParkingWidgetState extends State<ModerationParkingWidget> {
                           Padding(
                             padding: EdgeInsetsDirectional.fromSTEB(
                                 0.0, 0.0, 0.0, 16.0),
-                            child: FutureBuilder<List<ParkingPhotosRow>>(
-                              future: ParkingPhotosTable().queryRows(
-                                queryFn: (q) => q
-                                    .eqOrNull(
-                                      'parking_id',
-                                      widget!.parkingRow?.id,
-                                    )
-                                    .order('created_at'),
+                            child: FutureBuilder<List<ParkingPhoto>>(
+                              future: _parkingPhotosService.listParkingPhotos(
+                                parkingId: widget!.parkingRow?.id,
+                                orderByCreatedAt: true,
                               ),
                               builder: (context, snapshot) {
                                 // Customize what your widget looks like when it's loading.
@@ -198,8 +196,8 @@ class _ModerationParkingWidgetState extends State<ModerationParkingWidget> {
                                     ),
                                   );
                                 }
-                                List<ParkingPhotosRow>
-                                    photosParkingPhotosRowList = snapshot.data!;
+                                List<ParkingPhoto> photosParkingPhotosRowList =
+                                    snapshot.data!;
 
                                 return Builder(
                                   builder: (context) {
