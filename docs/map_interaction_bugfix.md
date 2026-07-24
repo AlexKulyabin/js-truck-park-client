@@ -20,6 +20,9 @@ production release contract changed.
   guard;
 - parking details dismiss only when vertical drag velocity is downward;
 - the same direction rule is used by the handle and the no-photo placeholder.
+- the photo gallery no longer captures vertical drags, so an upward drag over a
+  photo expands the scrollable details content while horizontal paging and
+  photo taps remain unchanged.
 
 ## Automated verification
 
@@ -38,10 +41,13 @@ production release contract changed.
 3. Open Delete account and confirm its destructive confirmation does nothing in
    `JS Truck Park Dev`.
 4. Return to Home and open a parking marker.
-5. Swipe the top handle upward; details must remain visible.
-6. Swipe the top handle downward; details must close.
-7. Repeat both gestures on a parking without photos.
-8. Confirm the close icon still closes details.
+5. Swipe upward directly over a visible photo; details must expand.
+6. Swipe horizontally over the photo; the gallery must change pages.
+7. Tap the photo; the full photo view must still open.
+8. Swipe the top handle upward; details must remain visible.
+9. Swipe the top handle downward; details must close.
+10. Repeat both handle gestures on a parking without photos.
+11. Confirm the close icon still closes details.
 
 ## Rollback
 

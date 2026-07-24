@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -107,6 +109,21 @@ Widget _buildRoutedSubject(_FakeRepository repository) =>
 
 void main() {
   setUp(FFAppState.reset);
+
+  test('does not intercept vertical drags over the photo gallery', () {
+    final source = File(
+      'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+    ).readAsStringSync();
+
+    expect(
+      source,
+      isNot(contains('onVerticalDragEnd: (details) async {}')),
+    );
+    expect(
+      source,
+      contains('key: ParkingsDetailsWidget.photoGalleryKey'),
+    );
+  });
 
   testWidgets('loads the bottom sheet through the repository boundary',
       (tester) async {

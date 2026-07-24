@@ -49,6 +49,7 @@ class ParkingsDetailsWidget extends StatefulWidget {
   static const failureKey = Key('public-parking-details-failure');
   static const emptyKey = Key('public-parking-details-empty');
   static const dragHandleKey = Key('public-parking-details-drag-handle');
+  static const photoGalleryKey = Key('public-parking-details-photo-gallery');
   static const favoriteButtonKey = Key('public-parking-favorite-button');
   static const favoriteUpdatingKey = Key('public-parking-favorite-updating');
 
@@ -281,8 +282,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
                               0.0, 0.0, 0.0, 16.0),
-                          child: GestureDetector(
-                            onVerticalDragEnd: (details) async {},
+                          child: KeyedSubtree(
+                            key: ParkingsDetailsWidget.photoGalleryKey,
                             child: Builder(
                               builder: (context) {
                                 if (mainContainerViewFullParkingDetailsRow
