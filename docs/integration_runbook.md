@@ -26,13 +26,17 @@ banner.
 - `/enterPhoneNumber`, `/validateSmsCode`;
 - `/homePage`;
 - `/profile` (read-only shell; account deletion is blocked);
+- `/payWall` (preview only; RevenueCat restore and purchase are blocked);
+- `/requests`, `/moderationParking`, `/acceptedParking`, `/rejectedParking`;
+- `/reviewsAndComplaints`, `/favourites`;
 - `/photoDetailed`, `/photoDetailedReviews`;
 - `/language`.
 
 All other routes redirect to Home for an authenticated test user or to phone
 authentication for a signed-out user. In particular, registration, profile
-editing, account deletion, parking/review/report creation, favorite writes,
-referrals, requests and subscription screens are unavailable.
+editing, account deletion, parking/review/report creation, favorite writes and
+referrals are unavailable. Profile lists and subscription presentation are
+read-only.
 
 ## Configuration
 
@@ -68,8 +72,11 @@ identity.
 8. Confirm RevenueCat and production deep links do not initialize.
 9. Open Profile and confirm its read-only information is visible while
    write-capable child screens return to Home and account deletion cannot run.
-10. Do not create a missing profile; registration is intentionally blocked.
-11. Sign out through Profile when needed; do not use account deletion.
+10. Open Subscription, Requests, Reviews and Favourites. Confirm their read-only
+    content loads and subscription actions do not start a store purchase.
+11. Open a request detail and a favourite parking, then return to Profile.
+12. Do not create a missing profile; registration is intentionally blocked.
+13. Sign out through Profile when needed; do not use account deletion.
 
 ## Verification commands
 

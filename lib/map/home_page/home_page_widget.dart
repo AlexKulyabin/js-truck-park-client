@@ -79,10 +79,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      if (AppConfig.current.integrationReadOnly) {
-        return;
-      }
-      if (FFAppState().isGuest == true) {
+      if (!AppConfig.current.integrationReadOnly &&
+          FFAppState().isGuest == true) {
         return;
       }
       if (widget.targetParkingId != null && widget.targetParkingId != '') {
@@ -106,6 +104,9 @@ class _HomePageWidgetState extends State<HomePageWidget> {
             );
           },
         ).then((value) => safeSetState(() {}));
+      }
+      if (AppConfig.current.integrationReadOnly) {
+        return;
       }
       _model.fetchPremiumExpirationDateOut =
           await actions.fetchPremiumExpirationDate();

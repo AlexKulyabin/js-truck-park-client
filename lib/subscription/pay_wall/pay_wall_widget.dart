@@ -1,4 +1,5 @@
 import '/backend/schema/structs/index.dart';
+import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -36,7 +37,16 @@ class _PayWallWidgetState extends State<PayWallWidget> {
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.smartPrices = await actions.getSmartSubscriptionPrices();
+      if (AppConfig.current.integrationReadOnly) {
+        _model.smartPrices = createSubscriptionPricesStructStruct(
+          monthly: '4.99 €',
+          annual: '49.99 €',
+          referral: '3.99 €',
+          isEligible: false,
+        );
+      } else {
+        _model.smartPrices = await actions.getSmartSubscriptionPrices();
+      }
       _model.isPageload = true;
       safeSetState(() {});
     });
@@ -556,6 +566,9 @@ class _PayWallWidgetState extends State<PayWallWidget> {
                     children: [
                       FFButtonWidget(
                         onPressed: () async {
+                          if (AppConfig.current.integrationReadOnly) {
+                            return;
+                          }
                           await revenue_cat.restorePurchases();
                           _model.fetchPremiumExpirationDateOut2 =
                               await actions.fetchPremiumExpirationDate();
@@ -640,6 +653,9 @@ class _PayWallWidgetState extends State<PayWallWidget> {
                       ),
                       FFButtonWidget(
                         onPressed: () async {
+                          if (AppConfig.current.integrationReadOnly) {
+                            return;
+                          }
                           var _shouldSetState = false;
                           _model.purchaseSmartPackageOut =
                               await actions.purchaseSmartPackage(
