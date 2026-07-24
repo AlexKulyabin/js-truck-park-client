@@ -161,9 +161,9 @@ Repository не нужен language page, статическим onboarding page
 - Profile header, edit initial form and post-OTP profile-completion check now
   consume `PublicUserProfile` (`id`, `fullName`, `avatarUrl`) through
   `features/profile/data/UserProfileService`. Invite referral lookup uses the
-  explicit private profile boundary for `referralCode`. The underlying gateway
-  still reads the legacy `users` table until the reviewed Supabase projection
-  rollout is complete.
+  explicit private profile boundary for `referralCode`. The Supabase gateway
+  now reads `public_profiles` and `private_profiles` views instead of the
+  legacy `users` table for profile reads.
 - Profile page local invite visibility state now lives in
   `features/profile/application/ProfileController` with immutable state. This is
   intentionally narrow and preserves the generated screen behavior while moving

@@ -83,16 +83,19 @@ abstract interface class UserProfileUpdateGateway {
 
 class SupabaseUserProfileGateway implements UserProfileGateway {
   SupabaseUserProfileGateway({
-    UsersTable? usersTable,
-  }) : _usersTable = usersTable ?? UsersTable();
+    PublicProfilesTable? publicProfilesTable,
+    PrivateProfilesTable? privateProfilesTable,
+  })  : _publicProfilesTable = publicProfilesTable ?? PublicProfilesTable(),
+        _privateProfilesTable = privateProfilesTable ?? PrivateProfilesTable();
 
-  final UsersTable _usersTable;
+  final PublicProfilesTable _publicProfilesTable;
+  final PrivateProfilesTable _privateProfilesTable;
 
   @override
   Future<List<PublicUserProfile>> listPublicProfilesByUserId({
     required String userId,
   }) async {
-    final rows = await _usersTable.querySingleRow(
+    final rows = await _publicProfilesTable.querySingleRow(
       queryFn: (q) => q.eqOrNull(
         'id',
         userId,
@@ -105,7 +108,7 @@ class SupabaseUserProfileGateway implements UserProfileGateway {
   Future<List<PrivateUserProfile>> listPrivateProfilesByUserId({
     required String userId,
   }) async {
-    final rows = await _usersTable.querySingleRow(
+    final rows = await _privateProfilesTable.querySingleRow(
       queryFn: (q) => q.eqOrNull(
         'id',
         userId,
@@ -235,7 +238,7 @@ class PublicUserProfile {
     required this.avatarUrl,
   });
 
-  factory PublicUserProfile.fromRow(UsersRow row) {
+  factory PublicUserProfile.fromRow(PublicProfilesRow row) {
     return PublicUserProfile(
       id: row.id,
       fullName: row.fullName,
@@ -263,7 +266,7 @@ class PrivateUserProfile {
     required this.isAdmin,
   });
 
-  factory PrivateUserProfile.fromRow(UsersRow row) {
+  factory PrivateUserProfile.fromRow(PrivateProfilesRow row) {
     return PrivateUserProfile(
       id: row.id,
       fullName: row.fullName,

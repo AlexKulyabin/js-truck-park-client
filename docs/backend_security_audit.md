@@ -61,7 +61,8 @@ Local mitigation in progress: migration
 `20260725100000_add_profile_projections.sql` adds `public_profiles`
 (`id`, `full_name`, `avatar_url`) and owner/admin `private_profiles` views with
 pgTAP coverage. This does not close production `users SELECT *` until Flutter
-callers are moved and a separate revoke rollout is approved.
+callers are verified against the projections and a separate revoke rollout is
+approved.
 
 Exposed contract: UUID, phone, premium/admin flags, moderation status, referral relation, device id, profile fields.
 
