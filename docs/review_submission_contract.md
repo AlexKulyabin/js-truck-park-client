@@ -1,13 +1,16 @@
 # Review submission safety contract
 
-## Current production behavior
+## Legacy production behavior
 
-The legacy review screen inserts a `reviews` row first, then uploads each file
-to Storage and inserts one `parking_photos` row per URL. These operations are
-not atomic. A failed upload or row insert can leave a review with only some
-photos, or an uploaded object without its database row.
+Before the guarded service path, the review screen inserted a `reviews` row
+first, then uploaded each file to Storage and inserted one `parking_photos` row
+per URL. Those operations were not atomic. A failed upload or row insert could
+leave a review with only some photos, or an uploaded object without its
+database row.
 
-This stage does not change or call that production flow.
+The current UI is wired through `ReviewSubmissionService`, but the write
+capability is still disabled by default and can only be enabled for guarded
+non-production test builds.
 
 ## Prepared client boundary
 
@@ -39,7 +42,10 @@ The current client implementation uses the staged upload strategy:
    public Storage object best-effort.
 
 Returning success is allowed only when the review and every requested photo
-are visible together. Retrying the same submission must not create duplicates.
+are visible together. The client uses deterministic object paths and best-effort
+compensation to limit duplicate/orphan risk, but a fully duplicate-safe retry
+contract still belongs in a future server-owned endpoint or RPC with an
+explicit idempotency key.
 
 Review deletion uses the inverse cleanup order in the prepared client service:
 capture owner-scoped photo URLs, delete the owner-scoped review row, then remove
@@ -52,7 +58,8 @@ orphan cleanup without restoring the deleted review.
 - version-controlled backend contract and migrations;
 - owner, cross-user and anonymous RLS/Storage policy tests;
 - failure tests for every upload and insert boundary;
-- idempotency and cleanup tests;
+- cleanup tests for Storage upload failure and photo-row insert failure;
+- server-side idempotency key before enabling broad production retries;
 - staging verification without production writes;
 - a separate commit that wires the UI to `ReviewSubmissionService`;
 - a separate photo-flow commit with compensation before photo submission is

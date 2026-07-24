@@ -299,6 +299,12 @@ Supabase-контракты.
     5 MiB, загружает объекты в `parking_content` по review-author path,
     создаёт `parking_photos` rows и компенсирует review/object state при
     ошибке. Review-create UI передаёт выбранные фото в сервис.
+16. `test(reviews): cover photo submission failure boundaries` —
+    добавлен отдельный тест на падение Storage upload после создания review:
+    сервис удаляет owner-scoped review row, не создаёт `parking_photos` rows
+    и не пытается чистить несуществующий public URL. Документирован предел
+    текущей клиентской компенсации: для fully duplicate-safe retry нужен
+    будущий server-owned endpoint/RPC с idempotency key.
 
 Проверки:
 
@@ -318,8 +324,7 @@ Supabase-контракты.
   отдельным этапом после read-side pilots;
 - reviews/reports profile tabs и request detail screens всё ещё используют
   generated rows напрямую и должны мигрировать отдельными маленькими этапами;
-- review create можно включать следующим отдельным Flutter-этапом через
-  `ReviewSubmissionService`, но фото должны идти через staged upload с
-  компенсацией и FlutterFlow constraints `maxWidth=1920`, `maxHeight=1920`,
-  `imageQuality=80`, bucket `parking_content`, MIME jpeg/png/webp и лимит
-  5 MiB.
+- review create уже переведён на `ReviewSubmissionService` и поддерживает
+  staged photo upload за guarded test-write flag; перед широким production
+  rollout нужен отдельный server-owned idempotency contract для безопасных
+  повторов после сетевых сбоев.

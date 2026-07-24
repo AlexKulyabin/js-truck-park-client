@@ -269,6 +269,38 @@ void main() {
       expect(reviewsTable.deletedReviewIds, [42]);
       expect(photoStorage.deletedUrls, ['https://storage.test/0.jpg']);
     });
+
+    test('supabase gateway compensates review after storage upload error',
+        () async {
+      final reviewsTable = _FakeReviewsTable();
+      final parkingPhotosTable = _FakeParkingPhotosTable();
+      final photoStorage = _FakeReviewPhotoStorageGateway(failUpload: true);
+      final gateway = SupabaseReviewSubmissionGateway(
+        reviewsTable: reviewsTable,
+        parkingPhotosTable: parkingPhotosTable,
+        photoStorage: photoStorage,
+      );
+
+      await expectLater(
+        gateway.submitAtomically(
+          submission: _service().prepare(
+            _command(
+              photos: [
+                ReviewPhotoDraft(
+                  fileName: 'photo.png',
+                  byteLength: 3,
+                  bytes: _photoBytes,
+                ),
+              ],
+            ),
+          ),
+        ),
+        throwsException,
+      );
+      expect(reviewsTable.deletedReviewIds, [42]);
+      expect(parkingPhotosTable.insertedRows, isEmpty);
+      expect(photoStorage.deletedUrls, isEmpty);
+    });
   });
 }
 
@@ -365,6 +397,9 @@ class _FakeParkingPhotosTable extends ParkingPhotosTable {
 }
 
 class _FakeReviewPhotoStorageGateway implements ReviewPhotoStorageGateway {
+  _FakeReviewPhotoStorageGateway({this.failUpload = false});
+
+  final bool failUpload;
   final uploads = <_FakeReviewPhotoUpload>[];
   final deletedUrls = <String>[];
 
@@ -374,6 +409,9 @@ class _FakeReviewPhotoStorageGateway implements ReviewPhotoStorageGateway {
     required Uint8List bytes,
     required String mimeType,
   }) async {
+    if (failUpload) {
+      throw Exception('upload failed');
+    }
     final index = uploads.length;
     uploads.add(
       _FakeReviewPhotoUpload(
