@@ -130,6 +130,10 @@ Repository не нужен language page, статическим onboarding page
 - Parking details review reads now use `features/reviews/data/ReviewsService`.
   The details info tab receives a typed count and the reviews tab/card receive
   `ParkingReview`, while review creation remains outside this read-only stage.
+- Report creation now uses `features/reports/data/ReportsService` with
+  `AppWriteOperation.reportCreate`. The service preserves the current insert
+  payload, validates the user/parking/report/status boundary and returns a
+  typed `CreatedReport`.
 
 ## Где нужен service
 

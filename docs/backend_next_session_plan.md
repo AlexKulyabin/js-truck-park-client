@@ -257,6 +257,9 @@ Supabase-контракты.
    Flutter UI не менялись, production write-команды не выполнялись. Локальный
    запуск `supabase test db ... --local` заблокирован отсутствующим соединением
    с local Postgres/Supabase (`LegacyDbConnectError`).
+8. `refactor(reports): move create writes into service` — report-create UI
+   пишет через `ReportsService` и `AppWriteOperation.reportCreate`, сохраняя
+   текущие поля insert. На ошибке UI показывает snackbar и не закрывает экран.
 
 Проверки:
 
@@ -276,8 +279,5 @@ Supabase-контракты.
   отдельным этапом после read-side pilots;
 - reviews/reports profile tabs и request detail screens всё ещё используют
   generated rows напрямую и должны мигрировать отдельными маленькими этапами;
-- report-create UI всё ещё пишет `reports` напрямую; перед включением нового
-  service нужно сохранить текущие поля insert и добавить client-side capability
-  отдельным коммитом;
 - новые write-capabilities добавлять только отдельными этапами после RLS и
   rollback contract.

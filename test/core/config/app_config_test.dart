@@ -14,6 +14,10 @@ void main() {
         config.canPerformWrite(AppWriteOperation.favoriteToggle),
         isTrue,
       );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reportCreate),
+        isTrue,
+      );
       expect(config.appDisplayName, 'JS Truck Park Dev');
     });
 
@@ -26,6 +30,10 @@ void main() {
       expect(config.enableDeepLinks, isTrue);
       expect(
         config.canPerformWrite(AppWriteOperation.favoriteToggle),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reportCreate),
         isTrue,
       );
       expect(config.appDisplayName, 'JS Truck Park');

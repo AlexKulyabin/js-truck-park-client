@@ -28,6 +28,8 @@ enabled write must be listed in `AppWriteOperation` and checked through
 Currently allowed:
 
 - `favoriteToggle`: insert/delete the current user's favorite parking row.
+- `reportCreate`: insert the current user's report row for a parking, using the
+  existing Flutter payload contract.
 
 ## Allowed integration routes
 
@@ -72,12 +74,15 @@ identity.
 4. Sign in only with the designated production test user.
 5. Confirm Home loads parking markers using `get_filtered_parkings`.
 6. Exercise viewport, search and filters.
-7. Open one parking details component from Home and toggle only the favorite
-   button; confirm the UI rolls back if the backend rejects the write.
-8. Confirm Language can switch between `en` and `ru`.
-9. Confirm RevenueCat and production deep links do not initialize.
-10. Do not create a missing profile; registration is intentionally blocked.
-11. Sign out by clearing the dev app or through a future integration-only safe
+7. Open one parking details component from Home and toggle the favorite button;
+   confirm the UI rolls back if the backend rejects the write.
+8. From the same parking details component, create only a test report using the
+   designated production test user; confirm the UI stays open and shows an
+   error if the backend rejects the write.
+9. Confirm Language can switch between `en` and `ru`.
+10. Confirm RevenueCat and production deep links do not initialize.
+11. Do not create a missing profile; registration is intentionally blocked.
+12. Sign out by clearing the dev app or through a future integration-only safe
     control; do not use account deletion.
 
 ## Verification commands

@@ -2,7 +2,10 @@ import 'package:flutter/foundation.dart';
 
 enum AppEnvironment { integration, production }
 
-enum AppWriteOperation { favoriteToggle }
+enum AppWriteOperation {
+  favoriteToggle,
+  reportCreate,
+}
 
 class AppConfig {
   const AppConfig._({
@@ -98,6 +101,7 @@ class AppConfig {
 
     return switch (operation) {
       AppWriteOperation.favoriteToggle => true,
+      AppWriteOperation.reportCreate => true,
     };
   }
 
