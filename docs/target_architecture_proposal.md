@@ -155,10 +155,11 @@ Repository не нужен language page, статическим onboarding page
   and its info/reviews/photos tabs receive typed `ParkingDetails` and
   `ParkingDetailPhoto` data instead of the generated Supabase view row.
 - Review submission now has a typed validation and gateway contract in
-  `ReviewSubmissionService`. The Supabase gateway supports no-photo review
-  inserts behind the guarded review-create capability, while photo submissions
-  still wait for the staged upload and compensation stage; the review-create UI
-  now calls this service instead of the legacy direct insert/upload loop.
+  `ReviewSubmissionService`. The Supabase gateway supports review inserts and
+  staged photo uploads behind the guarded review-create capability, preserving
+  FlutterFlow image constraints and compensating created review/object state on
+  failure. The review-create UI now calls this service instead of the legacy
+  direct insert/upload loop.
 - Review owner updates are prepared in `ReviewsService.updateReview(...)`
   behind the guarded review-update capability. The service only accepts mutable
   review content (`comment` and five ratings) and scopes the Supabase update by

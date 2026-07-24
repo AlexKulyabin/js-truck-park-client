@@ -21,21 +21,22 @@ This stage does not change or call that production flow.
   build;
 - a single `ReviewSubmissionGateway.submitAtomically` operation.
 
-`SupabaseReviewSubmissionGateway` currently supports the no-photo path as one
-direct `reviews` insert behind `AppWriteOperation.reviewCreate`. The review
-create UI calls this service when the guarded test-write capability is enabled.
-It explicitly rejects photo submissions until the staged upload and
-compensation contract is implemented.
+`SupabaseReviewSubmissionGateway` supports review creation behind
+`AppWriteOperation.reviewCreate`. The review create UI calls this service when
+the guarded test-write capability is enabled. Photo uploads keep the
+FlutterFlow picker constraints: `maxWidth=1920`, `maxHeight=1920`,
+`imageQuality=80`, JPEG/PNG/WebP only, and the Supabase bucket limit of 5 MiB.
 
 ## Partial failure rule
 
-A future implementation must use one of these reviewed backend strategies:
+The current client implementation uses the staged upload strategy:
 
-1. A server-owned atomic submission endpoint that validates the JWT owner,
-   creates the review and photo rows, and finalizes uploaded objects only after
-   all checks pass.
-2. A staged upload protocol with deterministic object paths and idempotent
-   compensation that removes every object and row created by a failed request.
+1. Create the owner-scoped `reviews` row.
+2. Upload each image to
+   `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>/...`.
+3. Insert one owner-scoped `parking_photos` row per uploaded object.
+4. If any step fails, delete the created review row and remove every uploaded
+   public Storage object best-effort.
 
 Returning success is allowed only when the review and every requested photo
 are visible together. Retrying the same submission must not create duplicates.

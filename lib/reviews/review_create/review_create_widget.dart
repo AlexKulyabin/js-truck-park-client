@@ -3285,13 +3285,6 @@ class _ReviewCreateWidgetState extends State<ReviewCreateWidget> {
                                   _model.textController.text == ''))
                       ? null
                       : () async {
-                          if (_model.photos.isNotEmpty) {
-                            showSnackbar(
-                              context,
-                              'Review photos are not enabled yet.',
-                            );
-                            return;
-                          }
                           try {
                             _model.createReviewOut =
                                 await _model.reviewSubmissionService.submit(
@@ -3324,6 +3317,18 @@ class _ReviewCreateWidgetState extends State<ReviewCreateWidget> {
                                         : 0,
                                 createdAt: getCurrentTimestamp,
                                 userId: currentUserUid,
+                                photos: _model.photos
+                                    .map(
+                                      (photo) => ReviewPhotoDraft(
+                                        fileName: photo.name ??
+                                            photo.originalFilename,
+                                        byteLength: photo.bytes?.length ?? 0,
+                                        bytes: photo.bytes,
+                                        width: photo.width,
+                                        height: photo.height,
+                                      ),
+                                    )
+                                    .toList(),
                               ),
                             );
                             if (!context.mounted) {

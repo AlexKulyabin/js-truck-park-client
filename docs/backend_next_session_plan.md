@@ -293,6 +293,12 @@ Supabase-контракты.
     по `id` + `user_id`, после чего best-effort чистит public Storage objects
     и возвращает счётчик успешных/неуспешных cleanup операций. UI ещё не
     подключён.
+15. `refactor(reviews): enable staged review photos` —
+    `ReviewSubmissionService` принимает bytes выбранных FlutterFlow photos,
+    сохраняет constraints `1920x1920`, quality `80`, MIME jpeg/png/webp и
+    5 MiB, загружает объекты в `parking_content` по review-author path,
+    создаёт `parking_photos` rows и компенсирует review/object state при
+    ошибке. Review-create UI передаёт выбранные фото в сервис.
 
 Проверки:
 
