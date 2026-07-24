@@ -1,8 +1,13 @@
 import '/backend/api_requests/api_calls.dart';
 import '/create_parking2/create_parking_dialog2/create_parking_dialog2_widget.dart';
+import '/features/map/application/parking_map_controller.dart';
+import '/features/map/data/supabase_parking_map_repository.dart';
+import '/features/map/domain/map_bounds.dart';
+import '/features/map/domain/map_parking_query.dart';
+import '/features/map/domain/parking_map_repository.dart';
+import '/features/map/presentation/map_read_adapter.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/parkings_details/parkings_details/parkings_details_widget.dart';
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
@@ -14,7 +19,12 @@ import 'select_parking_model.dart';
 export 'select_parking_model.dart';
 
 class SelectParkingWidget extends StatefulWidget {
-  const SelectParkingWidget({super.key});
+  const SelectParkingWidget({
+    super.key,
+    this.parkingMapRepository,
+  });
+
+  final ParkingMapRepository? parkingMapRepository;
 
   static String routeName = 'SelectParking';
   static String routePath = '/selectParking';
@@ -25,6 +35,7 @@ class SelectParkingWidget extends StatefulWidget {
 
 class _SelectParkingWidgetState extends State<SelectParkingWidget> {
   late SelectParkingModel _model;
+  late final ParkingMapController _parkingMapController;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   LatLng? currentUserLocationValue;
@@ -33,6 +44,9 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => SelectParkingModel());
+    _parkingMapController = ParkingMapController(
+      repository: widget.parkingMapRepository ?? SupabaseParkingMapRepository(),
+    );
 
     getCurrentUserLocation(defaultLocation: LatLng(0.0, 0.0), cached: true)
         .then((loc) => safeSetState(() => currentUserLocationValue = loc));
@@ -41,9 +55,58 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
 
   @override
   void dispose() {
+    _parkingMapController.dispose();
     _model.dispose();
 
     super.dispose();
+  }
+
+  MapFilterSnapshot _currentFilterSnapshot() => MapFilterSnapshot(
+        radiusMeters: FFAppState().isFilterShowNearest
+            ? functions.getMetersFromIndex(FFAppState().filterRadius)
+            : 0.0,
+        minCapacity: FFAppState().filterCapacityFrom,
+        maxCapacity: FFAppState().filterCapacityTo,
+        needGas: FFAppState().isFilterHasGas,
+        needShower: FFAppState().isFilterHasShower,
+        needLaundry: FFAppState().isFilterHasLaundry,
+        needHotel: FFAppState().isFilterHasHotel,
+        needShop: FFAppState().isFilterHasShop,
+        needRecreation: FFAppState().isFilterHasRecreation,
+        isActive: FFAppState().isFilterApplied,
+      );
+
+  MapParkingQuery _buildMapQuery({
+    required double minLat,
+    required double minLng,
+    required double maxLat,
+    required double maxLng,
+    required double zoom,
+  }) =>
+      buildMapParkingQuery(
+        bounds: MapBounds(
+          minLatitude: minLat,
+          minLongitude: minLng,
+          maxLatitude: maxLat,
+          maxLongitude: maxLng,
+        ),
+        zoom: zoom,
+        filter: _currentFilterSnapshot(),
+      );
+
+  Future<void> _loadMapPoints(MapParkingQuery query) async {
+    await _parkingMapController.load(query);
+    if (!mounted) {
+      return;
+    }
+    final state = _parkingMapController.state;
+    if (!identical(state.query, query) ||
+        state.phase != ParkingMapLoadPhase.loaded) {
+      return;
+    }
+    safeSetState(() {
+      _model.parkingsOnMap = toLegacyMapItems(state.points);
+    });
   }
 
   @override
@@ -132,37 +195,15 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
                           _model.lngMax = maxLng;
                           _model.currentZoom = zoom;
                           safeSetState(() {});
-                          _model.getFilteredParkings =
-                              await GetFilteredParkingsCall.call(
-                            minLat: minLat,
-                            maxLat: maxLat,
-                            minLng: minLng,
-                            maxLng: maxLng,
-                            isActive: FFAppState().isFilterApplied,
-                            radius: FFAppState().isFilterShowNearest
-                                ? functions.getMetersFromIndex(
-                                    FFAppState().filterRadius)
-                                : 0.0,
-                            lat: (minLat + maxLat) / 2,
-                            lng: (minLng + maxLng) / 2,
-                            minCap: FFAppState().filterCapacityFrom,
-                            maxCap: FFAppState().filterCapacityTo,
-                            gas: FFAppState().isFilterHasGas,
-                            shower: FFAppState().isFilterHasShower,
-                            laundry: FFAppState().isFilterHasLaundry,
-                            hotel: FFAppState().isFilterHasHotel,
-                            shop: FFAppState().isFilterHasShop,
-                            recreation: FFAppState().isFilterHasRecreation,
-                            zoom: zoom,
+                          await _loadMapPoints(
+                            _buildMapQuery(
+                              minLat: minLat,
+                              minLng: minLng,
+                              maxLat: maxLat,
+                              maxLng: maxLng,
+                              zoom: zoom,
+                            ),
                           );
-
-                          if ((_model.getFilteredParkings?.succeeded ?? true)) {
-                            _model.parkingsOnMap =
-                                (_model.getFilteredParkings?.jsonBody ?? '');
-                            safeSetState(() {});
-                          }
-
-                          safeSetState(() {});
                         },
                         onLongPress: (longPressedPoint) async {
                           FFAppState().tempLat =

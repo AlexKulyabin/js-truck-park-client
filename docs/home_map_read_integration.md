@@ -223,10 +223,10 @@ Backend rollback не нужен: сервер не изменялся.
 
 ## Следующий отдельный этап
 
-Сначала выполнить ручной Android smoke test этого Home slice. После
-подтверждения — отдельным коммитом подключить тот же repository/controller к
-`SelectParking`, не меняя write-flow создания парковки. Не объединять это с
-переходом `CustomGoogleMap` на typed marker API.
+Home slice был подтверждён и `SelectParking` подключён следующим отдельным
+этапом без изменения write-flow. Актуальный отчёт:
+`docs/select_parking_map_read_integration.md`. Переход `CustomGoogleMap` на
+typed marker API остаётся отдельной будущей задачей.
 
 ## Предлагаемое сообщение Git-коммита
 
