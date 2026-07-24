@@ -155,6 +155,11 @@ Impact: неоднозначный referrer, обход device uniqueness, infor
 
 Impact: некорректные агрегаты, невозможные координаты, drift business states.
 
+Report creation RLS is now covered by a local pgTAP contract test for the
+current owner-only insert and owner/admin select behavior. This does not change
+the typo default or add enum/check constraints; those remain separate backend
+hardening tasks after data audit.
+
 ### P2 — публичные buckets и stale policies
 
 `assets`, `avatars`, `parking_content` публичные. Это может быть намеренно для UI, но URL не должен считаться приватным. Локальные migrations теперь закрывают avatar и parking_content write/delete по owner path; до production rollout нужен read-only diff hosted Storage policies, чтобы подтвердить отсутствие дополнительных permissive rules.

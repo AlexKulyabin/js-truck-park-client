@@ -251,6 +251,12 @@ Supabase-контракты.
    `reviews_tab` читают `reviews` / `view_reviews_with_users` через
    `ReviewsService`; карточка parking details получает `ParkingReview`, а
    создание reviews/reports не менялось.
+7. `test(reports): document create authorization contract` — добавлен
+   транзакционный pgTAP contract test для `reports`: owner insert, запрет
+   cross-user/anon insert, owner/admin select и service-role insert. Схема и
+   Flutter UI не менялись, production write-команды не выполнялись. Локальный
+   запуск `supabase test db ... --local` заблокирован отсутствующим соединением
+   с local Postgres/Supabase (`LegacyDbConnectError`).
 
 Проверки:
 
@@ -262,10 +268,16 @@ Supabase-контракты.
 Ограничения:
 
 - Supabase local pgTAP/RLS smoke не запускался в рамках Flutter-only этапа;
+- reports pgTAP contract test добавлен, но локально не выполнен из-за
+  недоступного local Postgres/Supabase; перед rollout нужно повторить его на
+  поднятом local Supabase или staging clone;
 - favorite toggle в parking details всё ещё хранит локальный bool в
   FlutterFlow model; перенос optimistic action в controller лучше делать
   отдельным этапом после read-side pilots;
 - reviews/reports profile tabs и request detail screens всё ещё используют
   generated rows напрямую и должны мигрировать отдельными маленькими этапами;
+- report-create UI всё ещё пишет `reports` напрямую; перед включением нового
+  service нужно сохранить текущие поля insert и добавить client-side capability
+  отдельным коммитом;
 - новые write-capabilities добавлять только отдельными этапами после RLS и
   rollback contract.

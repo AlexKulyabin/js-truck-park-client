@@ -112,6 +112,14 @@ RLS включён. Текущие permissive policies разрешают чте
 
 `id bigint identity`, `parking_id -> parkings.id CASCADE`, `user_id -> auth.users.id SET NULL`, `category`, `comment`, `report`, `status`, `created_at`. Default `status` сейчас равен строке `penging` — подтверждённая опечатка контракта. RLS разрешает insert владельцу и select владельцу/admin.
 
+Flutter report-create contract currently writes explicit `parking_id`,
+`user_id = currentUserUid`, `comment`, `status = approved`, `report` enum name
+and `created_at`. Because the client writes `status` explicitly, the typo
+default is documented but not part of the active Flutter insert path. The local
+contract test `supabase/tests/database/reports_authorization_test.sql` verifies
+owner insert, cross-user denial, anonymous denial, owner/admin select scope and
+service-role insert access without changing production data.
+
 ### `referral_stats`
 
 `id uuid`, `referrer_id -> auth.users.id SET NULL`, `referee_id -> auth.users.id CASCADE`, `device_id`, `ip_address`, `status`, `created_at`. Уникальны `referee_id` и `device_id`. RLS включён, прямых policies нет; доступ выполняет SECURITY DEFINER RPC `process_referral`.
