@@ -5,6 +5,7 @@ enum AppEnvironment { integration, production }
 enum AppWriteOperation {
   favoriteToggle,
   reportCreate,
+  reviewCreate,
 }
 
 class AppConfig {
@@ -95,13 +96,10 @@ class AppConfig {
   bool get enableDeepLinks => isProduction;
 
   bool canPerformWrite(AppWriteOperation operation) {
-    if (isProduction) {
-      return true;
-    }
-
     return switch (operation) {
       AppWriteOperation.favoriteToggle => true,
       AppWriteOperation.reportCreate => true,
+      AppWriteOperation.reviewCreate => false,
     };
   }
 

@@ -18,6 +18,10 @@ void main() {
         config.canPerformWrite(AppWriteOperation.reportCreate),
         isTrue,
       );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewCreate),
+        isFalse,
+      );
       expect(config.appDisplayName, 'JS Truck Park Dev');
     });
 
@@ -35,6 +39,10 @@ void main() {
       expect(
         config.canPerformWrite(AppWriteOperation.reportCreate),
         isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewCreate),
+        isFalse,
       );
       expect(config.appDisplayName, 'JS Truck Park');
     });

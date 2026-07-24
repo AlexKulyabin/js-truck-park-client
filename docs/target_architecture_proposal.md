@@ -154,6 +154,10 @@ Repository не нужен language page, статическим onboarding page
 - Main parking detail reads now use `ParkingDetailsService`. The detail sheet
   and its info/reviews/photos tabs receive typed `ParkingDetails` and
   `ParkingDetailPhoto` data instead of the generated Supabase view row.
+- Review submission now has a typed validation and atomic gateway contract in
+  `ReviewSubmissionService`. `AppWriteOperation.reviewCreate` remains disabled,
+  no Supabase gateway exists and the legacy production UI is not wired to it;
+  activation prerequisites are recorded in `review_submission_contract.md`.
 
 ## Где нужен service
 

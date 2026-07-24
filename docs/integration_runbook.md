@@ -31,6 +31,12 @@ Currently allowed:
 - `reportCreate`: insert the current user's report row for a parking, using the
   existing Flutter payload contract.
 
+Reserved but disabled in every build:
+
+- `reviewCreate`: the typed client contract exists, but it has no gateway/UI
+  wiring and cannot be enabled before the atomic submission prerequisites in
+  `review_submission_contract.md` are complete.
+
 ## Allowed integration routes
 
 - `/`, `/splash`;
