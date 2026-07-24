@@ -103,8 +103,10 @@ domain/application  -X-> Supabase / FlutterFlow rows
   сохранены;
 - `lib/parkings_details/parkings_details/parkings_details_model.dart` — удалён
   ставший ненужным favorite query output и unused imports;
-- `lib/parkings_details/info_tab/info_tab_widget.dart` — review count читается из
-  подтверждённого view aggregate вместо загрузки всех review rows;
+- `lib/parkings_details/info_tab/info_tab_widget.dart` — адрес, рейтинг,
+  capacity, services и review count читаются из typed `ParkingDetails`; review
+  count берётся из подтверждённого view aggregate вместо загрузки всех review
+  rows;
 - `lib/parkings_details/info_tab/info_tab_model.dart` — только cleanup imports;
 - `lib/parkings_details/reviews_tab/reviews_tab_widget.dart` — отзывы
   загружаются через общий controller/repository и отображаются из typed
@@ -211,8 +213,9 @@ Realtime, migrations, grants и RLS не менялись.
 - `FlutterFlowTheme`, `FFLocalizations`, generated buttons, guest/subscription
   dialogs и navigation serialization продолжают использоваться;
 - существующий `ViewFullParkingDetailsRow` временно создаётся compatibility
-  adapter для немигрированных Info tab и parent gallery/actions; публичные
-  Reviews и Photos tabs уже используют typed `ParkingReview`/`ParkingDetails`;
+  adapter для parent gallery/actions и remaining Reviews tab summary; публичные
+  Info, Reviews и Photos tabs уже используют typed
+  `ParkingDetails`/`ParkingReview`;
 - photo parameters `photoPath`, `index`, `address`, `photoCount`, `photoRef`,
   `data` не менялись;
 - FlutterFlow dependencies не удалялись, пока они используются.

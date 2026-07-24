@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/parking_details/domain/parking_details.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -13,10 +13,10 @@ export 'info_tab_model.dart';
 class InfoTabWidget extends StatefulWidget {
   const InfoTabWidget({
     super.key,
-    required this.parkingRow,
+    required this.details,
   });
 
-  final ViewFullParkingDetailsRow? parkingRow;
+  final ParkingDetails details;
 
   @override
   State<InfoTabWidget> createState() => _InfoTabWidgetState();
@@ -75,7 +75,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                 Flexible(
                   child: Text(
                     valueOrDefault<String>(
-                      widget!.parkingRow?.address,
+                      widget.details.address,
                       'No address',
                     ),
                     maxLines: 2,
@@ -131,7 +131,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                   children: [
                     Text(
                       valueOrDefault<String>(
-                        widget!.parkingRow?.rating?.toString(),
+                        widget.details.rating?.toString(),
                         '4.0',
                       ),
                       style: FlutterFlowTheme.of(context).bodyLarge.override(
@@ -151,7 +151,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                     Text(
                       valueOrDefault<String>(
                         '${valueOrDefault<String>(
-                          widget!.parkingRow?.reviewsCount?.toString(),
+                          widget.details.reviewsCount?.toString(),
                           '0',
                         )} ${FFLocalizations.of(context).getVariableText(
                           enText: 'reviews',
@@ -230,7 +230,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                     ),
                     Text(
                       valueOrDefault<String>(
-                        widget!.parkingRow?.totalSpaces?.toString(),
+                        widget.details.totalSpaces?.toString(),
                         '-',
                       ),
                       style: FlutterFlowTheme.of(context).labelLarge.override(
@@ -290,7 +290,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                         ),
                   ),
                 ),
-                if (widget!.parkingRow?.hasGasStation ?? true)
+                if (widget.details.hasGasStation ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -332,7 +332,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasShower ?? true)
+                if (widget.details.hasShower ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -374,7 +374,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasLaundry ?? true)
+                if (widget.details.hasLaundry ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -416,7 +416,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasHotel ?? true)
+                if (widget.details.hasHotel ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -458,7 +458,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasShop ?? true)
+                if (widget.details.hasShop ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -500,7 +500,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasRecreationArea ?? true)
+                if (widget.details.hasRecreationArea ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),

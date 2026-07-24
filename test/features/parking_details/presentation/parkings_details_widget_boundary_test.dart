@@ -147,6 +147,16 @@ void main() {
     expect(source, isNot(contains('/backend/supabase/supabase.dart')));
   });
 
+  test('renders info tab from the typed parking details model', () {
+    final source = File(
+      'lib/parkings_details/info_tab/info_tab_widget.dart',
+    ).readAsStringSync();
+
+    expect(source, contains('ParkingDetails'));
+    expect(source, isNot(contains('ViewFullParkingDetailsRow')));
+    expect(source, isNot(contains('/backend/supabase/supabase.dart')));
+  });
+
   testWidgets('loads the bottom sheet through the repository boundary',
       (tester) async {
     final repository = _FakeRepository()
