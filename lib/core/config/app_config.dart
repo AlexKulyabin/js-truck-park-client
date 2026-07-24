@@ -100,6 +100,15 @@ class AppConfig {
         'Authorization': 'Bearer $supabasePublishableKey',
       };
 
+  Map<String, String> authenticatedSupabaseHeaders(String accessToken) {
+    final token = accessToken.trim();
+    return {
+      'apikey': supabasePublishableKey,
+      'Authorization':
+          'Bearer ${token.isEmpty ? supabasePublishableKey : token}',
+    };
+  }
+
   @override
   String toString() => 'AppConfig(environment: ${environment.name})';
 }

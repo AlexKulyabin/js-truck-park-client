@@ -90,6 +90,8 @@ Fix:
 - добавить уникальность referral code и controlled retry генерации;
 - rate-limit на backend/edge boundary.
 
+Локальная реализация: начата в `20260724101000_harden_process_referral.sql`; функция теперь требует authenticated EXECUTE, сравнивает `p_referee_id` с `auth.uid()`, возвращает стабильные публичные ошибки без `SQLERRM`, а Flutter RPC wrapper передаёт текущий JWT. pgTAP test добавлен, но локальный запуск сейчас заблокирован недоступным Docker daemon. Production status: не применено.
+
 ### P1 — произвольное удаление/создание parking photos
 
 Evidence:

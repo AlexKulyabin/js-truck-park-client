@@ -548,6 +548,7 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                   refCode: FFAppState().tempReferralCode,
                                   refereeId: currentUserUid,
                                   deviceId: FFAppState().deviceId,
+                                  userToken: currentJwtToken,
                                 );
 
                                 if ((_model.apiResult8fn?.succeeded ?? true)) {

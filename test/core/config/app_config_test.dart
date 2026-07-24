@@ -39,6 +39,21 @@ void main() {
       expect(config.anonymousSupabaseHeaders['apikey'], 'sb_publishable_test');
     });
 
+    test('builds authenticated Supabase headers with a user token', () {
+      final config = AppConfig.resolve(
+        isReleaseMode: false,
+        supabasePublishableKeyOverride: 'sb_publishable_test',
+      );
+
+      expect(
+        config.authenticatedSupabaseHeaders('user-jwt'),
+        {
+          'apikey': 'sb_publishable_test',
+          'Authorization': 'Bearer user-jwt',
+        },
+      );
+    });
+
     test('rejects an unknown environment', () {
       expect(
         () => AppConfig.resolve(
