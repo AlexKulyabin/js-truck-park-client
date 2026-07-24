@@ -19,6 +19,10 @@ void main() {
         isTrue,
       );
       expect(
+        config.canPerformWrite(AppWriteOperation.profileUpdate),
+        isFalse,
+      );
+      expect(
         config.canPerformWrite(AppWriteOperation.reviewCreate),
         isFalse,
       );
@@ -39,6 +43,10 @@ void main() {
       expect(
         config.canPerformWrite(AppWriteOperation.reportCreate),
         isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.profileUpdate),
+        isFalse,
       );
       expect(
         config.canPerformWrite(AppWriteOperation.reviewCreate),

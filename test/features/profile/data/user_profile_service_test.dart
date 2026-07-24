@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:j_s_truck_park/core/config/app_config.dart';
 import 'package:j_s_truck_park/features/profile/data/user_profile_service.dart';
 
 void main() {
@@ -85,6 +86,93 @@ void main() {
 
       expect(result, isFalse);
     });
+
+    test('prepares profile update while preserving current name behavior', () {
+      final service = UserProfileService(gateway: _FakeUserProfileGateway());
+
+      final update = service.prepareUpdate(
+        UpdateUserProfileCommand(
+          userId: ' user-1 ',
+          fullName: '  Driver One  ',
+          updatedAt: DateTime(2026, 7, 25),
+          avatar: const UserAvatarDraft(
+            fileName: 'avatar.jpg',
+            byteLength: 512,
+            mimeType: 'image/jpeg',
+          ),
+        ),
+      );
+
+      expect(update.userId, 'user-1');
+      expect(update.fullName, '  Driver One  ');
+      expect(update.requiresAvatarHandling, isTrue);
+    });
+
+    test('rejects missing owner and invalid avatar drafts', () {
+      final service = UserProfileService(gateway: _FakeUserProfileGateway());
+
+      expect(
+        () => service.prepareUpdate(
+          UpdateUserProfileCommand(
+            userId: ' ',
+            fullName: 'Driver One',
+            updatedAt: DateTime(2026, 7, 25),
+          ),
+        ),
+        throwsA(
+          isA<UserProfileUpdateException>().having(
+            (error) => error.failure,
+            'failure',
+            UserProfileUpdateFailure.invalidIdentity,
+          ),
+        ),
+      );
+      expect(
+        () => service.prepareUpdate(
+          UpdateUserProfileCommand(
+            userId: 'user-1',
+            fullName: 'Driver One',
+            updatedAt: DateTime(2026, 7, 25),
+            avatar: const UserAvatarDraft(fileName: '', byteLength: 1),
+          ),
+        ),
+        throwsA(
+          isA<UserProfileUpdateException>().having(
+            (error) => error.failure,
+            'failure',
+            UserProfileUpdateFailure.invalidAvatar,
+          ),
+        ),
+      );
+    });
+
+    test('disabled capability prevents every profile update gateway write',
+        () async {
+      final updateGateway = _FakeUserProfileUpdateGateway();
+      final service = UserProfileService(
+        gateway: _FakeUserProfileGateway(),
+        updateGateway: updateGateway,
+        config: AppConfig.resolve(isReleaseMode: false),
+      );
+
+      await expectLater(
+        service.updateProfile(
+          UpdateUserProfileCommand(
+            userId: 'user-1',
+            fullName: 'Driver One',
+            updatedAt: DateTime(2026, 7, 25),
+          ),
+        ),
+        throwsA(
+          isA<UserProfileUpdateException>().having(
+            (error) => error.failure,
+            'failure',
+            UserProfileUpdateFailure.disabled,
+          ),
+        ),
+      );
+      expect(updateGateway.calls, 0);
+    });
   });
 }
 
@@ -102,5 +190,27 @@ class _FakeUserProfileGateway implements UserProfileGateway {
   }) async {
     calls.add('list:$userId');
     return profiles;
+  }
+}
+
+class _FakeUserProfileUpdateGateway implements UserProfileUpdateGateway {
+  int calls = 0;
+
+  @override
+  Future<UserProfile> updateProfileAtomically({
+    required PreparedUserProfileUpdate update,
+  }) async {
+    calls += 1;
+    return UserProfile(
+      id: update.userId,
+      fullName: update.fullName,
+      avatarUrl: null,
+      phone: null,
+      isPremium: null,
+      referralCode: null,
+      theme: null,
+      status: null,
+      isAdmin: null,
+    );
   }
 }

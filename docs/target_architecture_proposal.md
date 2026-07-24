@@ -169,6 +169,10 @@ Repository не нужен language page, статическим onboarding page
 - Edit profile initial form data now also uses `UserProfileService`, so profile
   read paths are behind the typed boundary. The save action is intentionally
   still legacy until the guarded profile update contract is introduced.
+- Profile update now has a typed validation and atomic gateway contract in
+  `UserProfileService`. `AppWriteOperation.profileUpdate` remains disabled, no
+  Supabase update gateway exists and the legacy edit UI is not wired to it;
+  activation prerequisites are recorded in `profile_update_contract.md`.
 
 ## Где нужен service
 

@@ -4,6 +4,7 @@ enum AppEnvironment { integration, production }
 
 enum AppWriteOperation {
   favoriteToggle,
+  profileUpdate,
   reportCreate,
   reviewCreate,
 }
@@ -98,6 +99,7 @@ class AppConfig {
   bool canPerformWrite(AppWriteOperation operation) {
     return switch (operation) {
       AppWriteOperation.favoriteToggle => true,
+      AppWriteOperation.profileUpdate => false,
       AppWriteOperation.reportCreate => true,
       AppWriteOperation.reviewCreate => false,
     };

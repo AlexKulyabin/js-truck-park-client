@@ -36,6 +36,9 @@ Reserved but disabled in every build:
 - `reviewCreate`: the typed client contract exists, but it has no gateway/UI
   wiring and cannot be enabled before the atomic submission prerequisites in
   `review_submission_contract.md` are complete.
+- `profileUpdate`: the typed client contract exists, but it has no gateway/UI
+  wiring and cannot be enabled before the profile/avatar prerequisites in
+  `profile_update_contract.md` are complete.
 
 ## Allowed integration routes
 
