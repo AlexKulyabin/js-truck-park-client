@@ -1,6 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/parking_requests/data/parking_requests_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -28,6 +29,7 @@ class _RequestsWidgetState extends State<RequestsWidget> {
   late RequestsModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  final _parkingRequestsService = ParkingRequestsService();
 
   @override
   void initState() {
@@ -450,16 +452,9 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                       builder: (context) {
                         if (_model.isModerationTabOn) {
                           return FutureBuilder<List<ParkingsRow>>(
-                            future: ParkingsTable().queryRows(
-                              queryFn: (q) => q
-                                  .eqOrNull(
-                                    'created_by',
-                                    currentUserUid,
-                                  )
-                                  .eqOrNull(
-                                    'status',
-                                    StatusParking.pending.name,
-                                  ),
+                            future: _parkingRequestsService.listUserRequests(
+                              userId: currentUserUid,
+                              status: StatusParking.pending,
                             ),
                             builder: (context, snapshot) {
                               // Customize what your widget looks like when it's loading.
@@ -604,16 +599,9 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                           );
                         } else if (_model.isAcceptedTabOn) {
                           return FutureBuilder<List<ParkingsRow>>(
-                            future: ParkingsTable().queryRows(
-                              queryFn: (q) => q
-                                  .eqOrNull(
-                                    'created_by',
-                                    currentUserUid,
-                                  )
-                                  .eqOrNull(
-                                    'status',
-                                    StatusParking.approved.name,
-                                  ),
+                            future: _parkingRequestsService.listUserRequests(
+                              userId: currentUserUid,
+                              status: StatusParking.approved,
                             ),
                             builder: (context, snapshot) {
                               // Customize what your widget looks like when it's loading.
@@ -757,16 +745,9 @@ class _RequestsWidgetState extends State<RequestsWidget> {
                           );
                         } else {
                           return FutureBuilder<List<ParkingsRow>>(
-                            future: ParkingsTable().queryRows(
-                              queryFn: (q) => q
-                                  .eqOrNull(
-                                    'created_by',
-                                    currentUserUid,
-                                  )
-                                  .eqOrNull(
-                                    'status',
-                                    StatusParking.rejected.name,
-                                  ),
+                            future: _parkingRequestsService.listUserRequests(
+                              userId: currentUserUid,
+                              status: StatusParking.rejected,
                             ),
                             builder: (context, snapshot) {
                               // Customize what your widget looks like when it's loading.

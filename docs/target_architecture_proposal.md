@@ -145,6 +145,9 @@ Repository не нужен language page, статическим onboarding page
   the legacy create/review flows until a separate transactional write stage.
 - Request detail review counts now use `ReviewsService`; accepted, rejected and
   moderation presentation no longer query the generated `reviews` table.
+- Parking request list reads now use `ParkingRequestsService`, which owns the
+  current-user and typed status filters. `ParkingsRow` remains temporarily as a
+  route-compatible result until request state migration is complete.
 
 ## Где нужен service
 
