@@ -198,6 +198,17 @@ git status --short
 
 `security(supabase): restrict mutable user profile columns`
 
+## Текущая следующая сессия
+
+Статус: начат второй backend-hardening блок; production не затрагивать.
+Локальный `supabase db reset` сейчас заблокирован окружением: Docker daemon недоступен. До rollout обязательно повторить pgTAP на локальном Supabase или staging clone.
+
+Выбранные три этапа:
+
+1. удалить broad parking update policy и ограничить прямые client update grants;
+2. harden `process_referral` и перевести Flutter RPC call на authenticated bearer;
+3. ограничить broad DB policies для `parking_photos`; Storage ownership вынести в следующий этап после фиксации storage baseline.
+
 ## Следующие отдельные этапы
 
 После успешного первого коммита, каждый отдельно:

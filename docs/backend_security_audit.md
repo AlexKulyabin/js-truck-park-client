@@ -51,6 +51,8 @@ Impact: изменение координат, адреса, владельца,
 
 Fix: удалить broad policy; разделить owner update и admin moderation. Owner должен менять только разрешённые business columns и не должен менять `status`, `created_by`, `admin_comment`, `rejection_reason`, `is_active`.
 
+Локальная реализация: начата в `20260724100000_restrict_parking_updates.sql`; migration удаляет broad policy, пересоздаёт owner/admin RLS с `WITH CHECK` и даёт authenticated UPDATE только на owner-maintained поля. pgTAP test добавлен, но локальный запуск сейчас заблокирован недоступным Docker daemon. Production status: не применено.
+
 ### P0 — публичное раскрытие профилей и персональных полей
 
 Evidence: `users_select_all` разрешает `SELECT` для `anon` и `authenticated` с `USING true`; generic Flutter adapter запрашивает `select *`.
