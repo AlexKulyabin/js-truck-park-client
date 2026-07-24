@@ -209,6 +209,8 @@ git status --short
 2. harden `process_referral` и перевести Flutter RPC call на authenticated bearer;
 3. ограничить broad DB policies для `parking_photos`; Storage ownership вынести в следующий этап после фиксации storage baseline.
 
+Результат этапа 3 этой сессии должен считаться DB-only: object-level Storage policies для `parking_content` остаются открытым пунктом, пока они не будут выгружены в versioned baseline и проверены отдельно.
+
 ## Следующие отдельные этапы
 
 После успешного первого коммита, каждый отдельно:

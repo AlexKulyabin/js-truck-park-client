@@ -104,6 +104,8 @@ Impact: удаление чужих photo records, подмена `user_id`, п�
 
 Fix: owner/admin delete; insert должен требовать `user_id=auth.uid()` и допустимую parking/review связь. Проверить, кто имеет право добавлять контент к существующей парковке.
 
+Локальная реализация DB-части: начата в `20260724102000_restrict_parking_photo_policies.sql`; broad insert/delete policies удалены, `photos_insert` требует `auth.uid() = user_id`, `photos_delete` оставляет owner/admin. Storage ownership не менялся, потому что storage policies пока не зафиксированы в versioned baseline. pgTAP test добавлен, но локальный запуск сейчас заблокирован недоступным Docker daemon. Production status: не применено.
+
 ### P1 — Storage avatars не ограничены владельцем
 
 Policies `Avatar_Update` и `Avatar_Delete` проверяют только `bucket_id='avatars'`; `Avatar_Upload` также не проверяет path owner.
