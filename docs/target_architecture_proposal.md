@@ -143,6 +143,8 @@ Repository не нужен language page, статическим onboarding page
 - Parking photo reads for details/request detail screens now use
   `features/parking_photos/data/ParkingPhotosService`. Photo uploads remain in
   the legacy create/review flows until a separate transactional write stage.
+- Request detail review counts now use `ReviewsService`; accepted, rejected and
+  moderation presentation no longer query the generated `reviews` table.
 
 ## Где нужен service
 

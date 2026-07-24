@@ -1,5 +1,6 @@
 import '/backend/supabase/supabase.dart';
 import '/features/parking_photos/data/parking_photos_service.dart';
+import '/features/reviews/data/reviews_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -33,6 +34,7 @@ class _AcceptedParkingWidgetState extends State<AcceptedParkingWidget> {
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final _parkingPhotosService = ParkingPhotosService();
+  final _reviewsService = ReviewsService();
 
   @override
   void initState() {
@@ -321,12 +323,9 @@ class _AcceptedParkingWidgetState extends State<AcceptedParkingWidget> {
                               ),
                             ),
                           ),
-                          FutureBuilder<List<ReviewsRow>>(
-                            future: ReviewsTable().queryRows(
-                              queryFn: (q) => q.eqOrNull(
-                                'parking_id',
-                                widget!.parkingRow?.id,
-                              ),
+                          FutureBuilder<int>(
+                            future: _reviewsService.countParkingReviews(
+                              parkingId: widget!.parkingRow?.id,
                             ),
                             builder: (context, snapshot) {
                               // Customize what your widget looks like when it's loading.
@@ -343,8 +342,7 @@ class _AcceptedParkingWidgetState extends State<AcceptedParkingWidget> {
                                   ),
                                 );
                               }
-                              List<ReviewsRow> reviewsContainerReviewsRowList =
-                                  snapshot.data!;
+                              final reviewCount = snapshot.data!;
 
                               return Container(
                                 width: double.infinity,
@@ -406,9 +404,7 @@ class _AcceptedParkingWidgetState extends State<AcceptedParkingWidget> {
                                           Text(
                                             valueOrDefault<String>(
                                               '${valueOrDefault<String>(
-                                                reviewsContainerReviewsRowList
-                                                    .length
-                                                    .toString(),
+                                                reviewCount.toString(),
                                                 '0',
                                               )} ${FFLocalizations.of(context).getVariableText(
                                                 enText: 'reviews',
