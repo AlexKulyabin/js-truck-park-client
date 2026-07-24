@@ -19,6 +19,16 @@ the only server-side authorization boundary.
 The integration UI displays both the Flutter debug banner and a `READ ONLY`
 banner.
 
+## Allowed integration writes
+
+Integration remains read-only by navigation and by default. Any intentionally
+enabled write must be listed in `AppWriteOperation` and checked through
+`AppConfig.canPerformWrite(...)` before the UI starts the action.
+
+Currently allowed:
+
+- `favoriteToggle`: insert/delete the current user's favorite parking row.
+
 ## Allowed integration routes
 
 - `/`, `/splash`;
@@ -29,8 +39,8 @@ banner.
 
 All other routes redirect to Home for an authenticated test user or to phone
 authentication for a signed-out user. In particular, registration, profile
-editing, account deletion, parking/review/report creation, parking details with
-favorite toggles, referrals, requests and subscription screens are unavailable.
+editing, account deletion, parking/review/report creation, referrals, requests
+and subscription screens are unavailable.
 
 ## Configuration
 

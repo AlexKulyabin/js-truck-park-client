@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 enum AppEnvironment { integration, production }
 
+enum AppWriteOperation { favoriteToggle }
+
 class AppConfig {
   const AppConfig._({
     required this.environment,
@@ -88,6 +90,16 @@ class AppConfig {
   bool get integrationReadOnly => isIntegration;
   bool get enableRevenueCat => isProduction;
   bool get enableDeepLinks => isProduction;
+
+  bool canPerformWrite(AppWriteOperation operation) {
+    if (isProduction) {
+      return true;
+    }
+
+    return switch (operation) {
+      AppWriteOperation.favoriteToggle => true,
+    };
+  }
 
   String get appDisplayName =>
       isProduction ? 'JS Truck Park' : 'JS Truck Park Dev';
