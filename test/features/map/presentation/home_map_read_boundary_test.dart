@@ -54,7 +54,10 @@ void main() {
     expect(source, contains('_parkingSearchController'));
     expect(source, contains('_reverseGeocodingService'));
     expect(source, contains('toMapMarkerItems(state.points)'));
+    expect(source, contains('toMapSearchResultItems(state.points)'));
     expect(source, contains('markers: _model.parkingsOnMap'));
     expect(source, isNot(contains('markerData:')));
+    expect(source, isNot(contains('toLegacyMapItems')));
+    expect(source, isNot(contains('getJsonField(')));
   });
 }

@@ -3,6 +3,7 @@ import 'package:j_s_truck_park/features/map/domain/map_bounds.dart';
 import 'package:j_s_truck_park/features/map/domain/map_parking_point.dart';
 import 'package:j_s_truck_park/features/map/presentation/map_marker_item.dart';
 import 'package:j_s_truck_park/features/map/presentation/map_read_adapter.dart';
+import 'package:j_s_truck_park/features/map/presentation/map_search_result_item.dart';
 
 void main() {
   test('builds one immutable query snapshot from viewport and filters', () {
@@ -78,8 +79,8 @@ void main() {
     );
   });
 
-  test('keeps the complete legacy shape only for search consumers', () {
-    final items = toLegacyMapItems(const [
+  test('adapts typed points to immutable search result items', () {
+    final items = toMapSearchResultItems(const [
       MapParkingPoint(
         id: 'parking-1',
         latitude: 52.1,
@@ -91,18 +92,26 @@ void main() {
       ),
     ]);
 
-    expect(items.single, {
-      'id': 'parking-1',
-      'lat': 52.1,
-      'lng': 21.2,
-      'latitude': 52.1,
-      'longitude': 21.2,
-      'count': 1,
-      'is_cluster': false,
-      'address': 'Test address',
-      'rating': 4.5,
-    });
-    expect(() => items.add(items.first), throwsUnsupportedError);
-    expect(() => items.first['id'] = 'changed', throwsUnsupportedError);
+    expect(
+      items,
+      const [
+        MapSearchResultItem(
+          id: 'parking-1',
+          latitude: 52.1,
+          longitude: 21.2,
+          address: 'Test address',
+        ),
+      ],
+    );
+    expect(
+      () => items.add(
+        const MapSearchResultItem(
+          id: 'parking-2',
+          latitude: 52.2,
+          longitude: 21.3,
+        ),
+      ),
+      throwsUnsupportedError,
+    );
   });
 }

@@ -218,7 +218,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       return;
     }
     safeSetState(() {
-      _model.searchResults = toLegacyMapItems(state.points);
+      _model.searchResults = toMapSearchResultItems(state.points);
       _model.isSearching = true;
     });
   }
@@ -603,16 +603,10 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                               parkingsItem[parkingsItemIndex];
                                           return GestureDetector(
                                             onTap: () async {
-                                              _model.searchCoord =
-                                                  functions.convertToLatLng(
-                                                      getJsonField(
-                                                        parkingsItemItem,
-                                                        r'''$.lat''',
-                                                      ),
-                                                      getJsonField(
-                                                        parkingsItemItem,
-                                                        r'''$.lng''',
-                                                      ));
+                                              _model.searchCoord = LatLng(
+                                                parkingsItemItem.latitude,
+                                                parkingsItemItem.longitude,
+                                              );
                                               _model.isMapLocked = false;
                                               _model.textController?.clear();
                                               _parkingSearchController.reset();
@@ -641,10 +635,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                               context),
                                                       child:
                                                           ParkingsDetailsWidget(
-                                                        parkingId: getJsonField(
-                                                          parkingsItemItem,
-                                                          r'''$.id''',
-                                                        ).toString(),
+                                                        parkingId:
+                                                            parkingsItemItem.id,
                                                       ),
                                                     ),
                                                   );
@@ -663,10 +655,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                               children: [
                                                 Text(
                                                   valueOrDefault<String>(
-                                                    getJsonField(
-                                                      parkingsItemItem,
-                                                      r'''$.address''',
-                                                    )?.toString(),
+                                                    parkingsItemItem.address,
                                                     'No address',
                                                   ),
                                                   style: FlutterFlowTheme.of(

@@ -105,8 +105,8 @@ Write-path создания парковки на этом этапе не ан�
 
 - `FFAppState` остаётся источником map filter values и временных координат;
 - `SelectParkingModel`, `createModel` и `safeSetState` сохранены;
-- `CustomGoogleMap` позднее переведён на immutable `MapMarkerItem`; legacy
-  maps остаются только у search UI;
+- `CustomGoogleMap` позднее переведён на immutable `MapMarkerItem`, а dormant
+  search state модели типизирован через `MapSearchResultItem`;
 - reverse geocoding позднее вынесен в typed shared boundary; generated call
   остался только внутри data source;
 - `CreateParkingDialog2Widget` остаётся generated write-flow;

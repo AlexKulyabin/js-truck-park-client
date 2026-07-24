@@ -62,9 +62,8 @@ toMapMarkerItems (presentation adapter)
  google_maps.Marker
 ```
 
-Search results пока используют отдельный legacy map shape, потому что search
-panel читает дополнительные поля `address` и `rating`. Его миграция должна
-быть отдельным этапом.
+Search results переведены на отдельный typed `MapSearchResultItem` следующим
+этапом; актуальный отчёт: `docs/typed_map_search_results.md`.
 
 ## Сохранённое поведение
 
@@ -123,7 +122,7 @@ Presentation и renderer:
   сохранены;
 - `FFAppState` остаётся источником filters, guest state и временных координат;
 - FlutterFlow `LatLng`, navigation, dialogs и theme не менялись;
-- legacy search results остаются `List<dynamic>` до отдельной миграции.
+- legacy search results позднее заменены typed presentation model;
 
 ## Файлы, которые создаются
 
@@ -233,9 +232,8 @@ Backend rollback не требуется.
 
 ## Следующий отдельный этап
 
-После real-device smoke test следующий безопасный кандидат — typed search
-result presentation model. Он устранит оставшийся `List<dynamic>` в Home и
-SelectParking, не затрагивая Supabase contracts.
+Typed search result presentation model выполнен следующим этапом без изменения
+Supabase contracts. Актуальный отчёт: `docs/typed_map_search_results.md`.
 
 ## Предлагаемое сообщение Git-коммита
 

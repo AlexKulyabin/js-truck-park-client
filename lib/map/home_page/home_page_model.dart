@@ -1,5 +1,6 @@
 import '/flutter_flow/flutter_flow_util.dart';
 import '/features/map/presentation/map_marker_item.dart';
+import '/features/map/presentation/map_search_result_item.dart';
 import 'home_page_widget.dart' show HomePageWidget;
 import 'package:flutter/material.dart';
 
@@ -12,14 +13,16 @@ class HomePageModel extends FlutterFlowModel<HomePageWidget> {
 
   int? requests;
 
-  List<dynamic> searchResults = [];
-  void addToSearchResults(dynamic item) => searchResults.add(item);
-  void removeFromSearchResults(dynamic item) => searchResults.remove(item);
+  List<MapSearchResultItem> searchResults = [];
+  void addToSearchResults(MapSearchResultItem item) => searchResults.add(item);
+  void removeFromSearchResults(MapSearchResultItem item) =>
+      searchResults.remove(item);
   void removeAtIndexFromSearchResults(int index) =>
       searchResults.removeAt(index);
-  void insertAtIndexInSearchResults(int index, dynamic item) =>
+  void insertAtIndexInSearchResults(int index, MapSearchResultItem item) =>
       searchResults.insert(index, item);
-  void updateSearchResultsAtIndex(int index, Function(dynamic) updateFn) =>
+  void updateSearchResultsAtIndex(int index,
+          MapSearchResultItem Function(MapSearchResultItem) updateFn) =>
       searchResults[index] = updateFn(searchResults[index]);
 
   LatLng? searchCoord;

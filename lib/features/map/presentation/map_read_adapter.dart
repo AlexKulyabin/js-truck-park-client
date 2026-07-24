@@ -4,6 +4,7 @@ import '../domain/map_bounds.dart';
 import '../domain/map_parking_point.dart';
 import '../domain/map_parking_query.dart';
 import 'map_marker_item.dart';
+import 'map_search_result_item.dart';
 
 @immutable
 class MapFilterSnapshot {
@@ -69,21 +70,16 @@ List<MapMarkerItem> toMapMarkerItems(
       ),
     );
 
-List<Map<String, Object?>> toLegacyMapItems(
+List<MapSearchResultItem> toMapSearchResultItems(
   List<MapParkingPoint> points,
 ) =>
     List.unmodifiable(
       points.map(
-        (point) => Map<String, Object?>.unmodifiable({
-          'id': point.id,
-          'lat': point.latitude,
-          'lng': point.longitude,
-          'latitude': point.latitude,
-          'longitude': point.longitude,
-          'count': point.count,
-          'is_cluster': point.isCluster,
-          'address': point.address,
-          'rating': point.rating,
-        }),
+        (point) => MapSearchResultItem(
+          id: point.id,
+          latitude: point.latitude,
+          longitude: point.longitude,
+          address: point.address,
+        ),
       ),
     );
