@@ -44,6 +44,9 @@ Test-write pilot:
   `--dart-define=APP_ENABLE_TEST_WRITES=true` and a non-production
   `SUPABASE_URL`. Startup fails if this flag is used in Release or with the
   production Supabase host.
+- The same guarded test-write flag also enables `reviewUpdate`,
+  `reviewDelete` and `reviewPhotoManage` capabilities for staged review
+  management work. UI wiring is still staged separately per operation.
 
 ## Allowed integration routes
 

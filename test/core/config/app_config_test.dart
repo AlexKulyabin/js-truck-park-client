@@ -101,6 +101,18 @@ void main() {
         config.canPerformWrite(AppWriteOperation.reviewCreate),
         isTrue,
       );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewUpdate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewDelete),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewPhotoManage),
+        isTrue,
+      );
       expect(config.integrationReadOnly, isTrue);
     });
 

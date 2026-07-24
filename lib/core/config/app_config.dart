@@ -7,6 +7,9 @@ enum AppWriteOperation {
   profileUpdate,
   reportCreate,
   reviewCreate,
+  reviewUpdate,
+  reviewDelete,
+  reviewPhotoManage,
 }
 
 class AppConfig {
@@ -125,6 +128,9 @@ class AppConfig {
       AppWriteOperation.profileUpdate => false,
       AppWriteOperation.reportCreate => true,
       AppWriteOperation.reviewCreate => testWritesEnabled,
+      AppWriteOperation.reviewUpdate => testWritesEnabled,
+      AppWriteOperation.reviewDelete => testWritesEnabled,
+      AppWriteOperation.reviewPhotoManage => testWritesEnabled,
     };
   }
 

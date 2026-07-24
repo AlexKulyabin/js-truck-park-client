@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:j_s_truck_park/core/config/app_config.dart';
 import 'package:j_s_truck_park/features/reviews/data/reviews_service.dart';
 
 void main() {
@@ -116,18 +117,122 @@ void main() {
         'listUser:user-1',
       ]);
     });
+
+    test('rejects review updates when capability is disabled', () async {
+      final gateway = _FakeReviewsGateway();
+      final service = ReviewsService(gateway: gateway);
+
+      await expectLater(
+        service.updateReview(_updateRequest()),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      expect(gateway.calls, isEmpty);
+    });
+
+    test('rejects invalid review update payloads without querying', () async {
+      final gateway = _FakeReviewsGateway();
+      final service = _writeEnabledService(gateway);
+
+      await expectLater(
+        service.updateReview(_updateRequest(reviewId: 0)),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      await expectLater(
+        service.updateReview(_updateRequest(userId: ' ')),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      await expectLater(
+        service.updateReview(_updateRequest(ratingComfort: 6)),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      await expectLater(
+        service.updateReview(
+          _updateRequest(
+            comment: '',
+            ratingImpression: 0,
+            ratingArrival: 0,
+            ratingSecurity: 0,
+            ratingInfrastructure: 0,
+            ratingComfort: 0,
+          ),
+        ),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      expect(gateway.calls, isEmpty);
+    });
+
+    test('updates mutable review content for normalized owner identity',
+        () async {
+      final gateway = _FakeReviewsGateway(
+        updatedReview: const UpdatedReview(
+          id: 7,
+          comment: 'Updated review',
+          ratingImpression: 5,
+          ratingArrival: 4,
+          ratingSecurity: 3,
+          ratingInfrastructure: 2,
+          ratingComfort: 1,
+          averageScore: 3,
+        ),
+      );
+      final service = _writeEnabledService(gateway);
+
+      final result = await service.updateReview(
+        _updateRequest(userId: ' user-1 '),
+      );
+
+      expect(result.id, 7);
+      expect(gateway.lastUpdateRequest?.userId, 'user-1');
+      expect(gateway.calls, ['update:7:user-1']);
+    });
   });
+}
+
+ReviewsService _writeEnabledService(_FakeReviewsGateway gateway) {
+  return ReviewsService(
+    gateway: gateway,
+    config: AppConfig.resolve(
+      isReleaseMode: false,
+      supabaseUrlOverride: 'http://127.0.0.1:54321',
+      testWritesOverride: 'true',
+    ),
+  );
+}
+
+UpdateReviewRequest _updateRequest({
+  int? reviewId = 7,
+  String userId = 'user-1',
+  String comment = 'Updated review',
+  int ratingImpression = 5,
+  int ratingArrival = 4,
+  int ratingSecurity = 3,
+  int ratingInfrastructure = 2,
+  int ratingComfort = 1,
+}) {
+  return UpdateReviewRequest(
+    reviewId: reviewId,
+    userId: userId,
+    comment: comment,
+    ratingImpression: ratingImpression,
+    ratingArrival: ratingArrival,
+    ratingSecurity: ratingSecurity,
+    ratingInfrastructure: ratingInfrastructure,
+    ratingComfort: ratingComfort,
+  );
 }
 
 class _FakeReviewsGateway implements ReviewsGateway {
   _FakeReviewsGateway({
     this.reviewCount = 0,
     this.reviews = const [],
+    this.updatedReview,
   });
 
   final int reviewCount;
   final List<ParkingReview> reviews;
+  final UpdatedReview? updatedReview;
   final calls = <String>[];
+  UpdateReviewRequest? lastUpdateRequest;
 
   @override
   Future<int> countParkingReviews({
@@ -151,5 +256,24 @@ class _FakeReviewsGateway implements ReviewsGateway {
   }) async {
     calls.add('listUser:$userId');
     return reviews;
+  }
+
+  @override
+  Future<UpdatedReview> updateReview({
+    required UpdateReviewRequest request,
+  }) async {
+    calls.add('update:${request.reviewId}:${request.userId}');
+    lastUpdateRequest = request;
+    return updatedReview ??
+        UpdatedReview(
+          id: request.reviewId!,
+          comment: request.comment,
+          ratingImpression: request.ratingImpression,
+          ratingArrival: request.ratingArrival,
+          ratingSecurity: request.ratingSecurity,
+          ratingInfrastructure: request.ratingInfrastructure,
+          ratingComfort: request.ratingComfort,
+          averageScore: 3,
+        );
   }
 }

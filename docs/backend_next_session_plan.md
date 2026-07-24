@@ -282,6 +282,11 @@ Supabase-контракты.
     `ReviewSubmissionService`; legacy direct review insert/upload loop удалён
     из button action. Выбранные фото пока дают явную ошибку до photo-flow
     этапа.
+13. `refactor(reviews): add owner update service` — добавлен
+    `AppWriteOperation.reviewUpdate` под тем же guarded test-write флагом и
+    typed `ReviewsService.updateReview(...)`. Сервис валидирует review id,
+    owner id, content и ratings; Supabase gateway обновляет только `comment`
+    и пять rating fields с фильтром по `id` + `user_id`. UI ещё не подключён.
 
 Проверки:
 

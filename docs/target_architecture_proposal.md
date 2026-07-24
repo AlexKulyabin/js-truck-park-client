@@ -159,6 +159,10 @@ Repository не нужен language page, статическим onboarding page
   inserts behind the guarded review-create capability, while photo submissions
   still wait for the staged upload and compensation stage; the review-create UI
   now calls this service instead of the legacy direct insert/upload loop.
+- Review owner updates are prepared in `ReviewsService.updateReview(...)`
+  behind the guarded review-update capability. The service only accepts mutable
+  review content (`comment` and five ratings) and scopes the Supabase update by
+  both `id` and `user_id`; UI wiring remains a separate stage.
 - Profile header, edit initial form and post-OTP profile-completion check now
   consume `PublicUserProfile` (`id`, `fullName`, `avatarUrl`) through
   `features/profile/data/UserProfileService`. Invite referral lookup uses the

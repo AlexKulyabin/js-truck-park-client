@@ -1,4 +1,71 @@
 import '/backend/supabase/database/database.dart';
+import '/core/config/app_config.dart';
+
+class ReviewMutationException implements Exception {
+  const ReviewMutationException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+class UpdateReviewRequest {
+  const UpdateReviewRequest({
+    required this.reviewId,
+    required this.userId,
+    required this.comment,
+    required this.ratingImpression,
+    required this.ratingArrival,
+    required this.ratingSecurity,
+    required this.ratingInfrastructure,
+    required this.ratingComfort,
+  });
+
+  final int? reviewId;
+  final String userId;
+  final String comment;
+  final int ratingImpression;
+  final int ratingArrival;
+  final int ratingSecurity;
+  final int ratingInfrastructure;
+  final int ratingComfort;
+}
+
+class UpdatedReview {
+  const UpdatedReview({
+    required this.id,
+    required this.comment,
+    required this.ratingImpression,
+    required this.ratingArrival,
+    required this.ratingSecurity,
+    required this.ratingInfrastructure,
+    required this.ratingComfort,
+    required this.averageScore,
+  });
+
+  factory UpdatedReview.fromRow(ReviewsRow row) {
+    return UpdatedReview(
+      id: row.id,
+      comment: row.comment,
+      ratingImpression: row.ratingImpression,
+      ratingArrival: row.ratingArrival,
+      ratingSecurity: row.ratingSecurity,
+      ratingInfrastructure: row.ratingInfrastructure,
+      ratingComfort: row.ratingComfort,
+      averageScore: row.averageScore,
+    );
+  }
+
+  final int id;
+  final String? comment;
+  final int ratingImpression;
+  final int ratingArrival;
+  final int ratingSecurity;
+  final int ratingInfrastructure;
+  final int ratingComfort;
+  final double? averageScore;
+}
 
 abstract interface class ReviewsGateway {
   Future<int> countParkingReviews({
@@ -11,6 +78,10 @@ abstract interface class ReviewsGateway {
 
   Future<List<ParkingReview>> listUserReviews({
     required String userId,
+  });
+
+  Future<UpdatedReview> updateReview({
+    required UpdateReviewRequest request,
   });
 }
 
@@ -66,14 +137,47 @@ class SupabaseReviewsGateway implements ReviewsGateway {
     );
     return rows.map(ParkingReview.fromRow).toList();
   }
+
+  @override
+  Future<UpdatedReview> updateReview({
+    required UpdateReviewRequest request,
+  }) async {
+    final rows = await _reviewsTable.update(
+      data: {
+        'comment': request.comment,
+        'rating_impression': request.ratingImpression,
+        'rating_arrival': request.ratingArrival,
+        'rating_security': request.ratingSecurity,
+        'rating_infrastructure': request.ratingInfrastructure,
+        'rating_comfort': request.ratingComfort,
+      },
+      matchingRows: (q) => q
+          .eqOrNull(
+            'id',
+            request.reviewId,
+          )
+          .eqOrNull(
+            'user_id',
+            request.userId,
+          ),
+      returnRows: true,
+    );
+    if (rows.isEmpty) {
+      throw const ReviewMutationException('Review was not updated.');
+    }
+    return UpdatedReview.fromRow(rows.first);
+  }
 }
 
 class ReviewsService {
   ReviewsService({
     ReviewsGateway? gateway,
-  }) : _gateway = gateway ?? SupabaseReviewsGateway();
+    AppConfig? config,
+  })  : _gateway = gateway ?? SupabaseReviewsGateway(),
+        _config = config ?? AppConfig.current;
 
   final ReviewsGateway _gateway;
+  final AppConfig _config;
 
   Future<int> countParkingReviews({
     required String? parkingId,
@@ -106,6 +210,56 @@ class ReviewsService {
     }
 
     return _gateway.listUserReviews(userId: normalizedUserId);
+  }
+
+  Future<UpdatedReview> updateReview(UpdateReviewRequest request) async {
+    if (!_config.canPerformWrite(AppWriteOperation.reviewUpdate)) {
+      throw const ReviewMutationException(
+        'Review updates are disabled for this build.',
+      );
+    }
+
+    final normalizedReviewId = request.reviewId;
+    final normalizedUserId = request.userId.trim();
+    if (normalizedReviewId == null ||
+        normalizedReviewId <= 0 ||
+        normalizedUserId.isEmpty) {
+      throw const ReviewMutationException(
+        'Sign in again before updating a review.',
+      );
+    }
+
+    final ratings = [
+      request.ratingImpression,
+      request.ratingArrival,
+      request.ratingSecurity,
+      request.ratingInfrastructure,
+      request.ratingComfort,
+    ];
+    if (ratings.any((rating) => rating < 0 || rating > 5)) {
+      throw const ReviewMutationException(
+        'Review ratings must be between 0 and 5.',
+      );
+    }
+
+    if (request.comment.isEmpty && ratings.every((rating) => rating == 0)) {
+      throw const ReviewMutationException(
+        'Add a comment or rating before updating a review.',
+      );
+    }
+
+    return _gateway.updateReview(
+      request: UpdateReviewRequest(
+        reviewId: normalizedReviewId,
+        userId: normalizedUserId,
+        comment: request.comment,
+        ratingImpression: request.ratingImpression,
+        ratingArrival: request.ratingArrival,
+        ratingSecurity: request.ratingSecurity,
+        ratingInfrastructure: request.ratingInfrastructure,
+        ratingComfort: request.ratingComfort,
+      ),
+    );
   }
 }
 
