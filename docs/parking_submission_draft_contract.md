@@ -45,7 +45,8 @@ flutter test test/features/parking_submission
 
 ## Следующий этап
 
-Добавить repository/use-case boundary с fake data source: insert parking,
-upload each photo, insert photo rows, typed failures и отсутствие вызовов при
-invalid draft/unauthenticated user. Production write UI подключать только
+Repository/use-case boundary добавлен следующим отдельным этапом:
+`SupabaseParkingSubmissionRepository` собирает текущий insert payload, загружает
+фото в `parking_content` по existing path convention и вставляет `parking_photos`
+rows через injectable data source. Production write UI подключать только
 следующим отдельным коммитом после тестов.
