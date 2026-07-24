@@ -143,10 +143,13 @@ insert access without changing production data.
 
 ## Views
 
-Все четыре view созданы с `security_invoker=true`; они используют права и RLS вызывающего пользователя.
+Все существующие view созданы с `security_invoker=true`; они используют права и
+RLS вызывающего пользователя.
 
 | View | Назначение | Чувствительные поля/особенности |
 |---|---|---|
+| `public_profiles` | Публичный профиль для UI и joins | только `id`, `full_name`, `avatar_url`; подготовлен локальной миграцией `20260725100000_add_profile_projections.sql` |
+| `private_profiles` | Owner/admin профиль | содержит private profile fields; rows ограничены `auth.uid()` или `is_admin()`; anon не имеет `SELECT` |
 | `view_full_parking_details` | Полная карточка, photos JSON, favorite flag, creator profile | включает moderation columns; фильтр approved или admin |
 | `view_reviews_with_users` | Review + parking address + author + review photos | публичные reviews и profile fields |
 | `view_user_favorites` | Favorite + компактная parking card + photos | source RLS должен ограничить favorites owner |

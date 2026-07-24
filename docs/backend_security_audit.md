@@ -57,6 +57,12 @@ Fix: удалить broad policy; разделить owner update и admin moder
 
 Evidence: `users_select_all` разрешает `SELECT` для `anon` и `authenticated` с `USING true`; generic Flutter adapter запрашивает `select *`.
 
+Local mitigation in progress: migration
+`20260725100000_add_profile_projections.sql` adds `public_profiles`
+(`id`, `full_name`, `avatar_url`) and owner/admin `private_profiles` views with
+pgTAP coverage. This does not close production `users SELECT *` until Flutter
+callers are moved and a separate revoke rollout is approved.
+
 Exposed contract: UUID, phone, premium/admin flags, moderation status, referral relation, device id, profile fields.
 
 Impact: privacy leak и упрощение атак на UUID/profile/referral flows.
@@ -173,7 +179,7 @@ Impact: resource abuse и неожиданный объём ответа. Нуж
 ## Положительные свойства текущей схемы
 
 - RLS включён на всех прикладных tables.
-- Все четыре views используют `security_invoker=true`.
+- Существующие views используют `security_invoker=true`.
 - Favorites ownership выражен через `auth.uid()` и уникальную пару user/parking.
 - Review insert и report insert проверяют `user_id=auth.uid()`.
 - `referral_stats` имеет unique device/referee constraints.

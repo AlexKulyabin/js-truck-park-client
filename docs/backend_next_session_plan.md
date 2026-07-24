@@ -218,9 +218,9 @@ git status --short
 
 1. перед production rollout сделать read-only diff hosted Storage policies и подтвердить parity;
 2. перед включением profile writes выполнить `profile_security_activation_checklist.md`;
-3. ввести public/private profile projections;
-3. harden SECURITY DEFINER search paths;
-4. добавить domain constraints после data audit.
+3. перевести Flutter profile callers на `public_profiles`/`private_profiles`;
+4. harden SECURITY DEFINER search paths;
+5. добавить domain constraints после data audit.
 
 ## Текущий Flutter write-pilot: favorites
 
