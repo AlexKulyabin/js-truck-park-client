@@ -1,5 +1,4 @@
 import '/backend/schema/enums/enums.dart';
-import '/features/favorites/data/favorites_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -27,11 +26,8 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
 
   TabsToggle? activeTab = TabsToggle.info;
 
-  bool? isFavorite;
-
   ///  State fields for stateful widgets in this component.
 
-  final favoritesService = FavoritesService();
   // State field(s) for PageView widget.
   PageController? pageViewController;
 

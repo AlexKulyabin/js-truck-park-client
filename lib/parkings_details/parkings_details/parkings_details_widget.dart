@@ -2,6 +2,7 @@ import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/features/favorites/application/favorites_controller.dart';
 import '/features/parking_photos/data/parking_photos_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -40,6 +41,7 @@ class ParkingsDetailsWidget extends StatefulWidget {
 
 class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late ParkingsDetailsModel _model;
+  final _favoriteToggleController = FavoriteToggleController();
   final _parkingPhotosService = ParkingPhotosService();
 
   @override
@@ -52,14 +54,14 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ParkingsDetailsModel());
+    _favoriteToggleController.addListener(_onFavoriteToggleStateChanged);
 
     // On component load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.isFavorite = await _model.favoritesService.isFavorite(
+      await _favoriteToggleController.load(
         parkingId: widget.parkingId,
         userId: currentUserUid,
       );
-      safeSetState(() {});
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
@@ -67,9 +69,17 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
 
   @override
   void dispose() {
+    _favoriteToggleController.removeListener(_onFavoriteToggleStateChanged);
+    _favoriteToggleController.dispose();
     _model.maybeDispose();
 
     super.dispose();
+  }
+
+  void _onFavoriteToggleStateChanged() {
+    if (mounted) {
+      safeSetState(() {});
+    }
   }
 
   @override
@@ -77,6 +87,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
     context.watch<FFAppState>();
     final canToggleFavorite =
         AppConfig.current.canPerformWrite(AppWriteOperation.favoriteToggle);
+    final canUseFavoriteButton =
+        canToggleFavorite && !_favoriteToggleController.state.isUpdating;
 
     return SingleChildScrollView(
       child: Column(
@@ -515,7 +527,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                   focusColor: Colors.transparent,
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
-                                  onTap: !canToggleFavorite
+                                  onTap: !canUseFavoriteButton
                                       ? null
                                       : () async {
                                           if (FFAppState().isGuest == true) {
@@ -543,23 +555,13 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                             return;
                                           }
 
-                                          final previousValue =
-                                              _model.isFavorite ?? false;
-                                          _model.isFavorite = !previousValue;
-                                          safeSetState(() {});
-
-                                          try {
-                                            _model.isFavorite = await _model
-                                                .favoritesService
-                                                .toggleFavorite(
-                                              parkingId: widget.parkingId,
-                                              userId: currentUserUid,
-                                              currentlyFavorite: previousValue,
-                                            );
-                                            safeSetState(() {});
-                                          } catch (_) {
-                                            _model.isFavorite = previousValue;
-                                            safeSetState(() {});
+                                          final didUpdate =
+                                              await _favoriteToggleController
+                                                  .toggle(
+                                            parkingId: widget.parkingId,
+                                            userId: currentUserUid,
+                                          );
+                                          if (!didUpdate) {
                                             if (!context.mounted) {
                                               return;
                                             }
@@ -573,7 +575,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                     width: 56.0,
                                     height: 56.0,
                                     decoration: BoxDecoration(
-                                      color: !canToggleFavorite
+                                      color: !canUseFavoriteButton
                                           ? FlutterFlowTheme.of(context)
                                               .inactiveButton
                                           : FlutterFlowTheme.of(context)
@@ -584,7 +586,9 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                       alignment: AlignmentDirectional(0.0, 0.0),
                                       child: Builder(
                                         builder: (context) {
-                                          if (_model.isFavorite == true) {
+                                          if (_favoriteToggleController
+                                                  .state.isFavorite ==
+                                              true) {
                                             return ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(0.0),
