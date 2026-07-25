@@ -47,7 +47,7 @@ class _SplashWidgetState extends State<SplashWidget> {
       }
       if (FFAppState().isOnboarding) {
         if (loggedIn == true) {
-          context.pushNamed(HomePageWidget.routeName);
+          context.goNamed(HomePageWidget.routeName);
         } else {
           context.goNamed(EnterPhoneNumberWidget.routeName);
         }
