@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -33,6 +34,7 @@ class _FakeRepository implements ParkingDetailsRepository {
 class _FakeFavoriteRepository implements ParkingFavoriteRepository {
   final calls = <({String parkingId, bool isFavorite})>[];
   Object? error;
+  Completer<void>? pendingWrite;
 
   @override
   Future<void> setFavorite({
@@ -40,6 +42,7 @@ class _FakeFavoriteRepository implements ParkingFavoriteRepository {
     required bool isFavorite,
   }) async {
     calls.add((parkingId: parkingId, isFavorite: isFavorite));
+    await pendingWrite?.future;
     if (error case final error?) {
       throw error;
     }
@@ -222,6 +225,7 @@ void main() {
       ..details = const ParkingDetails(
         id: 'parking-1',
         isFavorited: false,
+        address: 'Stable tab parking',
         stars1: 0,
         stars2: 0,
         stars3: 0,
@@ -243,15 +247,27 @@ void main() {
     await tester.pumpWidget(_buildSubject(repository));
     await tester.pumpAndSettle();
     expect(repository.reviewsParkingIds, isEmpty);
+    expect(repository.detailsParkingIds, ['parking-1']);
 
     await tester.ensureVisible(find.text('Reviews'));
     await tester.tap(find.text('Reviews'));
     await tester.pumpAndSettle();
 
     expect(repository.reviewsParkingIds, ['parking-1']);
+    expect(repository.detailsParkingIds, ['parking-1']);
+    expect(find.byKey(ParkingsDetailsWidget.loadingKey), findsNothing);
+    expect(find.byKey(ParkingsDetailsWidget.dragHandleKey), findsOneWidget);
     expect(find.text('1  reviews '), findsOneWidget);
     expect(find.text('Alex Driver'), findsOneWidget);
     expect(find.text('Quiet place near the highway.'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Photo'));
+    await tester.tap(find.text('Photo'));
+    await tester.pumpAndSettle();
+
+    expect(repository.detailsParkingIds, ['parking-1']);
+    expect(find.byKey(ParkingsDetailsWidget.loadingKey), findsNothing);
+    expect(find.byKey(ParkingsDetailsWidget.dragHandleKey), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -266,19 +282,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('keeps favorite writes disabled in integration read-only mode',
+  testWidgets('keeps the details shell visible while favorite write is pending',
       (tester) async {
     final detailsRepository = _FakeRepository()
       ..details = const ParkingDetails(
         id: 'parking-1',
         isFavorited: false,
+        address: 'Stable favorite parking',
         stars1: 0,
         stars2: 0,
         stars3: 0,
         stars4: 0,
         stars5: 0,
       );
-    final favoriteRepository = _FakeFavoriteRepository();
+    final favoriteRepository = _FakeFavoriteRepository()
+      ..pendingWrite = Completer<void>();
 
     await tester.pumpWidget(
       _buildSubject(
@@ -291,9 +309,24 @@ void main() {
     final button = find.byKey(ParkingsDetailsWidget.favoriteButtonKey);
     await tester.ensureVisible(button);
     await tester.tap(button);
+    await tester.pump();
+
+    expect(
+      favoriteRepository.calls,
+      [(parkingId: 'parking-1', isFavorite: true)],
+    );
+    expect(detailsRepository.detailsParkingIds, ['parking-1']);
+    expect(
+        find.byKey(ParkingsDetailsWidget.favoriteUpdatingKey), findsOneWidget);
+    expect(find.byKey(ParkingsDetailsWidget.loadingKey), findsNothing);
+    expect(find.text('Stable favorite parking'), findsOneWidget);
+
+    favoriteRepository.pendingWrite!.complete();
     await tester.pumpAndSettle();
 
-    expect(favoriteRepository.calls, isEmpty);
+    expect(detailsRepository.detailsParkingIds, ['parking-1']);
+    expect(find.byKey(ParkingsDetailsWidget.favoriteUpdatingKey), findsNothing);
+    expect(find.text('Stable favorite parking'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

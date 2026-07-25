@@ -129,6 +129,11 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    final canToggleFavorite =
+        AppConfig.current.canPerformWrite(AppWriteOperation.favoriteToggle);
+    final canUseFavoriteButton = canToggleFavorite &&
+        _favoriteController.state.phase !=
+            ParkingFavoriteMutationPhase.updating;
 
     return SingleChildScrollView(
       child: Column(
@@ -571,7 +576,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                   focusColor: Colors.transparent,
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
-                                  onTap: AppConfig.current.integrationReadOnly
+                                  onTap: !canUseFavoriteButton
                                       ? null
                                       : () async {
                                           if (FFAppState().isGuest == true) {
@@ -615,12 +620,11 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                     width: 56.0,
                                     height: 56.0,
                                     decoration: BoxDecoration(
-                                      color:
-                                          AppConfig.current.integrationReadOnly
-                                              ? FlutterFlowTheme.of(context)
-                                                  .inactiveButton
-                                              : FlutterFlowTheme.of(context)
-                                                  .buttons,
+                                      color: !canToggleFavorite
+                                          ? FlutterFlowTheme.of(context)
+                                              .inactiveButton
+                                          : FlutterFlowTheme.of(context)
+                                              .buttons,
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
                                     child: Align(

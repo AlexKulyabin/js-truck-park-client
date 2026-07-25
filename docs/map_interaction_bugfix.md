@@ -23,6 +23,9 @@ production release contract changed.
 - the photo gallery no longer captures vertical drags, so an upward drag over a
   photo expands the scrollable details content while horizontal paging and
   photo taps remain unchanged.
+- tab changes and favorite mutations retain the already loaded parking details;
+  only the affected local state changes, so the bottom sheet shell does not
+  disappear behind a full-screen loading state.
 
 ## Automated verification
 
@@ -31,6 +34,8 @@ production release contract changed.
 - unit tests for down, up, zero and missing drag velocity;
 - widget test proving an upward fling keeps details open and a downward fling
   closes them;
+- widget tests proving tab changes and a delayed favorite mutation do not
+  reload or hide the details shell;
 - complete Flutter test suite;
 - analyzer and Android debug build.
 
@@ -48,6 +53,10 @@ production release contract changed.
 9. Swipe the top handle downward; details must close.
 10. Repeat both handle gestures on a parking without photos.
 11. Confirm the close icon still closes details.
+12. Switch between Info, Reviews and Photo; the sheet must stay continuously
+    visible.
+13. Add and remove the parking from Favorites; the sheet must stay visible
+    while the button shows progress.
 
 ## Rollback
 
