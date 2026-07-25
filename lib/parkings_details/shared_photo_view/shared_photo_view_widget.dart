@@ -9,6 +9,14 @@ import 'package:provider/provider.dart';
 import 'shared_photo_view_model.dart';
 export 'shared_photo_view_model.dart';
 
+String? sharedPhotoViewDateText(String? date) {
+  final text = date?.trim();
+  if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+    return null;
+  }
+  return text;
+}
+
 class SharedPhotoViewWidget extends StatefulWidget {
   const SharedPhotoViewWidget({
     super.key,
@@ -50,6 +58,8 @@ class _SharedPhotoViewWidgetState extends State<SharedPhotoViewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final photoDateText = sharedPhotoViewDateText(widget.date);
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -176,15 +186,23 @@ class _SharedPhotoViewWidgetState extends State<SharedPhotoViewWidget> {
                                         ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  Text(
-                                    valueOrDefault<String>(
-                                      widget!.date,
-                                      '01.01.2026',
-                                    ),
-                                    style: FlutterFlowTheme.of(context)
-                                        .labelMedium
-                                        .override(
-                                          font: GoogleFonts.roboto(
+                                  if (photoDateText != null)
+                                    Text(
+                                      photoDateText,
+                                      style: FlutterFlowTheme.of(context)
+                                          .labelMedium
+                                          .override(
+                                            font: GoogleFonts.roboto(
+                                              fontWeight:
+                                                  FlutterFlowTheme.of(context)
+                                                      .labelMedium
+                                                      .fontWeight,
+                                              fontStyle:
+                                                  FlutterFlowTheme.of(context)
+                                                      .labelMedium
+                                                      .fontStyle,
+                                            ),
+                                            letterSpacing: 0.0,
                                             fontWeight:
                                                 FlutterFlowTheme.of(context)
                                                     .labelMedium
@@ -194,17 +212,7 @@ class _SharedPhotoViewWidgetState extends State<SharedPhotoViewWidget> {
                                                     .labelMedium
                                                     .fontStyle,
                                           ),
-                                          letterSpacing: 0.0,
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .labelMedium
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .labelMedium
-                                                  .fontStyle,
-                                        ),
-                                  ),
+                                    ),
                                 ],
                               ),
                             ),

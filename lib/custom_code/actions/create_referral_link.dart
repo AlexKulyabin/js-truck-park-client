@@ -14,13 +14,14 @@ import 'dart:async';
 import 'package:chottu_link/chottu_link.dart';
 import 'package:chottu_link/dynamic_link/cl_dynamic_link_behaviour.dart';
 import 'package:chottu_link/dynamic_link/cl_dynamic_link_parameters.dart';
+import '/features/referrals/referral_links.dart';
 
 Future<String> createReferralLink(String referralCode) async {
   final completer = Completer<String>();
 
   try {
     final parameters = CLDynamicLinkParameters(
-      link: Uri.parse("https://js-truck-park.web.app/?ref=$referralCode"),
+      link: buildReferralDestinationUri(referralCode),
       domain: "js-truck-park.chottu.link",
       androidBehaviour: CLDynamicLinkBehaviour.app,
       iosBehaviour: CLDynamicLinkBehaviour.app,

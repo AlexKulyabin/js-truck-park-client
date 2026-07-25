@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/profile/data/user_profile_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_timer.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -48,7 +49,7 @@ class ValidateSmsCodeModel extends FlutterFlowModel<ValidateSmsCodeWidget> {
   // Stores action output result for [Custom Action - verifyOtp] action in Button widget.
   bool? verifyIsSuccess;
   // Stores action output result for [Backend Call - Query Rows] action in Button widget.
-  List<UsersRow>? currentUser;
+  PublicUserProfile? currentUser;
 
   @override
   void initState(BuildContext context) {

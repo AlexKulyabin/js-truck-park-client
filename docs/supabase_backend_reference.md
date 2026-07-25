@@ -106,11 +106,20 @@ RLS включён. Текущие permissive policies разрешают чте
 
 ### `reviews`
 
-`id bigint identity`, `user_id -> auth.users.id SET NULL`, `parking_id -> parkings.id CASCADE`, `comment`, пять `smallint` ratings, calculated `average_score`, `created_at`. Уникальность `(user_id, parking_id)`, индекс по `parking_id`. RLS: публичное чтение, insert только с `user_id = auth.uid()`, delete только admin. Ограничений диапазона 1..5 на rating columns нет.
+`id bigint identity`, `user_id -> auth.users.id SET NULL`, `parking_id -> parkings.id CASCADE`, `comment`, пять `smallint` ratings, calculated `average_score`, `created_at`. Уникальность `(user_id, parking_id)`, индекс по `parking_id`. RLS: публичное чтение, insert только с `user_id = auth.uid()`, owner/admin update/delete через локальную migration `20260725120000_allow_owner_review_mutations.sql`. Direct client update grants ограничены `comment` и пятью rating columns; `user_id`, `parking_id`, `created_at` и `average_score` не меняются клиентом. Ограничений диапазона 1..5 на rating columns в базе пока нет.
 
 ### `reports`
 
 `id bigint identity`, `parking_id -> parkings.id CASCADE`, `user_id -> auth.users.id SET NULL`, `category`, `comment`, `report`, `status`, `created_at`. Default `status` сейчас равен строке `penging` — подтверждённая опечатка контракта. RLS разрешает insert владельцу и select владельцу/admin.
+
+Flutter report-create writes through `features/reports/data/ReportsService`
+with explicit `parking_id`, `user_id = currentUserUid`, `comment`,
+`status = approved`, `report` enum name and `created_at`. Because the client
+writes `status` explicitly, the typo default is documented but not part of the
+active Flutter insert path. The local contract test
+`supabase/tests/database/reports_authorization_test.sql` verifies owner insert,
+cross-user denial, anonymous denial, owner/admin select scope and service-role
+insert access without changing production data.
 
 ### `referral_stats`
 
@@ -134,10 +143,13 @@ RLS включён. Текущие permissive policies разрешают чте
 
 ## Views
 
-Все четыре view созданы с `security_invoker=true`; они используют права и RLS вызывающего пользователя.
+Все существующие view созданы с `security_invoker=true`; они используют права и
+RLS вызывающего пользователя.
 
 | View | Назначение | Чувствительные поля/особенности |
 |---|---|---|
+| `public_profiles` | Публичный профиль для UI и joins | только `id`, `full_name`, `avatar_url`; подготовлен локальной миграцией `20260725100000_add_profile_projections.sql` |
+| `private_profiles` | Owner/admin профиль | содержит private profile fields; rows ограничены `auth.uid()` или `is_admin()`; anon не имеет `SELECT` |
 | `view_full_parking_details` | Полная карточка, photos JSON, favorite flag, creator profile | включает moderation columns; фильтр approved или admin |
 | `view_reviews_with_users` | Review + parking address + author + review photos | публичные reviews и profile fields |
 | `view_user_favorites` | Favorite + компактная parking card + photos | source RLS должен ограничить favorites owner |
@@ -171,6 +183,10 @@ Trigger-only functions: `handle_new_auth_user`, `handle_new_user`, `handle_revie
 
 В базе остаётся вторая функция `handle_new_user`, но активный Auth trigger вызывает `handle_new_auth_user`. Это подтверждённый legacy/dead contract, удалять его без проверки истории нельзя.
 
+Закрытие broad direct `SELECT` на `public.users` должно проходить через
+`profile_select_rollout_checklist.md`; текущий reference описывает подготовленный
+contract, а не выполненный production revoke.
+
 ## Storage
 
 | Bucket | Public | Limit | MIME |
@@ -182,11 +198,11 @@ Trigger-only functions: `handle_new_auth_user`, `handle_new_user`, `handle_revie
 Flutter paths:
 
 - `avatars/users/<uid>/...` для регистрации и редактирования профиля;
-- `parking_content/parkings/<parkingId>/<index>` для парковки;
-- `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>` для review;
+- `parking_content/parkings/<parkingId>/<index>/<timestamp>.<ext>` для парковки;
+- `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>/<timestamp>.<ext>` для review;
 - hardcoded public `assets/icnLocation.png` для marker icon.
 
-Есть stale Storage policies для отсутствующего bucket `parking-images`. Policies `Avatar_Update` и `Avatar_Delete` проверяют только bucket, но не owner path; authenticated user потенциально может менять чужие avatars. Политики `parking_content` частично дублируются и не задают единый owner contract.
+Есть stale Storage policies для отсутствующего bucket `parking-images`. Policies `Avatar_Update` и `Avatar_Delete` проверяют только bucket, но не owner path; authenticated user потенциально может менять чужие avatars. Локальная migration `20260724103000_restrict_avatar_storage_policies.sql` заменяет avatar writes на owner path `avatars/users/<auth.uid()>/...`; локальная migration `20260724104000_restrict_parking_content_storage_policies.sql` заменяет parking_content writes на owner/review-author path contract. `20260725110000_harden_parking_content_storage_checks.sql` выполняет ownership lookup через закрытую helper-функцию, поэтому Storage policy не требует прямого `SELECT` на базовые таблицы и не мешает операциям в других buckets; owner-scoped object `SELECT` обеспечивает корректный UPDATE/DELETE. Production schema пока не изменялась.
 
 ## Realtime
 

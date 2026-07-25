@@ -1,6 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/review_submission/data/review_submission_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -46,8 +47,9 @@ class ReviewCreateModel extends FlutterFlowModel<ReviewCreateWidget> {
   FFUploadedFile uploadedLocalFile_uploadDataRew2 =
       FFUploadedFile(bytes: Uint8List.fromList([]), originalFilename: '');
 
-  // Stores action output result for [Backend Call - Insert Row] action in Button widget.
-  ReviewsRow? createReviewOut;
+  final reviewSubmissionService = ReviewSubmissionService();
+  // Stores action output result for [ReviewSubmissionService.submit] action in Button widget.
+  ReviewSubmissionResult? createReviewOut;
   bool isDataUploading_uploadDataYj0 = false;
   FFUploadedFile uploadedLocalFile_uploadDataYj0 =
       FFUploadedFile(bytes: Uint8List.fromList([]), originalFilename: '');

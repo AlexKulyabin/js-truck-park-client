@@ -33,10 +33,12 @@ banner.
 - `/language`.
 
 All other routes redirect to Home for an authenticated test user or to phone
-authentication for a signed-out user. In particular, registration, profile
-editing, account deletion, parking/review/report creation, favorite writes and
-referrals are unavailable. Profile lists and subscription presentation are
-read-only.
+authentication for a signed-out user. Registration, profile editing, account
+deletion, parking creation, referrals and subscription purchases are
+unavailable. Favorite toggles and report creation are enabled through explicit
+capabilities. Review create/update/delete/photo writes require a debug/profile
+build connected to a non-production Supabase project with
+`APP_ENABLE_TEST_WRITES=true`.
 
 ## Configuration
 
@@ -67,16 +69,21 @@ identity.
 3. Complete local onboarding; this only updates the dev app's local storage.
 4. Sign in only with the designated production test user.
 5. Confirm Home loads parking markers using `get_filtered_parkings`.
-6. Exercise viewport, search and filters without opening write-capable screens.
-7. Confirm Language can switch between `en` and `ru`.
-8. Confirm RevenueCat and production deep links do not initialize.
-9. Open Profile and confirm its read-only information is visible while
+6. Exercise viewport, search and filters.
+7. Open one parking details panel, switch tabs and toggle the favorite button;
+   confirm the panel stays visible and rolls back if the backend rejects the
+   write.
+8. Create only a test report with the designated test user and confirm an error
+   leaves the parking panel open.
+9. Confirm Language can switch between `en` and `ru`.
+10. Confirm RevenueCat and production deep links do not initialize.
+11. Open Profile and confirm its read-only information is visible while
    write-capable child screens return to Home and account deletion cannot run.
-10. Open Subscription, Requests, Reviews and Favourites. Confirm their read-only
+12. Open Subscription, Requests, Reviews and Favourites. Confirm their read-only
     content loads and subscription actions do not start a store purchase.
-11. Open a request detail and a favourite parking, then return to Profile.
-12. Do not create a missing profile; registration is intentionally blocked.
-13. Sign out through Profile when needed; do not use account deletion.
+13. Open a request detail and a favourite parking, then return to Profile.
+14. Do not create a missing profile; registration is intentionally blocked.
+15. Sign out through Profile when needed; do not use account deletion.
 
 ## Verification commands
 

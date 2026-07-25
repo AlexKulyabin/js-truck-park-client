@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/favorites/data/favorites_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -13,10 +13,10 @@ export 'favourite_card_model.dart';
 class FavouriteCardWidget extends StatefulWidget {
   const FavouriteCardWidget({
     super.key,
-    required this.favoriteRow,
+    required this.favorite,
   });
 
-  final ViewUserFavoritesRow? favoriteRow;
+  final FavoriteParking? favorite;
 
   @override
   State<FavouriteCardWidget> createState() => _FavouriteCardWidgetState();
@@ -65,14 +65,12 @@ class _FavouriteCardWidgetState extends State<FavouriteCardWidget> {
                 children: [
                   Builder(
                     builder: (context) {
-                      if (widget!.favoriteRow?.photos != null) {
+                      final primaryPhotoUrl = widget.favorite?.primaryPhotoUrl;
+                      if (primaryPhotoUrl != null) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(10.0),
                           child: Image.network(
-                            getJsonField(
-                              widget!.favoriteRow!.photos!,
-                              r'''$[0]''',
-                            ).toString(),
+                            primaryPhotoUrl,
                             width: 56.0,
                             height: 56.0,
                             fit: BoxFit.cover,
@@ -99,7 +97,7 @@ class _FavouriteCardWidgetState extends State<FavouriteCardWidget> {
                   Flexible(
                     child: Text(
                       valueOrDefault<String>(
-                        widget!.favoriteRow?.address,
+                        widget.favorite?.address,
                         'No address',
                       ),
                       maxLines: 2,

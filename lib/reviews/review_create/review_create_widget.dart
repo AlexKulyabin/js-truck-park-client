@@ -1,7 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/features/review_submission/data/review_submission_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -3275,7 +3275,8 @@ class _ReviewCreateWidgetState extends State<ReviewCreateWidget> {
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 60.0),
                 child: FFButtonWidget(
-                  onPressed: AppConfig.current.integrationReadOnly ||
+                  onPressed: !AppConfig.current.canPerformWrite(
+                              AppWriteOperation.reviewCreate) ||
                           ((_model.mainIimpression == null) &&
                               (_model.convenienceOfTruckArrival == null) &&
                               (_model.infrastructure == null) &&
@@ -3284,95 +3285,65 @@ class _ReviewCreateWidgetState extends State<ReviewCreateWidget> {
                                   _model.textController.text == ''))
                       ? null
                       : () async {
-                          _model.createReviewOut = await ReviewsTable().insert({
-                            'parking_id': widget!.parkingId,
-                            'comment': _model.textController.text,
-                            'rating_impression': _model.mainIimpression != null
-                                ? functions
-                                    .enumToScore(_model.mainIimpression!.name)
-                                : 0,
-                            'rating_arrival':
-                                _model.convenienceOfTruckArrival != null
+                          try {
+                            _model.createReviewOut =
+                                await _model.reviewSubmissionService.submit(
+                              ReviewSubmissionCommand(
+                                parkingId: widget.parkingId,
+                                comment: _model.textController.text,
+                                ratingImpression: _model.mainIimpression != null
+                                    ? functions.enumToScore(
+                                        _model.mainIimpression!.name)
+                                    : 0,
+                                ratingArrival: _model
+                                            .convenienceOfTruckArrival !=
+                                        null
                                     ? functions.enumToScore(
                                         _model.convenienceOfTruckArrival!.name)
                                     : 0,
-                            'rating_security': _model.securityLevel != null
-                                ? functions
-                                    .enumToScore(_model.securityLevel!.name)
-                                : 0,
-                            'rating_infrastructure': _model.infrastructure !=
-                                    null
-                                ? functions
-                                    .enumToScore(_model.infrastructure!.name)
-                                : 0,
-                            'rating_comfort':
-                                _model.comfortForRelaxation != null
-                                    ? functions.enumToScore(
-                                        _model.comfortForRelaxation!.name)
+                                ratingSecurity: _model.securityLevel != null
+                                    ? functions
+                                        .enumToScore(_model.securityLevel!.name)
                                     : 0,
-                            'created_at':
-                                supaSerialize<DateTime>(getCurrentTimestamp),
-                            'user_id': currentUserUid,
-                          });
-                          if ((_model.photos.isNotEmpty) == true) {
-                            for (int loop1Index = 0;
-                                loop1Index < _model.photos.length;
-                                loop1Index++) {
-                              final currentLoop1Item =
-                                  _model.photos[loop1Index];
-                              {
-                                safeSetState(() => _model
-                                    .isDataUploading_uploadDataYj0 = true);
-                                var selectedUploadedFiles = <FFUploadedFile>[];
-                                var selectedMedia = <SelectedFile>[];
-                                var downloadUrls = <String>[];
-                                try {
-                                  selectedUploadedFiles =
-                                      currentLoop1Item.bytes!.isNotEmpty
-                                          ? [currentLoop1Item]
-                                          : <FFUploadedFile>[];
-                                  selectedMedia =
-                                      selectedFilesFromUploadedFiles(
-                                    selectedUploadedFiles,
-                                    storageFolderPath:
-                                        'parkings/${widget!.parkingId}/reviews/${_model.createReviewOut?.id?.toString()}/${loop1Index.toString()}',
-                                  );
-                                  downloadUrls =
-                                      await uploadSupabaseStorageFiles(
-                                    bucketName: 'parking_content',
-                                    selectedFiles: selectedMedia,
-                                  );
-                                } finally {
-                                  _model.isDataUploading_uploadDataYj0 = false;
-                                }
-                                if (selectedUploadedFiles.length ==
-                                        selectedMedia.length &&
-                                    downloadUrls.length ==
-                                        selectedMedia.length) {
-                                  safeSetState(() {
-                                    _model.uploadedLocalFile_uploadDataYj0 =
-                                        selectedUploadedFiles.first;
-                                    _model.uploadedFileUrl_uploadDataYj0 =
-                                        downloadUrls.first;
-                                  });
-                                } else {
-                                  safeSetState(() {});
-                                  return;
-                                }
-                              }
-
-                              _model.createParkingPhotosOut =
-                                  await ParkingPhotosTable().insert({
-                                'url': _model.uploadedFileUrl_uploadDataYj0,
-                                'parking_id': widget!.parkingId,
-                                'created_at': supaSerialize<DateTime>(
-                                    getCurrentTimestamp),
-                                'user_id': currentUserUid,
-                                'review_id': _model.createReviewOut?.id,
-                              });
+                                ratingInfrastructure:
+                                    _model.infrastructure != null
+                                        ? functions.enumToScore(
+                                            _model.infrastructure!.name)
+                                        : 0,
+                                ratingComfort:
+                                    _model.comfortForRelaxation != null
+                                        ? functions.enumToScore(
+                                            _model.comfortForRelaxation!.name)
+                                        : 0,
+                                createdAt: getCurrentTimestamp,
+                                userId: currentUserUid,
+                                photos: _model.photos
+                                    .map(
+                                      (photo) => ReviewPhotoDraft(
+                                        fileName: photo.name ??
+                                            photo.originalFilename,
+                                        byteLength: photo.bytes?.length ?? 0,
+                                        bytes: photo.bytes,
+                                        width: photo.width,
+                                        height: photo.height,
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            );
+                            if (!context.mounted) {
+                              return;
                             }
+                            Navigator.pop(context);
+                          } catch (_) {
+                            if (!context.mounted) {
+                              return;
+                            }
+                            showSnackbar(
+                              context,
+                              'Could not create review. Please try again.',
+                            );
                           }
-                          Navigator.pop(context);
 
                           safeSetState(() {});
                         },

@@ -541,7 +541,8 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                       Expanded(
                         child: Builder(
                           builder: (context) => FFButtonWidget(
-                            onPressed: AppConfig.current.integrationReadOnly
+                            onPressed: !AppConfig.current.canPerformWrite(
+                                    AppWriteOperation.reportCreate)
                                 ? null
                                 : () async {
                                     if (FFAppState().isGuest == true) {
@@ -624,7 +625,8 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                       Expanded(
                         child: Builder(
                           builder: (context) => FFButtonWidget(
-                            onPressed: AppConfig.current.integrationReadOnly ||
+                            onPressed: !AppConfig.current.canPerformWrite(
+                                        AppWriteOperation.reviewCreate) ||
                                     functions.hasUserReviewed(
                                         reviews
                                             .map((e) => e.userId)

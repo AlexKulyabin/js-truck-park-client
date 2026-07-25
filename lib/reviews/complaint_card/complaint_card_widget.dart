@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/reports/data/reports_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -16,7 +16,7 @@ class ComplaintCardWidget extends StatefulWidget {
     required this.complaintRow,
   });
 
-  final ViewReportsDetailedRow? complaintRow;
+  final UserReport? complaintRow;
 
   @override
   State<ComplaintCardWidget> createState() => _ComplaintCardWidgetState();
