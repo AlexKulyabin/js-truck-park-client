@@ -46,6 +46,7 @@ void main() async {
     try {
       await actions.initChottuLink();
       await actions.listenChottuLink();
+      await actions.recoverChottuReferral();
     } catch (error) {
       debugPrint('Chottu Link initialization failed: $error');
     }

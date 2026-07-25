@@ -27,9 +27,9 @@ main.dart
 - Supabase: `lib/backend/supabase/supabase.dart`; singleton `SupaFlow.client`, implicit auth flow.
 - Сессия: `lib/auth/supabase_auth/supabase_user_provider.dart` слушает `onAuthStateChange`; `lib/auth/supabase_auth/auth_util.dart` отдельно слушает JWT.
 - Splash gate: `AppStateNotifier.loading` зависит от первого auth user и флага `showSplashImage`; флаг снимается через одну секунду.
-- Реальная splash-логика: `lib/onboarding/splash/splash_widget.dart` инициализирует Chottu Link/device id, восстанавливает referral, затем выбирает onboarding/auth/home.
+- Реальная splash-логика: `lib/onboarding/splash/splash_widget.dart` получает device id, восстанавливает referral из route/app state, затем выбирает onboarding/auth/home.
 - Маршрутизация: `lib/flutter_flow/nav/nav.dart`, 24 именованных route; сериализация параметров — `lib/flutter_flow/nav/serialization_util.dart`; page exports — `lib/index.dart`.
-- Deep links: Chottu Link custom actions и query `ref` у `SplashWidget`. Прямого использования `app_links` в `lib/` не найдено.
+- Deep links: `main.dart` инициализирует Chottu Link, слушает resolved-link metadata и на Android восстанавливает deferred referral из attribution; `SplashWidget` также принимает query `ref`. Прямого использования `app_links` в `lib/` не найдено.
 - Push notifications: Flutter/Dart-обработчик не найден. В iOS есть `ios/ImageNotification/NotificationService.swift`, но связанный Dart-flow не обнаружен.
 
 ## Состояние

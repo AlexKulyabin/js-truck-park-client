@@ -49,5 +49,17 @@ void main() {
         isNull,
       );
     });
+
+    test('uses a deferred destination when earlier candidates have no code',
+        () {
+      expect(
+        referralCodeFromUrls([
+          null,
+          'https://js-truck-park.chottu.link/short-path',
+          'https://js-truck-park.web.app/deeplink.html?route=splash&ref=DEFERRED',
+        ]),
+        'DEFERRED',
+      );
+    });
   });
 }

@@ -29,3 +29,14 @@ String? referralCodeFromUrl(String? value) {
   final code = uri?.queryParameters['ref']?.trim();
   return code == null || code.isEmpty ? null : code;
 }
+
+/// Returns the first referral code found in resolved or attributed URLs.
+String? referralCodeFromUrls(Iterable<String?> values) {
+  for (final value in values) {
+    final code = referralCodeFromUrl(value);
+    if (code != null) {
+      return code;
+    }
+  }
+  return null;
+}
