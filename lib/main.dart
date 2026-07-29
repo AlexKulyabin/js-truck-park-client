@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:provider/provider.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/gestures.dart';
@@ -48,7 +50,7 @@ void main() async {
     try {
       await actions.initChottuLink();
       await actions.listenChottuLink();
-      await actions.recoverChottuReferral();
+      unawaited(actions.recoverChottuReferral());
     } catch (error) {
       debugPrint('Chottu Link initialization failed: $error');
     }

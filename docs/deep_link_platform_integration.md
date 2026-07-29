@@ -38,6 +38,13 @@ Each inbound URL family has one application-level owner:
 | direct Hosting relay URL delivered to the app | `IncomingAppLinkCoordinator` | infer the same legacy Flutter route |
 | foreign domain or unknown route | none | ignore safely |
 
+On Android, deferred attribution recovery starts without blocking the first
+Flutter frame. The client reads Chottu attribution immediately and retries at
+one and two seconds when the SDK cache is still empty. A completed organic
+result stops the retry schedule, and concurrent callers share one in-flight
+recovery operation. Referral codes are persisted through the existing
+`FFAppState.tempReferralCode` contract and are never written to logs.
+
 Flutter's built-in deep-link handler is disabled for release. This prevents it
 from navigating to a Chottu short-link path before the ChottuLink SDK resolves
 the destination. The existing `app_links` dependency now owns the legacy
@@ -117,6 +124,10 @@ Android, app not installed:
    processing once.
 5. Verify the expected `users`/`referral_stats` result with read-only inspection
    before checking the RevenueCat price presentation.
+
+The generated referral URL must be new for each run. On first launch, allow the
+app to remain open through the splash/onboarding transition so the bounded
+attribution retries can complete.
 
 iOS/TestFlight:
 

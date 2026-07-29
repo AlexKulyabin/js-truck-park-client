@@ -15,9 +15,11 @@ import 'dart:io' show Platform;
 
 import 'package:chottu_link/chottu_link.dart';
 import 'package:chottu_link/model/chottu_link_resolve_link.dart';
+import '/features/referrals/deferred_referral_recovery.dart';
 import '/features/referrals/referral_links.dart';
 
 StreamSubscription<ResolvedLink>? _chottuLinkSubscription;
+Future<bool>? _referralRecoveryInFlight;
 
 Future listenChottuLink() async {
   if (_chottuLinkSubscription != null) {
@@ -35,45 +37,50 @@ Future listenChottuLink() async {
   });
 }
 
-Future recoverChottuReferral() async {
+Future<bool> recoverChottuReferral() async {
   if (!Platform.isAndroid || FFAppState().tempReferralCode.isNotEmpty) {
-    return;
+    return FFAppState().tempReferralCode.isNotEmpty;
   }
 
+  final inFlight = _referralRecoveryInFlight;
+  if (inFlight != null) {
+    return inFlight;
+  }
+
+  final recovery = _recoverChottuReferral();
+  _referralRecoveryInFlight = recovery;
   try {
-    final attribution = await ChottuLink.getAttributionData();
-    if (attribution == null) {
-      return;
+    return await recovery;
+  } finally {
+    if (identical(_referralRecoveryInFlight, recovery)) {
+      _referralRecoveryInFlight = null;
     }
+  }
+}
 
-    final attributedCode = referralCodeFromUrls([
-      attribution.destinationWithUtm,
-      attribution.destinationUrl,
-      attribution.clickedShortUrl,
-      attribution.shortUrl,
-    ]);
-    if (_persistReferralCode(attributedCode)) {
-      return;
-    }
-
-    final shortUrl = _firstNonEmpty([
-      attribution.clickedShortUrl,
-      attribution.shortUrl,
-    ]);
-    if (shortUrl == null) {
-      return;
-    }
-
-    final resolvedLink = await _resolveShortUrl(shortUrl);
-    _persistReferralCode(
-      referralCodeFromUrls([
-        resolvedLink?.link,
-        resolvedLink?.shortLink,
-        resolvedLink?.shortLinkRaw,
-      ]),
+Future<bool> _recoverChottuReferral() async {
+  try {
+    final recovery = DeferredReferralRecovery(
+      readAttribution: () async {
+        final attribution = await ChottuLink.getAttributionData();
+        if (attribution == null) {
+          return null;
+        }
+        return DeferredReferralAttribution(
+          isAttributed: attribution.isAttributed,
+          matchFound: attribution.matchFound,
+          destinationWithUtm: attribution.destinationWithUtm,
+          destinationUrl: attribution.destinationUrl,
+          clickedShortUrl: attribution.clickedShortUrl,
+          shortUrl: attribution.shortUrl,
+        );
+      },
+      resolveShortLink: _resolveShortUrl,
     );
+    return _persistReferralCode(await recovery.recover());
   } catch (error) {
     debugPrint('Chottu referral recovery failed: ${error.runtimeType}');
+    return false;
   }
 }
 
@@ -88,23 +95,19 @@ bool _persistReferralCode(String? refCode) {
   return true;
 }
 
-String? _firstNonEmpty(Iterable<String?> values) {
-  for (final value in values) {
-    final normalized = value?.trim();
-    if (normalized != null && normalized.isNotEmpty) {
-      return normalized;
-    }
-  }
-  return null;
-}
-
-Future<ResolvedLink?> _resolveShortUrl(String shortUrl) async {
-  final completer = Completer<ResolvedLink?>();
+Future<DeferredReferralResolvedLink?> _resolveShortUrl(String shortUrl) async {
+  final completer = Completer<DeferredReferralResolvedLink?>();
   await ChottuLink.getAppLinkDataFromUrl(
     shortUrl: shortUrl,
     onSuccess: (link) {
       if (!completer.isCompleted) {
-        completer.complete(link);
+        completer.complete(
+          DeferredReferralResolvedLink(
+            link: link.link,
+            shortLink: link.shortLink,
+            shortLinkRaw: link.shortLinkRaw,
+          ),
+        );
       }
     },
     onError: (_) {
