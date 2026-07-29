@@ -1,6 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/api_requests/api_calls.dart';
 import '/backend/supabase/supabase.dart';
+import '/custom_code/actions/index.dart' as actions;
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -541,8 +542,11 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                 );
                               }
 
-                              if (FFAppState().tempReferralCode != null &&
-                                  FFAppState().tempReferralCode != '') {
+                              if (FFAppState().tempReferralCode.isEmpty) {
+                                await actions.recoverChottuReferral();
+                              }
+
+                              if (FFAppState().tempReferralCode.isNotEmpty) {
                                 _model.apiResult8fn =
                                     await ProcessReferralCall.call(
                                   refCode: FFAppState().tempReferralCode,

@@ -53,7 +53,7 @@ class _SplashWidgetState extends State<SplashWidget> {
         }
       } else {
         _model.waitedRefCode = await actions.waitForReferralCode(
-          3,
+          4,
         );
 
         context.goNamed(Onboard1Widget.routeName);

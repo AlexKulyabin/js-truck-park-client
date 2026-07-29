@@ -44,6 +44,10 @@ one and two seconds when the SDK cache is still empty. A completed organic
 result stops the retry schedule, and concurrent callers share one in-flight
 recovery operation. Referral codes are persisted through the existing
 `FFAppState.tempReferralCode` contract and are never written to logs.
+The first-run splash allows four seconds for that bounded recovery, and the
+registration action requests the same deduplicated recovery once more before
+deciding whether to call `process_referral`. It does not call the RPC when no
+verified referral code is available.
 
 Flutter's built-in deep-link handler is disabled for release. This prevents it
 from navigating to a Chottu short-link path before the ChottuLink SDK resolves
