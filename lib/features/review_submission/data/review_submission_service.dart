@@ -336,8 +336,17 @@ class ReviewSubmissionService {
       );
     }
 
+    final submission = prepare(command);
+    if (submission.photos.isNotEmpty &&
+        !_config.canPerformWrite(AppWriteOperation.reviewPhotoCreate)) {
+      throw const ReviewSubmissionException(
+        failure: ReviewSubmissionFailure.disabled,
+        message: 'Review photo creation is not enabled for this build.',
+      );
+    }
+
     final gateway = _gateway ?? SupabaseReviewSubmissionGateway();
-    return gateway.submitAtomically(submission: prepare(command));
+    return gateway.submitAtomically(submission: submission);
   }
 }
 

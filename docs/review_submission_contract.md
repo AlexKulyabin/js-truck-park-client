@@ -8,9 +8,10 @@ per URL. Those operations were not atomic. A failed upload or row insert could
 leave a review with only some photos, or an uploaded object without its
 database row.
 
-The current UI is wired through `ReviewSubmissionService`, but the write
-capability is still disabled by default and can only be enabled for guarded
-non-production test builds.
+The current UI is wired through `ReviewSubmissionService`. Review and review
+photo creation are enabled in production Release builds for closed testing and
+in guarded non-production test builds. Update and delete remain disabled in
+production after publication.
 
 ## Prepared client boundary
 
@@ -20,15 +21,14 @@ non-production test builds.
   timestamp and photo metadata;
 - validation matching the current UI eligibility rule and score range;
 - immutable `PreparedReviewSubmission` data;
-- an explicit `reviewCreate` write capability that remains disabled in every
-  build;
+- explicit `reviewCreate` and `reviewPhotoCreate` capabilities;
 - a single `ReviewSubmissionGateway.submitAtomically` operation.
 
 `SupabaseReviewSubmissionGateway` supports review creation behind
-`AppWriteOperation.reviewCreate`. The review create UI calls this service when
-the guarded test-write capability is enabled. Photo uploads keep the
-FlutterFlow picker constraints: `maxWidth=1920`, `maxHeight=1920`,
-`imageQuality=80`, JPEG/PNG/WebP only, and the Supabase bucket limit of 5 MiB.
+`AppWriteOperation.reviewCreate`. A submission containing photos also requires
+`AppWriteOperation.reviewPhotoCreate`. Photo uploads keep the FlutterFlow
+picker constraints: `maxWidth=1920`, `maxHeight=1920`, `imageQuality=80`,
+JPEG/PNG/WebP only, and the Supabase bucket limit of 5 MiB.
 
 ## Partial failure rule
 
@@ -53,7 +53,24 @@ public Storage objects best-effort. If Storage cleanup fails after the row is
 gone, the result records failed cleanup count; a future backend job can retry
 orphan cleanup without restoring the deleted review.
 
-## Activation prerequisites
+## Closed-test activation
+
+Activation date: 2026-07-29.
+
+The production Release capability matrix is intentionally asymmetric:
+
+- create a review: enabled;
+- attach photos while creating that review: enabled;
+- update a published review: disabled;
+- delete a published review: disabled;
+- add, replace or delete photos after publication: disabled.
+
+This client stage does not apply Supabase migrations and performs no production
+writes during automated verification. The release artifact must stay in the
+closed-test track until the manual matrix in
+`docs/user_write_closed_test_activation.md` passes.
+
+## Future hardening
 
 - version-controlled backend contract and migrations;
 - owner, cross-user and anonymous RLS/Storage policy tests;
@@ -61,6 +78,5 @@ orphan cleanup without restoring the deleted review.
 - cleanup tests for Storage upload failure and photo-row insert failure;
 - server-side idempotency key before enabling broad production retries;
 - staging verification without production writes;
-- a separate commit that wires the UI to `ReviewSubmissionService`;
-- a separate photo-flow commit with compensation before photo submission is
-  enabled.
+- a server-owned idempotent endpoint before removing the current best-effort
+  client compensation boundary.

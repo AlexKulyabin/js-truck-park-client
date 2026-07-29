@@ -38,7 +38,9 @@ deletion, parking creation, referrals and subscription purchases are
 unavailable. Favorite toggles and report creation are enabled through explicit
 capabilities. Review create/update/delete/photo writes require a debug/profile
 build connected to a non-production Supabase project with
-`APP_ENABLE_TEST_WRITES=true`.
+`APP_ENABLE_TEST_WRITES=true`. Production Release builds separately allow a
+user to create one review with optional photos; review update and delete remain
+disabled after publication. See `docs/user_write_closed_test_activation.md`.
 
 ## Configuration
 

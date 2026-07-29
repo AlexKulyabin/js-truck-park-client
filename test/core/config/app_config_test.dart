@@ -28,6 +28,10 @@ void main() {
         config.canPerformWrite(AppWriteOperation.reviewCreate),
         isFalse,
       );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewPhotoCreate),
+        isFalse,
+      );
       expect(config.appDisplayName, 'JS Truck Park Dev');
     });
 
@@ -54,6 +58,18 @@ void main() {
       );
       expect(
         config.canPerformWrite(AppWriteOperation.reviewCreate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewPhotoCreate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewUpdate),
+        isFalse,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewDelete),
         isFalse,
       );
       expect(config.appDisplayName, 'JS Truck Park');
@@ -112,7 +128,7 @@ void main() {
         isTrue,
       );
       expect(
-        config.canPerformWrite(AppWriteOperation.reviewPhotoManage),
+        config.canPerformWrite(AppWriteOperation.reviewPhotoCreate),
         isTrue,
       );
       expect(config.integrationReadOnly, isTrue);

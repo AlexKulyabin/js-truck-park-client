@@ -197,6 +197,25 @@ void main() {
       expect(gateway.calls, isEmpty);
     });
 
+    test('production release keeps review updates and deletes disabled',
+        () async {
+      final gateway = _FakeReviewsGateway();
+      final service = ReviewsService(
+        gateway: gateway,
+        config: AppConfig.resolve(isReleaseMode: true),
+      );
+
+      await expectLater(
+        service.updateReview(_updateRequest()),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      await expectLater(
+        service.deleteReview(_deleteRequest()),
+        throwsA(isA<ReviewMutationException>()),
+      );
+      expect(gateway.calls, isEmpty);
+    });
+
     test('rejects invalid review delete payloads without querying', () async {
       final gateway = _FakeReviewsGateway();
       final service = _writeEnabledService(gateway);

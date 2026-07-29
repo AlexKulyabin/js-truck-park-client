@@ -174,6 +174,34 @@ void main() {
       expect(gateway.lastSubmission?.userId, 'user-1');
     });
 
+    test('production capability submits a new review with photos', () async {
+      final gateway = _FakeReviewSubmissionGateway();
+      final service = ReviewSubmissionService(
+        gateway: gateway,
+        config: AppConfig.resolve(isReleaseMode: true),
+      );
+
+      final result = await service.submit(
+        _command(
+          photos: [
+            ReviewPhotoDraft(
+              fileName: 'photo.jpg',
+              byteLength: _photoBytes.length,
+              mimeType: 'image/jpeg',
+              bytes: _photoBytes,
+              width: 1920,
+              height: 1080,
+            ),
+          ],
+        ),
+      );
+
+      expect(result.reviewId, 1);
+      expect(result.createdPhotoCount, 1);
+      expect(gateway.calls, 1);
+      expect(gateway.lastSubmission?.photos, hasLength(1));
+    });
+
     test('supabase gateway inserts a no-photo review payload', () async {
       final reviewsTable = _FakeReviewsTable();
       final gateway = SupabaseReviewSubmissionGateway(

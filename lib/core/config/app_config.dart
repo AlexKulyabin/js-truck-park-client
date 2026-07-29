@@ -7,9 +7,9 @@ enum AppWriteOperation {
   profileUpdate,
   reportCreate,
   reviewCreate,
+  reviewPhotoCreate,
   reviewUpdate,
   reviewDelete,
-  reviewPhotoManage,
 }
 
 class AppConfig {
@@ -128,10 +128,10 @@ class AppConfig {
       AppWriteOperation.favoriteToggle => true,
       AppWriteOperation.profileUpdate => false,
       AppWriteOperation.reportCreate => true,
-      AppWriteOperation.reviewCreate => testWritesEnabled,
+      AppWriteOperation.reviewCreate => isProduction || testWritesEnabled,
+      AppWriteOperation.reviewPhotoCreate => isProduction || testWritesEnabled,
       AppWriteOperation.reviewUpdate => testWritesEnabled,
       AppWriteOperation.reviewDelete => testWritesEnabled,
-      AppWriteOperation.reviewPhotoManage => testWritesEnabled,
     };
   }
 
