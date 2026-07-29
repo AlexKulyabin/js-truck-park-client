@@ -46,6 +46,7 @@ class ParkingsDetailsWidget extends StatefulWidget {
   static const loadingKey = Key('public-parking-details-loading');
   static const failureKey = Key('public-parking-details-failure');
   static const emptyKey = Key('public-parking-details-empty');
+  static const scrollViewKey = Key('public-parking-details-scroll-view');
   static const dragHandleKey = Key('public-parking-details-drag-handle');
   static const photoGalleryKey = Key('public-parking-details-photo-gallery');
   static const favoriteButtonKey = Key('public-parking-favorite-button');
@@ -59,6 +60,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late ParkingsDetailsModel _model;
   late final ParkingDetailsController _controller;
   late final ParkingFavoriteController _favoriteController;
+  final ScrollController _detailsScrollController = ScrollController();
 
   @override
   void setState(VoidCallback callback) {
@@ -113,6 +115,20 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
     showSnackbar(context, message);
   }
 
+  void _handlePhotoVerticalDrag(DragUpdateDetails details) {
+    final delta = details.primaryDelta;
+    if (delta == null || !_detailsScrollController.hasClients) {
+      return;
+    }
+
+    final position = _detailsScrollController.position;
+    final target = (position.pixels - delta).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    _detailsScrollController.jumpTo(target);
+  }
+
   @override
   void dispose() {
     _controller
@@ -121,6 +137,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
     _favoriteController
       ..removeListener(_onFavoriteStateChanged)
       ..dispose();
+    _detailsScrollController.dispose();
     _model.maybeDispose();
 
     super.dispose();
@@ -136,6 +153,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
             ParkingFavoriteMutationPhase.updating;
 
     return SingleChildScrollView(
+      key: ParkingsDetailsWidget.scrollViewKey,
+      controller: _detailsScrollController,
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
@@ -282,8 +301,10 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
                               0.0, 0.0, 0.0, 16.0),
-                          child: KeyedSubtree(
+                          child: GestureDetector(
                             key: ParkingsDetailsWidget.photoGalleryKey,
+                            behavior: HitTestBehavior.translucent,
+                            onVerticalDragUpdate: _handlePhotoVerticalDrag,
                             child: Builder(
                               builder: (context) {
                                 if (details.photos != null) {
@@ -366,6 +387,20 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                       width: double.infinity,
                                                       height: 194.0,
                                                       fit: BoxFit.cover,
+                                                      errorBuilder: (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) =>
+                                                          Icon(
+                                                        Icons
+                                                            .no_photography_outlined,
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                          context,
+                                                        ).checkBoxes,
+                                                        size: 72.0,
+                                                      ),
                                                     ),
                                                   ),
                                                 );

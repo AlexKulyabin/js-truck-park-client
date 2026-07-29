@@ -23,6 +23,9 @@ production release contract changed.
 - the photo gallery no longer captures vertical drags, so an upward drag over a
   photo expands the scrollable details content while horizontal paging and
   photo taps remain unchanged.
+- the gallery now forwards vertical drag deltas to the details scroll
+  controller explicitly, rather than relying on implicit gesture-arena
+  propagation through the horizontal photo pager;
 - tab changes and favorite mutations retain the already loaded parking details;
   only the affected local state changes, so the bottom sheet shell does not
   disappear behind a full-screen loading state.
@@ -34,6 +37,8 @@ production release contract changed.
 - unit tests for down, up, zero and missing drag velocity;
 - widget test proving an upward fling keeps details open and a downward fling
   closes them;
+- widget test proving an upward drag that starts on the gallery changes the
+  details scroll offset;
 - widget tests proving tab changes and a delayed favorite mutation do not
   reload or hide the details shell;
 - complete Flutter test suite;

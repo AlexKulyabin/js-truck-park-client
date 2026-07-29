@@ -26,6 +26,7 @@ class ProfileWidget extends StatefulWidget {
 
   static String routeName = 'Profile';
   static String routePath = '/profile';
+  static const inviteActionKey = Key('profile-invite-action');
 
   @override
   State<ProfileWidget> createState() => _ProfileWidgetState();
@@ -975,17 +976,18 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       AnimatedBuilder(
                         animation: _profileController,
                         builder: (context, _) {
-                          if (!_profileController.state.showInviteAction) {
-                            return const SizedBox.shrink();
-                          }
-
                           return Builder(
                             builder: (context) => InkWell(
+                              key: ProfileWidget.inviteActionKey,
                               splashColor: Colors.transparent,
                               focusColor: Colors.transparent,
                               hoverColor: Colors.transparent,
                               highlightColor: Colors.transparent,
                               onTap: () async {
+                                if (!_profileController
+                                    .state.showInviteAction) {
+                                  return;
+                                }
                                 var _shouldSetState = false;
                                 if (FFAppState().isGuest == true) {
                                   await showDialog(

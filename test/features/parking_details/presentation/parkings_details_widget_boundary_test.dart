@@ -128,6 +128,42 @@ void main() {
     );
   });
 
+  testWidgets('scrolls details when dragging upward over the photo gallery',
+      (tester) async {
+    final repository = _FakeRepository()
+      ..details = const ParkingDetails(
+        id: 'parking-1',
+        isFavorited: false,
+        address: 'Photo drag parking',
+        photos: [
+          ParkingDetailsPhoto(url: 'https://example.test/parking.jpg'),
+        ],
+        stars1: 0,
+        stars2: 0,
+        stars3: 0,
+        stars4: 0,
+        stars5: 0,
+      );
+
+    await tester.pumpWidget(_buildSubject(repository));
+    await tester.pumpAndSettle();
+
+    final scrollView = tester.widget<SingleChildScrollView>(
+      find.byKey(ParkingsDetailsWidget.scrollViewKey),
+    );
+    expect(scrollView.controller?.offset, 0.0);
+
+    await tester.drag(
+      find.byKey(ParkingsDetailsWidget.photoGalleryKey),
+      const Offset(0.0, -180.0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(scrollView.controller?.offset, greaterThan(0.0));
+    expect(find.text('Photo drag parking'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('renders review cards without the legacy Supabase row adapter', () {
     final source = File(
       'lib/parkings_details/reviews_tab/reviews_tab_widget.dart',
