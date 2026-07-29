@@ -55,7 +55,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.mycompany.jstrackpark"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
@@ -63,7 +63,7 @@ android {
             appName: "JS Truck Park",
             deepLinkScheme: "jstrackpark",
             deepLinkHost: "js-truck-park.web.app",
-            flutterDeepLinkingEnabled: "true"
+            flutterDeepLinkingEnabled: "false"
         ]
     }
 

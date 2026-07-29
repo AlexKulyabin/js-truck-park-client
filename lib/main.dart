@@ -1,4 +1,5 @@
 import 'package:provider/provider.dart';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +14,7 @@ import '/core/config/app_config.dart';
 import '/core/localization/shared_preferences_locale_store.dart';
 import '/core/theme/shared_preferences_theme_store.dart';
 import '/features/language/application/language_controller.dart';
+import '/features/deep_links/application/incoming_app_link_coordinator.dart';
 import '/features/map/application/parking_filter_controller.dart';
 import '/features/settings/application/theme_controller.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -94,6 +96,7 @@ class MyAppScrollBehavior extends MaterialScrollBehavior {
 class _MyAppState extends State<MyApp> {
   late AppStateNotifier _appStateNotifier;
   late GoRouter _router;
+  IncomingAppLinkCoordinator? _incomingAppLinks;
   String getRoute([RouteMatch? routeMatch]) {
     final RouteMatch lastMatch =
         routeMatch ?? _router.routerDelegate.currentConfiguration.last;
@@ -124,6 +127,31 @@ class _MyAppState extends State<MyApp> {
       Duration(milliseconds: 1000),
       () => _appStateNotifier.stopShowingSplashImage(),
     );
+    if (AppConfig.current.enableDeepLinks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _incomingAppLinks = IncomingAppLinkCoordinator(
+          links: AppLinks().uriLinkStream,
+          openLocation: _router.go,
+          persistReferralCode: (referralCode) {
+            FFAppState().update(() {
+              FFAppState().tempReferralCode = referralCode;
+            });
+          },
+          onError: (error, _) {
+            debugPrint('Incoming app link failed: ${error.runtimeType}');
+          },
+        )..start();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _incomingAppLinks?.dispose();
+    super.dispose();
   }
 
   @override

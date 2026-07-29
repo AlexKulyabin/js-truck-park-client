@@ -1,5 +1,7 @@
-const referralHostingDomain = 'js-truck-park.web.app';
-const referralHostingRelayPath = '/deeplink.html';
+import '../deep_links/domain/deep_link_contract.dart';
+
+const referralHostingDomain = productionHostingDomain;
+const referralHostingRelayPath = productionHostingRelayPath;
 const referralRoute = 'splash';
 
 /// Builds the destination stored inside a Chottu short link.

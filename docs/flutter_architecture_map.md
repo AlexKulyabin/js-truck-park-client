@@ -29,7 +29,7 @@ main.dart
 - Splash gate: `AppStateNotifier.loading` зависит от первого auth user и флага `showSplashImage`; флаг снимается через одну секунду.
 - Реальная splash-логика: `lib/onboarding/splash/splash_widget.dart` получает device id, восстанавливает referral из route/app state, затем выбирает onboarding/auth/home.
 - Маршрутизация: `lib/flutter_flow/nav/nav.dart`, 24 именованных route; сериализация параметров — `lib/flutter_flow/nav/serialization_util.dart`; page exports — `lib/index.dart`.
-- Deep links: `main.dart` инициализирует Chottu Link, слушает resolved-link metadata и на Android восстанавливает deferred referral из attribution; `SplashWidget` также принимает query `ref`. Прямого использования `app_links` в `lib/` не найдено.
+- Deep links: `main.dart` инициализирует Chottu Link, слушает resolved-link metadata и на Android восстанавливает deferred referral из attribution. `IncomingAppLinkCoordinator` через `app_links` отдельно принимает только allowlisted legacy Hosting/custom-scheme routes; встроенный Flutter handler выключен, чтобы не конкурировать с Chottu SDK. iOS release объявляет Associated Domains для `js-truck-park.chottu.link`; `SplashWidget` принимает query `ref`. Подробный контракт и closed-test checklist: `docs/deep_link_platform_integration.md`.
 - Push notifications: Flutter/Dart-обработчик не найден. В iOS есть `ios/ImageNotification/NotificationService.swift`, но связанный Dart-flow не обнаружен.
 
 ## Состояние

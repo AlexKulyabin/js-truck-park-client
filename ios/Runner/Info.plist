@@ -39,7 +39,7 @@
         </dict>
     </array>
     <key>FlutterDeepLinkingEnabled</key>
-    <true/>
+    <false/>
 
 
 	<key>CFBundleVersion</key>
