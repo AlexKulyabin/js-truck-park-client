@@ -2,7 +2,7 @@
 
 Date: 2026-07-29
 
-Target build: `1.0.5 (39)`.
+Target build: `1.0.6 (40)`.
 
 Status: client capabilities prepared for the next Android closed-test Release.
 No Supabase migration, policy change or production write command is part of
@@ -10,9 +10,8 @@ this stage.
 
 ## Build artifact
 
-- file: `build/app/outputs/bundle/release/JS-Truck-Park-1.0.5-39.aab`;
-- SHA-256:
-  `dac648e0cacbbb205847bff4a2249592adc0030b2aaf9ce89d16b25b76934974`;
+- file: `build/app/outputs/bundle/release/JS-Truck-Park-1.0.6-40.aab`;
+- SHA-256 and exact Git commit: recorded in the adjacent `.build-info` file;
 - upload certificate SHA-256:
   `AD:AE:70:BC:2E:04:2A:C4:C6:56:66:B0:7E:E3:F5:E1:78:39:D2:1F:BD:7E:E9:49:A4:9A:1A:48:2C:7B:DC:E5`;
 - validation: Gradle Release bundle and signing tasks passed, compressed data
@@ -64,18 +63,22 @@ Use designated test accounts and clearly identifiable test content.
 3. Create a parking with one valid photo and confirm moderation details render
    the same photo.
 4. Toggle a favorite twice and confirm the details sheet stays mounted.
-5. Submit one report and confirm it appears only for its author/admin contract.
-6. Create a text-only review and confirm a second review for the same parking
+5. Drag upward directly over the parking photo and confirm the details content
+   scrolls without closing the sheet.
+6. Open Profile and confirm the Invite friends action is visible and opens the
+   sharing dialog.
+7. Submit one report and confirm it appears only for its author/admin contract.
+8. Create a text-only review and confirm a second review for the same parking
    is blocked by the current UI rule.
-7. With a different designated account, create a review with one JPEG or WebP
+9. With a different designated account, create a review with one JPEG or WebP
    photo below 5 MiB and no larger than 1920 x 1920.
-8. Confirm the review and every selected photo appear together after refresh
+10. Confirm the review and every selected photo appear together after refresh
    and after restarting the app.
-9. Confirm no edit or delete action is offered for the published review.
-10. Try an oversize or unsupported image and confirm no review write starts.
-11. Inspect `reviews`, `parking_photos` and Storage read-only: author IDs,
+11. Confirm no edit or delete action is offered for the published review.
+12. Try an oversize or unsupported image and confirm no review write starts.
+13. Inspect `reviews`, `parking_photos` and Storage read-only: author IDs,
     parking IDs, review IDs and object paths must match the test submission.
-12. Check logs for permission failures and verify they contain no JWT, phone
+14. Check logs for permission failures and verify they contain no JWT, phone
     number or raw SQL details.
 
 ## Stop conditions
