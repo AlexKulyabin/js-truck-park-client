@@ -71,10 +71,30 @@ iOS release:
 - Flutter built-in handler: disabled;
 - ChottuLink receives Universal Links through its iOS plugin lifecycle.
 
-Before the first TestFlight archive, confirm that Associated Domains is enabled
-for the production App ID in Apple Developer and regenerate/refresh the
-distribution provisioning profile. The repository cannot perform that portal
-operation.
+## Deferred Apple portal action
+
+Decision date: 2026-07-29.
+
+Associated Domains activation in Apple Developer is intentionally deferred
+while Android closed testing validates the user write flows. This does not
+block Android builds, Google Play closed testing, review creation or photo
+submission.
+
+This action is a release blocker before the next iOS/TestFlight archive is
+created or uploaded:
+
+1. Enable `Associated Domains` for the production App ID
+   `8XNBY3768H.com.mycompany.jstrackpark` in Apple Developer.
+2. Regenerate the App Store distribution provisioning profile, or let Xcode
+   refresh it with automatic signing.
+3. Confirm the signed archive contains
+   `applinks:js-truck-park.chottu.link`.
+4. Install the new TestFlight build on a physical device and test a new Chottu
+   link with the app terminated and already running.
+
+Do not upload an iOS build that contains the entitlement until the App ID and
+provisioning profile both include the capability. The repository cannot perform
+these Apple portal operations.
 
 ## Closed-test checklist
 
