@@ -11,13 +11,17 @@ checkout from being uploaded under a new release description.
 1. Commit the feature changes.
 2. Commit the `pubspec.yaml` version and build-number change.
 3. Ensure the tracked working tree is clean.
-4. Run `tool/build_release_aab.sh` from the repository root.
-5. Upload only the versioned AAB printed by the script.
-6. Keep the adjacent `.build-info` file with the test record.
+4. If `android/key.properties` is absent, point `ANDROID_KEY_PROPERTIES` to the
+   existing private signing-properties file.
+5. Run `tool/build_release_aab.sh` from the repository root.
+6. Upload only the versioned AAB printed by the script.
+7. Keep the adjacent `.build-info` file with the test record.
 
-The script builds from `HEAD`, verifies release UI markers inside the compiled
-`libapp.so`, copies the bundle to a versioned filename, and records its SHA-256,
-Git commit, branch, version and build time.
+The script moves previous bundles out of Flutter's active output directory,
+builds from `HEAD`, and verifies the internal version, Google Play upload
+certificate and release UI markers inside the compiled `libapp.so`. It records
+the artifact SHA-256, certificate SHA-256, Git commit, branch, version and build
+time. Previous bundles are preserved under `build/release-archive/`.
 
 ## Protected release markers
 
