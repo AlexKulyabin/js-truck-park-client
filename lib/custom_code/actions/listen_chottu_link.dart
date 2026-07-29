@@ -79,7 +79,10 @@ Future<bool> _recoverChottuReferral() async {
     );
     return _persistReferralCode(await recovery.recover());
   } catch (error) {
-    debugPrint('Chottu referral recovery failed: ${error.runtimeType}');
+    debugPrint(
+      'Chottu referral recovery failed '
+      '[$deferredReferralReleaseMarker]: ${error.runtimeType}',
+    );
     return false;
   }
 }

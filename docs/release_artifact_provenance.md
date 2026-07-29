@@ -29,7 +29,9 @@ time. Previous bundles are preserved under `build/release-archive/`.
 - `public-parking-details-photo-gallery`: the parking photo gesture surface is
   present;
 - `public-parking-details-scroll-view`: the explicit details scroll surface is
-  present.
+  present;
+- `referral-deferred-recovery-v2`: the bounded deferred-attribution recovery is
+  present in the release client.
 
 The marker check does not replace Flutter tests. It protects the final handoff
 between tested source and uploaded binary.
