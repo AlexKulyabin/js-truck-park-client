@@ -25,6 +25,9 @@ void main() {
     final modernRules = File(
       'android/app/src/main/res/xml/data_extraction_rules.xml',
     ).readAsStringSync();
+    final activity = File(
+      'android/app/src/main/kotlin/com/example/my_project/MainActivity.kt',
+    ).readAsStringSync();
 
     expect(manifest, contains('android:fullBackupContent="@xml/backup_rules"'));
     expect(
@@ -35,6 +38,10 @@ void main() {
       expect(rules, contains('path="chottu_prefs.xml"'));
       expect(rules, contains('path="FlutterSharedPreferences.xml"'));
     }
+    expect(activity, contains('File(noBackupFilesDir, INSTALL_STATE_MARKER)'));
+    expect(activity, contains('CHOTTU_PREFERENCES'));
+    expect(activity, contains('if (isFreshInstall())'));
+    expect(activity, contains('FLUTTER_PREFERENCES'));
   });
 
   test('iOS release declares the Chottu universal-link association', () {

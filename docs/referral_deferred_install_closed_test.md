@@ -14,6 +14,8 @@ attribution immediately and retries after 0.5, 1 and 2 seconds. Registration
 requests the same deduplicated recovery once more before deciding whether
 `process_referral` can be called. Android backup rules prevent a reinstall from
 restoring stale Chottu attribution, pending referral or Supabase session state.
+The first launch also removes equivalent state from backup archives created by
+older builds, without requiring a manual data clear.
 
 ## Preconditions
 

@@ -62,7 +62,16 @@ Android Auto Backup excludes `chottu_prefs.xml` and
 prevents a reinstall from restoring Chottu's completed-attribution flag, a
 pending referral code or a Supabase session from the previous installation.
 Other application files remain eligible for the existing Android backup
-behavior. An ordinary in-place update does not clear either preferences file.
+behavior. The backup rules themselves do not clear data from the current
+installation.
+
+Build `1.0.8 (42)` also handles backup archives created before these exclusions
+existed. Before Flutter and ChottuLink initialize, Android clears Chottu's
+transient preferences once per installation. On a fresh install, it also
+clears restored Flutter preferences so an old Supabase session or pending
+referral cannot leak into registration. A marker in Android's no-backup storage
+prevents this cleanup from repeating on later launches. An in-place update
+keeps the user's Flutter preferences and authenticated session.
 
 The coordinator allowlists only:
 
