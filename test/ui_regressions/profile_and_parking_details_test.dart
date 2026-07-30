@@ -1,0 +1,37 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('profile and parking details UI regressions', () {
+    test('profile loading state reserves the final header height', () {
+      final source =
+          File('lib/profile/profile/profile_widget.dart').readAsStringSync();
+
+      expect(source, contains('_buildProfileHeaderLoadingCard(context)'));
+      expect(source, contains('height: 170.0'));
+    });
+
+    test('parking details keeps controller data stable across tab changes', () {
+      final source = File(
+        'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+      ).readAsStringSync();
+
+      expect(
+          source, contains('late final ParkingDetailsController _controller'));
+      expect(source, contains('final state = _controller.state'));
+      expect(source, isNot(contains('FutureBuilder<ParkingDetails?>')));
+    });
+
+    test('parking details separates photo scrolling from handle dismissal', () {
+      final source = File(
+        'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+      ).readAsStringSync();
+
+      expect(source, isNot(contains('onVerticalDragEnd: (details) async {}')));
+      expect(source, isNot(contains('onVerticalDragDown')));
+      expect(source, contains('_handlePhotoVerticalDrag'));
+      expect(source, contains('shouldDismissParkingDetails'));
+    });
+  });
+}
