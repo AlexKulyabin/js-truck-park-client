@@ -178,6 +178,9 @@ Repository не нужен language page, статическим onboarding page
   `profile_and_parking_details_ui_stability.md`: profile loading reserves the
   final header height, while the parking details controller keeps loaded data
   stable across tab changes.
+- PayWall price loading state is documented in
+  `pay_wall_price_loading.md`: plan price rows show compact spinners until
+  RevenueCat smart prices are loaded.
 - Profile page local invite visibility state now lives in
   `features/profile/application/ProfileController` with immutable state. This is
   intentionally narrow and preserves the generated screen behavior while moving
