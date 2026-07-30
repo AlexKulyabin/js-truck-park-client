@@ -3,6 +3,13 @@ import 'package:j_s_truck_park/parkings_details/parkings_details/parking_sheet_d
 
 void main() {
   group('ParkingSheetDismissTracker', () {
+    test('uses a compact default drag threshold', () {
+      final tracker = ParkingSheetDismissTracker();
+
+      expect(tracker.registerDragDelta(47.0), isFalse);
+      expect(tracker.registerDragDelta(1.0), isTrue);
+    });
+
     test('reaches the dismiss threshold across downward drag updates', () {
       final tracker = ParkingSheetDismissTracker(threshold: 72.0);
 

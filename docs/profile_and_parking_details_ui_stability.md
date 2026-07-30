@@ -35,6 +35,12 @@
   порога sheet закрывается; свайп вверх по ручке не закрывает окно, а жесты по
   фотографии и содержимому вкладок не участвуют в закрытии. Стандартный
   `enableDrag` остаётся выключенным, чтобы не вернуть прежнюю регрессию.
+- Drag handle слушает pointer movement напрямую, поэтому внешний vertical
+  scroll больше не может перехватить свайп. Порог закрытия равен `48.0`.
+- Все способы закрытия (ручка, крестик и внешний tap-layer) проходят через один
+  `ParkingSheetRouteController`. Он снимает только текущий `PopupRoute` и
+  игнорирует повторный dismiss, поэтому Home route не может быть случайно снят
+  вторым `Navigator.pop` с возвратом на splash.
 - Явное закрытие через верхний внешний tap-layer сохранено.
 - Счётчик фото в tab header больше не запускает отдельный future, так как число
   уже есть в загруженной модели parking details.
@@ -51,4 +57,6 @@ bottom sheet.
 ловит повторное появление inline future в parking details, вертикальных drag
 handlers в photo/header-зонах, потерю scroll controller/offset guard и
 нестабильного loading header в профиле. Логика порога свайпа вниз отдельно
-покрыта unit-тестом `parking_sheet_dismiss_tracker_test.dart`.
+покрыта unit-тестом `parking_sheet_dismiss_tracker_test.dart`. Widget-тесты
+дополнительно проверяют свайп ручки внутри vertical scroll, отсутствие закрытия
+по содержимому и сохранение Home route при повторном dismiss.

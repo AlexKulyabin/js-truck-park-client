@@ -71,13 +71,14 @@ void main() {
         'lib/parkings_details/parkings_details/parkings_details_widget.dart',
       ).readAsStringSync();
 
-      expect(source, contains('onVerticalDragUpdate: _handleSheetDragUpdate'));
-      expect(source, contains('ParkingSheetDismissTracker'));
+      expect(source, contains('ParkingSheetDragHandle('));
+      expect(source, contains('_sheetRouteController.dismiss(context)'));
       expect(source, contains('_dismissSheet()'));
       expect(
         source,
         isNot(contains('NotificationListener<ScrollNotification>')),
       );
+      expect(source, isNot(contains('Navigator.pop(context)')));
     });
   });
 }
