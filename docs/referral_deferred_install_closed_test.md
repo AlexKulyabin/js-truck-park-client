@@ -2,6 +2,8 @@
 
 Target Android build: `1.0.8 (42)`.
 
+Status: passed on a physical Android device on 2026-07-30.
+
 ## Scope
 
 This run verifies the complete new-user path:
@@ -16,6 +18,32 @@ requests the same deduplicated recovery once more before deciding whether
 restoring stale Chottu attribution, pending referral or Supabase session state.
 The first launch also removes equivalent state from backup archives created by
 older builds, without requiring a manual data clear.
+
+## Verified result
+
+The receiving device completed the full user-visible closed-test flow:
+
+1. A newly generated Chottu referral link opened the Google Play listing.
+2. Google Play installed package `com.mycompany.jstrackpark` with
+   `versionName=1.0.8`, `versionCode=42` and installer
+   `com.android.vending`.
+3. The recipient opened the fresh installation and registered a new account.
+4. The subscription screen displayed the referral discount.
+
+No manual app-data clear was required between the Google Play installation and
+registration. The successful result verifies the end-to-end user-visible path
+through deferred attribution, referral processing and referral-price
+eligibility for this build. No production write command was executed from the
+development environment during the test.
+
+An immediately preceding failed run was investigated separately. Device
+inspection showed that Google Play had installed `1.0.7 (41)`, which did not
+contain the backup and restored-state fixes. That run is an artifact-version
+mismatch and is not a failure of `1.0.8 (42)`.
+
+The Supabase row-level checkpoints below remain useful for future diagnostics;
+they were not independently captured as acceptance evidence after the
+successful user-visible run.
 
 ## Preconditions
 
