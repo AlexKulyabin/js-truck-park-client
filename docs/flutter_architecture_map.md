@@ -69,6 +69,7 @@ Guard не описан декларативно на каждом route. `AppSt
 
 - `getCurrentUserLocation` находится в `flutter_flow_util.dart`; запрашивает service/permission и возвращает default при отказе.
 - `CustomGoogleMap` получает visible bounds и zoom, затем вызывает callback.
+- Главная кнопка центрирования карты описана в `home_map_location_recenter.md`: сначала использует уже загруженную координату, затем фоново уточняет GPS.
 - Home и SelectParking передают в `get_filtered_parkings`: bounds, midpoint как center, radius в метрах, capacity, service booleans, zoom, search query и `is_filter_active`.
 - Slider radius преобразуется в 5/10/50/100/150 км функцией `getMetersFromIndex`.
 - Ответ хранится как `dynamic`; карта ожидает элементы с `lat`, `lng`, `is_cluster`, `count`, `id`. Невалидные элементы тихо пропускаются.
