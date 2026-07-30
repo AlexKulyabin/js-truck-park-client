@@ -55,6 +55,10 @@ void main() {
       expect(widgetSource, contains('_selectTab(TabsToggle.photo)'));
       expect(widgetSource, contains('_preservedSheetScrollOffset'));
       expect(
+        widgetSource,
+        contains('minHeight: MediaQuery.sizeOf(context).height'),
+      );
+      expect(
           widgetSource, contains('MediaQuery.sizeOf(context).height * 0.45'));
     });
 

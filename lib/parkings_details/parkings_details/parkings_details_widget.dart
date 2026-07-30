@@ -218,6 +218,9 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
               return SafeArea(
                 child: Container(
                   width: double.infinity,
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.sizeOf(context).height,
+                  ),
                   decoration: BoxDecoration(
                     color: FlutterFlowTheme.of(context).primaryBackground,
                     borderRadius: BorderRadius.only(
