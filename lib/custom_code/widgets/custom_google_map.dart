@@ -36,6 +36,7 @@ class CustomGoogleMap extends StatefulWidget {
     this.markerSize,
     this.clusterSize, // Новый параметр
     this.centerToMoveTo,
+    this.centerMoveRequestId,
     this.isDarkMode,
   });
 
@@ -55,6 +56,7 @@ class CustomGoogleMap extends StatefulWidget {
   final int? markerSize;
   final int? clusterSize; // Новый параметр
   final ff_lat_lng.LatLng? centerToMoveTo;
+  final int? centerMoveRequestId;
   final bool? isDarkMode;
 
   @override
@@ -107,8 +109,9 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
     if (oldWidget.isDarkMode != widget.isDarkMode && _controller != null) {
       _setMapStyle();
     }
-    if (widget.centerToMoveTo != oldWidget.centerToMoveTo &&
-        widget.centerToMoveTo != null) {
+    if (widget.centerToMoveTo != null &&
+        (widget.centerToMoveTo != oldWidget.centerToMoveTo ||
+            widget.centerMoveRequestId != oldWidget.centerMoveRequestId)) {
       _moveToLatLng(widget.centerToMoveTo!, targetZoom: 14.0);
     }
   }

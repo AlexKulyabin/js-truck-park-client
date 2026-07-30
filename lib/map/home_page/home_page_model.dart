@@ -40,6 +40,10 @@ class HomePageModel extends FlutterFlowModel<HomePageWidget> {
 
   LatLng? searchCoord;
 
+  int mapCenterRequestId = 0;
+
+  bool isRefreshingUserLocation = false;
+
   bool isSearching = false;
 
   double? latMin;

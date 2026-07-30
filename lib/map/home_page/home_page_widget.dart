@@ -13,6 +13,7 @@ import '/custom_code/widgets/index.dart' as custom_widgets;
 import '/flutter_flow/custom_functions.dart' as functions;
 import '/index.dart';
 import 'search_panel_layout.dart';
+import 'user_location_target.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -166,6 +167,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                               markerSize: 30,
                               markerData: _model.parkingsOnMap,
                               centerToMoveTo: _model.searchCoord,
+                              centerMoveRequestId: _model.mapCenterRequestId,
                               isDarkMode: Theme.of(context).brightness ==
                                   Brightness.dark,
                               clusterSize: 120,
@@ -395,16 +397,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              currentUserLocationValue =
-                                  await getCurrentUserLocation(
-                                      defaultLocation: LatLng(0.0, 0.0));
-                              await Future.delayed(
-                                Duration(
-                                  milliseconds: 100,
-                                ),
-                              );
-                              _model.searchCoord = currentUserLocationValue;
-                              safeSetState(() {});
+                              await _centerMapOnDeviceLocation();
                             },
                             child: Material(
                               color: Colors.transparent,
@@ -1207,5 +1200,49 @@ class _HomePageWidgetState extends State<HomePageWidget> {
         ),
       ),
     );
+  }
+
+  Future<void> _centerMapOnDeviceLocation() async {
+    final cachedLocation = currentUserLocationValue;
+    if (isUsableUserLocation(cachedLocation)) {
+      _requestMapCenter(cachedLocation!);
+    }
+
+    if (_model.isRefreshingUserLocation) {
+      return;
+    }
+
+    _model.isRefreshingUserLocation = true;
+    safeSetState(() {});
+
+    try {
+      final freshLocation = await getCurrentUserLocation(
+        defaultLocation: cachedLocation ?? LatLng(0.0, 0.0),
+      );
+      if (!mounted) {
+        return;
+      }
+
+      if (shouldApplyFreshUserLocation(
+        previous: cachedLocation,
+        fresh: freshLocation,
+      )) {
+        currentUserLocationValue = freshLocation;
+        _requestMapCenter(freshLocation);
+      } else if (isUsableUserLocation(freshLocation)) {
+        currentUserLocationValue = freshLocation;
+      }
+    } finally {
+      _model.isRefreshingUserLocation = false;
+      if (mounted) {
+        safeSetState(() {});
+      }
+    }
+  }
+
+  void _requestMapCenter(LatLng location) {
+    _model.searchCoord = location;
+    _model.mapCenterRequestId += 1;
+    safeSetState(() {});
   }
 }
