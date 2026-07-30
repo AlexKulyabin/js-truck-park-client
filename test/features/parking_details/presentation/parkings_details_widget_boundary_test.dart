@@ -391,6 +391,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Gesture test parking'), findsOneWidget);
 
+    await tester.ensureVisible(handle);
+    await tester.pumpAndSettle();
     await tester.fling(handle, const Offset(0, 200), 1000);
     await tester.pumpAndSettle();
     expect(find.text('Gesture test parking'), findsNothing);

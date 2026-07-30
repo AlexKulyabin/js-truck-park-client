@@ -7,7 +7,6 @@ import '/features/parking_details/data/supabase_parking_details_repository.dart'
 import '/features/parking_details/domain/parking_favorite_repository.dart';
 import '/features/parking_details/domain/parking_details_repository.dart';
 import '/features/parking_details/presentation/parking_details_links.dart';
-import '/features/parking_details/presentation/parking_details_dismissal.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -28,6 +27,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'parking_sheet_drag_handle.dart';
 import 'parkings_details_model.dart';
 export 'parkings_details_model.dart';
 
@@ -62,6 +62,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late final ParkingFavoriteController _favoriteController;
   final ScrollController _detailsScrollController = ScrollController();
   double? _preservedSheetScrollOffset;
+  bool _isDismissing = false;
 
   @override
   void setState(VoidCallback callback) {
@@ -239,66 +240,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Stack(
-                          children: [
-                            GestureDetector(
-                              onVerticalDragEnd: (details) async {
-                                if (shouldDismissParkingDetails(
-                                  primaryVelocity: details.primaryVelocity,
-                                )) {
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: Container(
-                                key: ParkingsDetailsWidget.dragHandleKey,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                ),
-                                child: Align(
-                                  alignment: AlignmentDirectional(0.0, 0.0),
-                                  child: Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 16.0, 0.0, 16.0),
-                                    child: Container(
-                                      width: 32.0,
-                                      height: 4.0,
-                                      decoration: BoxDecoration(
-                                        color: FlutterFlowTheme.of(context)
-                                            .divider,
-                                        borderRadius:
-                                            BorderRadius.circular(24.0),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional(1.0, 0.0),
-                              child: Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    0.0, 6.0, 0.0, 0.0),
-                                child: InkWell(
-                                  splashColor: Colors.transparent,
-                                  focusColor: Colors.transparent,
-                                  hoverColor: Colors.transparent,
-                                  highlightColor: Colors.transparent,
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    color: FlutterFlowTheme.of(context)
-                                        .secondaryText,
-                                    size: 24.0,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        _buildSheetHandle(context),
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
                               0.0, 0.0, 0.0, 16.0),
@@ -466,21 +408,11 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                           .secondaryBackground,
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
-                                    child: GestureDetector(
-                                      onVerticalDragEnd: (details) async {
-                                        if (shouldDismissParkingDetails(
-                                          primaryVelocity:
-                                              details.primaryVelocity,
-                                        )) {
-                                          Navigator.pop(context);
-                                        }
-                                      },
-                                      child: Icon(
-                                        Icons.no_photography,
-                                        color: FlutterFlowTheme.of(context)
-                                            .checkBoxes,
-                                        size: 100.0,
-                                      ),
+                                    child: Icon(
+                                      Icons.no_photography,
+                                      color: FlutterFlowTheme.of(context)
+                                          .checkBoxes,
+                                      size: 100.0,
                                     ),
                                   );
                                 }
@@ -1131,6 +1063,29 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
         ],
       ),
     );
+  }
+
+  Widget _buildSheetHandle(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+    return ParkingSheetDragHandle(
+      key: ParkingsDetailsWidget.dragHandleKey,
+      backgroundColor: theme.primaryBackground,
+      handleColor: theme.divider,
+      iconColor: theme.secondaryText,
+      onDismiss: _dismissSheet,
+    );
+  }
+
+  void _dismissSheet() {
+    if (_isDismissing) {
+      return;
+    }
+    _isDismissing = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
   }
 
   void _selectTab(TabsToggle tab) {

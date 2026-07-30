@@ -31,7 +31,7 @@ void main() {
       expect(source, isNot(contains('onVerticalDragEnd: (details) async {}')));
       expect(source, isNot(contains('onVerticalDragDown')));
       expect(source, contains('_handlePhotoVerticalDrag'));
-      expect(source, contains('shouldDismissParkingDetails'));
+      expect(source, contains('ParkingSheetDragHandle'));
     });
 
     test('parking details preserves sheet scroll position across tabs', () {
@@ -45,6 +45,19 @@ void main() {
       expect(widgetSource, contains('_preservedSheetScrollOffset'));
       expect(
           widgetSource, contains('MediaQuery.sizeOf(context).height * 0.45'));
+    });
+
+    test('parking details only dismisses from the top handle area', () {
+      final source = File(
+        'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+      ).readAsStringSync();
+
+      expect(source, contains('ParkingSheetDragHandle'));
+      expect(source, contains('_dismissSheet()'));
+      expect(
+        source,
+        isNot(contains('NotificationListener<ScrollNotification>')),
+      );
     });
   });
 }
