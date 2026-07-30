@@ -28,6 +28,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'parking_sheet_drag_handle.dart';
+import 'parking_sheet_route_controller.dart';
 import 'parkings_details_model.dart';
 export 'parkings_details_model.dart';
 
@@ -61,8 +62,9 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late final ParkingDetailsController _controller;
   late final ParkingFavoriteController _favoriteController;
   final ScrollController _detailsScrollController = ScrollController();
+  final ParkingSheetRouteController _sheetRouteController =
+      ParkingSheetRouteController();
   double? _preservedSheetScrollOffset;
-  bool _isDismissing = false;
 
   @override
   void setState(VoidCallback callback) {
@@ -1140,15 +1142,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   }
 
   void _dismissSheet() {
-    if (_isDismissing) {
-      return;
-    }
-    _isDismissing = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-    });
+    _sheetRouteController.dismiss(context);
   }
 
   void _selectTab(TabsToggle tab) {

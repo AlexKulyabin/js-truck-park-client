@@ -1,5 +1,5 @@
 class ParkingSheetDismissTracker {
-  ParkingSheetDismissTracker({this.threshold = 72.0});
+  ParkingSheetDismissTracker({this.threshold = 48.0});
 
   final double threshold;
   double _downwardDrag = 0.0;

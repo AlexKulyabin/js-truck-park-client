@@ -64,6 +64,7 @@ void main() {
       ).readAsStringSync();
 
       expect(source, contains('ParkingSheetDragHandle'));
+      expect(source, contains('ParkingSheetRouteController'));
       expect(source, contains('_dismissSheet()'));
       expect(
         source,

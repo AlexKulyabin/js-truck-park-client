@@ -92,14 +92,12 @@ Widget _buildRoutedSubject(_FakeRepository repository) =>
           builder: (context) => Scaffold(
             body: Center(
               child: FilledButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => Scaffold(
-                      body: ParkingsDetailsWidget(
-                        parkingId: 'parking-1',
-                        detailsRepository: repository,
-                      ),
-                    ),
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (_) => ParkingsDetailsWidget(
+                    parkingId: 'parking-1',
+                    detailsRepository: repository,
                   ),
                 ),
                 child: const Text('Open details'),
