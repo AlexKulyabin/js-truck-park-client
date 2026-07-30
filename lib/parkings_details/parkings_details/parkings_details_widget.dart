@@ -107,6 +107,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
         canToggleFavorite && !_favoriteToggleController.state.isUpdating;
 
     return SingleChildScrollView(
+      controller: _model.sheetScrollController,
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
@@ -673,8 +674,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.info;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.info);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -726,8 +726,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.review;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.review);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -839,8 +838,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.photo;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.photo);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -951,55 +949,69 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                         ),
                         Builder(
                           builder: (context) {
-                            if (_model.activeTab == TabsToggle.info) {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.infoTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: InfoTabWidget(
-                                      parkingRow:
-                                          mainContainerViewFullParkingDetailsRow!,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            } else if (_model.activeTab == TabsToggle.review) {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.reviewsTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: ReviewsTabWidget(
-                                      parkingRow:
-                                          mainContainerViewFullParkingDetailsRow!,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            } else {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.photosTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: PhotosTabWidget(
-                                      parkingRow:
-                                          mainContainerViewFullParkingDetailsRow!,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
+                            return ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight:
+                                    MediaQuery.sizeOf(context).height * 0.45,
+                              ),
+                              child: Builder(
+                                builder: (context) {
+                                  if (_model.activeTab == TabsToggle.info) {
+                                    return Container(
+                                      decoration: BoxDecoration(),
+                                      child: Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            0.0, 0.0, 0.0, 36.0),
+                                        child: wrapWithModel(
+                                          model: _model.infoTabModel,
+                                          updateCallback: () =>
+                                              safeSetState(() {}),
+                                          child: InfoTabWidget(
+                                            parkingRow:
+                                                mainContainerViewFullParkingDetailsRow!,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  } else if (_model.activeTab ==
+                                      TabsToggle.review) {
+                                    return Container(
+                                      decoration: BoxDecoration(),
+                                      child: Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            0.0, 0.0, 0.0, 36.0),
+                                        child: wrapWithModel(
+                                          model: _model.reviewsTabModel,
+                                          updateCallback: () =>
+                                              safeSetState(() {}),
+                                          child: ReviewsTabWidget(
+                                            parkingRow:
+                                                mainContainerViewFullParkingDetailsRow!,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    return Container(
+                                      decoration: BoxDecoration(),
+                                      child: Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            0.0, 0.0, 0.0, 36.0),
+                                        child: wrapWithModel(
+                                          model: _model.photosTabModel,
+                                          updateCallback: () =>
+                                              safeSetState(() {}),
+                                          child: PhotosTabWidget(
+                                            parkingRow:
+                                                mainContainerViewFullParkingDetailsRow!,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            );
                           },
                         ),
                       ],
@@ -1012,5 +1024,31 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
         ],
       ),
     );
+  }
+
+  void _selectTab(TabsToggle tab) {
+    final controller = _model.sheetScrollController;
+    _model.preservedSheetScrollOffset =
+        controller?.hasClients == true ? controller!.offset : null;
+
+    _model.activeTab = tab;
+    safeSetState(() {});
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final offset = _model.preservedSheetScrollOffset;
+      final controller = _model.sheetScrollController;
+      if (offset == null || controller?.hasClients != true) {
+        return;
+      }
+
+      final boundedOffset = offset.clamp(
+        controller!.position.minScrollExtent,
+        controller.position.maxScrollExtent,
+      );
+      controller.jumpTo(boundedOffset);
+    });
   }
 }

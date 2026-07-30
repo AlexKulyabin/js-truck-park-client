@@ -31,6 +31,8 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
 
   ///  State fields for stateful widgets in this component.
 
+  ScrollController? sheetScrollController;
+  double? preservedSheetScrollOffset;
   // State field(s) for PageView widget.
   PageController? pageViewController;
 
@@ -48,6 +50,7 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
 
   @override
   void initState(BuildContext context) {
+    sheetScrollController = ScrollController();
     infoTabModel = createModel(context, () => InfoTabModel());
     reviewsTabModel = createModel(context, () => ReviewsTabModel());
     photosTabModel = createModel(context, () => PhotosTabModel());
@@ -55,6 +58,7 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
 
   @override
   void dispose() {
+    sheetScrollController?.dispose();
     infoTabModel.dispose();
     reviewsTabModel.dispose();
     photosTabModel.dispose();

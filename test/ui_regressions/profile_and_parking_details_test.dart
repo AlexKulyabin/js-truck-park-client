@@ -35,5 +35,24 @@ void main() {
             '                                Navigator.pop(context);')),
       );
     });
+
+    test('parking details preserves sheet scroll position across tabs', () {
+      final widgetSource = File(
+        'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+      ).readAsStringSync();
+      final modelSource = File(
+        'lib/parkings_details/parkings_details/parkings_details_model.dart',
+      ).readAsStringSync();
+
+      expect(
+          widgetSource, contains('controller: _model.sheetScrollController'));
+      expect(widgetSource, contains('_selectTab(TabsToggle.info)'));
+      expect(widgetSource, contains('_selectTab(TabsToggle.review)'));
+      expect(widgetSource, contains('_selectTab(TabsToggle.photo)'));
+      expect(widgetSource, contains('preservedSheetScrollOffset'));
+      expect(
+          widgetSource, contains('MediaQuery.sizeOf(context).height * 0.45'));
+      expect(modelSource, contains('ScrollController? sheetScrollController'));
+    });
   });
 }

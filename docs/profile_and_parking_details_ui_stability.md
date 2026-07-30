@@ -19,6 +19,12 @@
   готовый header.
 - Parking details кэширует `parkingDetailsFuture` в модели компонента и не
   пересоздаёт его при обычном переключении вкладок.
+- Parking details использует собственный `sheetScrollController`, запоминает
+  текущий scroll offset перед переключением вкладки и восстанавливает его после
+  layout-pass.
+- Блок содержимого вкладок имеет стабильную минимальную высоту, чтобы вкладки
+  `Reviews` и `Photo` не уменьшали scroll extent и не опускали sheet после
+  раскрытия пользователем.
 - Из handle/photo/no-photo зон удалены vertical drag handlers. Закрытие
   остаётся через явную кнопку закрытия и текущий внешний tap-layer.
 - Счётчик фото в tab header больше не запускает отдельный future, так как число
@@ -34,4 +40,5 @@ bottom sheet.
 
 Добавлен source-level тест `profile_and_parking_details_test.dart`, который
 ловит повторное появление inline future в parking details, вертикальных drag
-handlers в photo/header-зонах и нестабильного loading header в профиле.
+handlers в photo/header-зонах, потерю scroll controller/offset guard и
+нестабильного loading header в профиле.
