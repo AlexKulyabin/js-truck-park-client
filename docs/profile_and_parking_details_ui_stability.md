@@ -19,6 +19,10 @@
   готовый header.
 - Parking details кэширует `parkingDetailsFuture` в модели компонента и не
   пересоздаёт его при обычном переключении вкладок.
+- Пока `parkingDetailsFuture` выполняется, sheet сразу показывает непрозрачную
+  оболочку с теми же скруглениями и drag handle, нейтральные placeholders и
+  компактный progress indicator. Карта больше не просвечивает вместо панели
+  на всё время запроса.
 - Parking details использует собственный `sheetScrollController`, запоминает
   текущий scroll offset перед переключением вкладки и восстанавливает его после
   layout-pass.

@@ -21,6 +21,17 @@ void main() {
       expect(source, isNot(contains('future: _parkingDetailsService')));
     });
 
+    test('parking details shows an opaque stable loading sheet', () {
+      final source = File(
+        'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+      ).readAsStringSync();
+
+      expect(source, contains('return _buildParkingDetailsLoading(context)'));
+      expect(source, contains('color: theme.primaryBackground'));
+      expect(source, contains('height: 180.0'));
+      expect(source, contains('_buildSheetHandle(context)'));
+    });
+
     test('parking details photo/header zones do not close on vertical drags',
         () {
       final source = File(

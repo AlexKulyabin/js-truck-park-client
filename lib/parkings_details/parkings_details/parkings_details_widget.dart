@@ -136,17 +136,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
               // Customize what your widget looks like when it's loading.
               if (snapshot.connectionState != ConnectionState.done ||
                   snapshot.hasError) {
-                return Center(
-                  child: SizedBox(
-                    width: 50.0,
-                    height: 50.0,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        FlutterFlowTheme.of(context).primary,
-                      ),
-                    ),
-                  ),
-                );
+                return _buildParkingDetailsLoading(context);
               }
               final mainContainerViewFullParkingDetailsRow = snapshot.data;
 
@@ -166,69 +156,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onVerticalDragStart: (_) {
-                            _sheetDismissTracker.reset();
-                          },
-                          onVerticalDragUpdate: _handleSheetDragUpdate,
-                          onVerticalDragEnd: (_) {
-                            _sheetDismissTracker.reset();
-                          },
-                          onVerticalDragCancel: () {
-                            _sheetDismissTracker.reset();
-                          },
-                          child: Stack(
-                            children: [
-                              Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                ),
-                                child: Align(
-                                  alignment: AlignmentDirectional(0.0, 0.0),
-                                  child: Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 16.0, 0.0, 16.0),
-                                    child: Container(
-                                      width: 32.0,
-                                      height: 4.0,
-                                      decoration: BoxDecoration(
-                                        color: FlutterFlowTheme.of(context)
-                                            .divider,
-                                        borderRadius:
-                                            BorderRadius.circular(24.0),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Align(
-                                alignment: AlignmentDirectional(1.0, 0.0),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 6.0, 0.0, 0.0),
-                                  child: InkWell(
-                                    splashColor: Colors.transparent,
-                                    focusColor: Colors.transparent,
-                                    hoverColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                    onTap: () async {
-                                      Navigator.pop(context);
-                                    },
-                                    child: Icon(
-                                      Icons.close_rounded,
-                                      color: FlutterFlowTheme.of(context)
-                                          .secondaryText,
-                                      size: 24.0,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        _buildSheetHandle(context),
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
                               0.0, 0.0, 0.0, 16.0),
@@ -1037,6 +965,139 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                 ),
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParkingDetailsLoading(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+
+    return SafeArea(
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: theme.primaryBackground,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(10.0),
+            topRight: Radius.circular(10.0),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSheetHandle(context),
+              Container(
+                width: double.infinity,
+                height: 180.0,
+                decoration: BoxDecoration(
+                  color: theme.alternate,
+                  borderRadius: BorderRadius.circular(6.0),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 18.0, 0.0, 0.0),
+                child: Container(
+                  width: 220.0,
+                  height: 18.0,
+                  decoration: BoxDecoration(
+                    color: theme.alternate,
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
+                child: Container(
+                  width: 150.0,
+                  height: 14.0,
+                  decoration: BoxDecoration(
+                    color: theme.alternate,
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 22.0, 0.0, 0.0),
+                child: Center(
+                  child: SizedBox(
+                    width: 22.0,
+                    height: 22.0,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      valueColor: AlwaysStoppedAnimation<Color>(theme.primary),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetHandle(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragStart: (_) {
+        _sheetDismissTracker.reset();
+      },
+      onVerticalDragUpdate: _handleSheetDragUpdate,
+      onVerticalDragEnd: (_) {
+        _sheetDismissTracker.reset();
+      },
+      onVerticalDragCancel: () {
+        _sheetDismissTracker.reset();
+      },
+      child: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: FlutterFlowTheme.of(context).primaryBackground,
+            ),
+            child: Align(
+              alignment: AlignmentDirectional(0.0, 0.0),
+              child: Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 16.0),
+                child: Container(
+                  width: 32.0,
+                  height: 4.0,
+                  decoration: BoxDecoration(
+                    color: FlutterFlowTheme.of(context).divider,
+                    borderRadius: BorderRadius.circular(24.0),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: AlignmentDirectional(1.0, 0.0),
+            child: Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(0.0, 6.0, 0.0, 0.0),
+              child: InkWell(
+                splashColor: Colors.transparent,
+                focusColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap: () async {
+                  Navigator.pop(context);
+                },
+                child: Icon(
+                  Icons.close_rounded,
+                  color: FlutterFlowTheme.of(context).secondaryText,
+                  size: 24.0,
+                ),
+              ),
+            ),
           ),
         ],
       ),
