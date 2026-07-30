@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('Android delegates link delivery to app_links and ChottuLink', () {
     final gradle = File('android/app/build.gradle').readAsStringSync();
+    final main = File('lib/main.dart').readAsStringSync();
     final releaseManifest =
         File('android/app/src/release/AndroidManifest.xml').readAsStringSync();
 
@@ -15,6 +16,11 @@ void main() {
       releaseManifest,
       contains('android:host="js-truck-park.chottu.link"'),
     );
+    expect(
+      main.indexOf('initialAppLink = _readInitialAppLink(appLinks);'),
+      lessThan(main.indexOf('await SupaFlow.initialize();')),
+    );
+    expect(main, contains('initialLink: widget.initialAppLink'));
   });
 
   test('Android does not restore transient identity or attribution state', () {

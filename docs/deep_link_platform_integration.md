@@ -81,6 +81,13 @@ The coordinator allowlists only:
 
 Unknown query parameters are not forwarded into application navigation.
 
+`app_links` is instantiated and its initial URI is requested before Supabase,
+preferences and other asynchronous startup work. The coordinator subscribes to
+the warm-link stream before consuming that captured URI and deduplicates the
+initial event if Android also publishes it through the stream. This preserves
+parking and shared-photo navigation when the app is launched from a terminated
+state without opening the same route twice during a warm launch.
+
 ## Platform configuration
 
 Android release:

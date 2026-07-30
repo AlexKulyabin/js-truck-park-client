@@ -32,6 +32,13 @@ void main() async {
   GoRouter.optionURLReflectsImperativeAPIs = true;
   usePathUrlStrategy();
 
+  AppLinks? appLinks;
+  Future<Uri?>? initialAppLink;
+  if (AppConfig.current.enableDeepLinks) {
+    appLinks = AppLinks();
+    initialAppLink = _readInitialAppLink(appLinks);
+  }
+
   await SupaFlow.initialize();
 
   final themeStore = await SharedPreferencesThemeStore.create();
@@ -72,12 +79,36 @@ void main() async {
         ChangeNotifierProvider(create: (_) => parkingFilterController),
         ChangeNotifierProvider(create: (_) => themeController),
       ],
-      child: MyApp(),
+      child: MyApp(
+        appLinks: appLinks,
+        initialAppLink: initialAppLink,
+      ),
     ),
   );
 }
 
+Future<Uri?> _readInitialAppLink(AppLinks appLinks) async {
+  try {
+    return await appLinks.getInitialLink();
+  } catch (error) {
+    debugPrint(
+      'Initial app link failed '
+      '[$deepLinkColdStartReleaseMarker]: ${error.runtimeType}',
+    );
+    return null;
+  }
+}
+
 class MyApp extends StatefulWidget {
+  const MyApp({
+    super.key,
+    this.appLinks,
+    this.initialAppLink,
+  });
+
+  final AppLinks? appLinks;
+  final Future<Uri?>? initialAppLink;
+
   // This widget is the root of your application.
   @override
   State<MyApp> createState() => _MyAppState();
@@ -135,7 +166,8 @@ class _MyAppState extends State<MyApp> {
           return;
         }
         _incomingAppLinks = IncomingAppLinkCoordinator(
-          links: AppLinks().uriLinkStream,
+          links: widget.appLinks!.uriLinkStream,
+          initialLink: widget.initialAppLink,
           openLocation: _router.go,
           persistReferralCode: (referralCode) {
             FFAppState().update(() {

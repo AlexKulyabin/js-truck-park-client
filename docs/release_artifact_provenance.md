@@ -30,6 +30,8 @@ time. Previous bundles are preserved under `build/release-archive/`.
   present;
 - `public-parking-details-scroll-view`: the explicit details scroll surface is
   present;
+- `deep-link-cold-start-v1`: parking and shared-photo initial links are
+  captured before asynchronous application startup;
 - `referral-deferred-recovery-v3`: native SDK readiness, Android backup
   exclusions and the bounded deferred-attribution recovery are present in the
   release client.

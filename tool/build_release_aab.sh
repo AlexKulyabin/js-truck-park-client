@@ -79,6 +79,7 @@ for marker in \
   'profile-invite-action' \
   'public-parking-details-photo-gallery' \
   'public-parking-details-scroll-view' \
+  'deep-link-cold-start-v1' \
   'referral-deferred-recovery-v3'; do
   if ! grep -Fq "$marker" "$compiled_strings"; then
     echo "Release marker missing from AAB: $marker" >&2
@@ -127,7 +128,7 @@ git_branch=$git_branch
 sha256=$artifact_sha
 upload_certificate_sha256=$actual_upload_sha256
 built_at_utc=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-release_markers=profile-invite-action,public-parking-details-photo-gallery,public-parking-details-scroll-view,referral-deferred-recovery-v3
+release_markers=profile-invite-action,public-parking-details-photo-gallery,public-parking-details-scroll-view,deep-link-cold-start-v1,referral-deferred-recovery-v3
 EOF
 
 printf 'AAB: %s\n' "$artifact"
