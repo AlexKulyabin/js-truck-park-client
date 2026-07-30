@@ -3,7 +3,6 @@ import '/backend/schema/enums/enums.dart';
 import '/core/config/app_config.dart';
 import '/features/favorites/application/favorites_controller.dart';
 import '/features/parking_details/data/parking_details_service.dart';
-import '/features/parking_photos/data/parking_photos_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -43,7 +42,6 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late ParkingsDetailsModel _model;
   final _favoriteToggleController = FavoriteToggleController();
   final _parkingDetailsService = ParkingDetailsService();
-  final _parkingPhotosService = ParkingPhotosService();
 
   @override
   void setState(VoidCallback callback) {
@@ -55,6 +53,9 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ParkingsDetailsModel());
+    _model.parkingDetailsFuture = _parkingDetailsService.getParkingDetails(
+      parkingId: widget.parkingId,
+    );
     _favoriteToggleController.addListener(_onFavoriteToggleStateChanged);
 
     // On component load action.
@@ -80,6 +81,20 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   void _onFavoriteToggleStateChanged() {
     if (mounted) {
       safeSetState(() {});
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ParkingsDetailsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.parkingId != oldWidget.parkingId) {
+      _model.parkingDetailsFuture = _parkingDetailsService.getParkingDetails(
+        parkingId: widget.parkingId,
+      );
+      _favoriteToggleController.load(
+        parkingId: widget.parkingId,
+        userId: currentUserUid,
+      );
     }
   }
 
@@ -112,9 +127,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
             ),
           ),
           FutureBuilder<ParkingDetails?>(
-            future: _parkingDetailsService.getParkingDetails(
-              parkingId: widget!.parkingId,
-            ),
+            future: _model.parkingDetailsFuture,
             builder: (context, snapshot) {
               // Customize what your widget looks like when it's loading.
               if (snapshot.connectionState != ConnectionState.done ||
@@ -151,30 +164,24 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                       children: [
                         Stack(
                           children: [
-                            GestureDetector(
-                              onVerticalDragEnd: (details) async {
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                ),
-                                child: Align(
-                                  alignment: AlignmentDirectional(0.0, 0.0),
-                                  child: Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 16.0, 0.0, 16.0),
-                                    child: Container(
-                                      width: 32.0,
-                                      height: 4.0,
-                                      decoration: BoxDecoration(
-                                        color: FlutterFlowTheme.of(context)
-                                            .divider,
-                                        borderRadius:
-                                            BorderRadius.circular(24.0),
-                                      ),
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: FlutterFlowTheme.of(context)
+                                    .primaryBackground,
+                              ),
+                              child: Align(
+                                alignment: AlignmentDirectional(0.0, 0.0),
+                                child: Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      0.0, 16.0, 0.0, 16.0),
+                                  child: Container(
+                                    width: 32.0,
+                                    height: 4.0,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          FlutterFlowTheme.of(context).divider,
+                                      borderRadius: BorderRadius.circular(24.0),
                                     ),
                                   ),
                                 ),
@@ -207,27 +214,105 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
                               0.0, 0.0, 0.0, 16.0),
-                          child: GestureDetector(
-                            onVerticalDragEnd: (details) async {},
-                            child: Builder(
-                              builder: (context) {
-                                if (mainContainerViewFullParkingDetailsRow
-                                        ?.allPhotos !=
-                                    null) {
-                                  return Builder(
-                                    builder: (context) {
-                                      final photos =
-                                          mainContainerViewFullParkingDetailsRow
-                                                  ?.allPhotos
-                                                  ?.toList() ??
-                                              [];
+                          child: Builder(
+                            builder: (context) {
+                              if (mainContainerViewFullParkingDetailsRow
+                                      ?.allPhotos !=
+                                  null) {
+                                return Builder(
+                                  builder: (context) {
+                                    final photos =
+                                        mainContainerViewFullParkingDetailsRow
+                                                ?.allPhotos
+                                                ?.toList() ??
+                                            [];
 
-                                      return Container(
-                                        width: double.infinity,
-                                        height: 210.0,
-                                        child: Stack(
-                                          children: [
-                                            PageView.builder(
+                                    return Container(
+                                      width: double.infinity,
+                                      height: 210.0,
+                                      child: Stack(
+                                        children: [
+                                          PageView.builder(
+                                            controller:
+                                                _model.pageViewController ??=
+                                                    PageController(
+                                                        initialPage: max(
+                                                            0,
+                                                            min(
+                                                                0,
+                                                                photos.length -
+                                                                    1))),
+                                            scrollDirection: Axis.horizontal,
+                                            itemCount: photos.length,
+                                            itemBuilder:
+                                                (context, photosIndex) {
+                                              final photosItem =
+                                                  photos[photosIndex];
+                                              return InkWell(
+                                                splashColor: Colors.transparent,
+                                                focusColor: Colors.transparent,
+                                                hoverColor: Colors.transparent,
+                                                highlightColor:
+                                                    Colors.transparent,
+                                                onTap: () async {
+                                                  context.pushNamed(
+                                                    PhotoDetailedWidget
+                                                        .routeName,
+                                                    queryParameters: {
+                                                      'photoPath':
+                                                          serializeParam(
+                                                        photosItem.url
+                                                            .toString(),
+                                                        ParamType.String,
+                                                      ),
+                                                      'index': serializeParam(
+                                                        photosIndex,
+                                                        ParamType.int,
+                                                      ),
+                                                      'address': serializeParam(
+                                                        mainContainerViewFullParkingDetailsRow
+                                                            ?.address,
+                                                        ParamType.String,
+                                                      ),
+                                                      'photoCount':
+                                                          serializeParam(
+                                                        mainContainerViewFullParkingDetailsRow
+                                                            ?.photosCount,
+                                                        ParamType.int,
+                                                      ),
+                                                      'photoRef':
+                                                          serializeParam(
+                                                        photosItem.url
+                                                            .toString(),
+                                                        ParamType.String,
+                                                      ),
+                                                      'data': serializeParam(
+                                                        photosItem.dateDisplay
+                                                            .toString(),
+                                                        ParamType.String,
+                                                      ),
+                                                    }.withoutNulls,
+                                                  );
+                                                },
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          8.0),
+                                                  child: Image.network(
+                                                    photosItem.url.toString(),
+                                                    width: double.infinity,
+                                                    height: 194.0,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          Align(
+                                            alignment:
+                                                AlignmentDirectional(0.0, 0.8),
+                                            child: smooth_page_indicator
+                                                .SmoothPageIndicator(
                                               controller: _model
                                                       .pageViewController ??=
                                                   PageController(
@@ -237,150 +322,57 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                               0,
                                                               photos.length -
                                                                   1))),
-                                              scrollDirection: Axis.horizontal,
-                                              itemCount: photos.length,
-                                              itemBuilder:
-                                                  (context, photosIndex) {
-                                                final photosItem =
-                                                    photos[photosIndex];
-                                                return InkWell(
-                                                  splashColor:
-                                                      Colors.transparent,
-                                                  focusColor:
-                                                      Colors.transparent,
-                                                  hoverColor:
-                                                      Colors.transparent,
-                                                  highlightColor:
-                                                      Colors.transparent,
-                                                  onTap: () async {
-                                                    context.pushNamed(
-                                                      PhotoDetailedWidget
-                                                          .routeName,
-                                                      queryParameters: {
-                                                        'photoPath':
-                                                            serializeParam(
-                                                          photosItem.url
-                                                              .toString(),
-                                                          ParamType.String,
-                                                        ),
-                                                        'index': serializeParam(
-                                                          photosIndex,
-                                                          ParamType.int,
-                                                        ),
-                                                        'address':
-                                                            serializeParam(
-                                                          mainContainerViewFullParkingDetailsRow
-                                                              ?.address,
-                                                          ParamType.String,
-                                                        ),
-                                                        'photoCount':
-                                                            serializeParam(
-                                                          mainContainerViewFullParkingDetailsRow
-                                                              ?.photosCount,
-                                                          ParamType.int,
-                                                        ),
-                                                        'photoRef':
-                                                            serializeParam(
-                                                          photosItem.url
-                                                              .toString(),
-                                                          ParamType.String,
-                                                        ),
-                                                        'data': serializeParam(
-                                                          photosItem.dateDisplay
-                                                              .toString(),
-                                                          ParamType.String,
-                                                        ),
-                                                      }.withoutNulls,
-                                                    );
-                                                  },
-                                                  child: ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8.0),
-                                                    child: Image.network(
-                                                      photosItem.url.toString(),
-                                                      width: double.infinity,
-                                                      height: 194.0,
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                  ),
+                                              count: photos.length,
+                                              axisDirection: Axis.horizontal,
+                                              onDotClicked: (i) async {
+                                                await _model.pageViewController!
+                                                    .animateToPage(
+                                                  i,
+                                                  duration: Duration(
+                                                      milliseconds: 500),
+                                                  curve: Curves.ease,
                                                 );
+                                                safeSetState(() {});
                                               },
-                                            ),
-                                            Align(
-                                              alignment: AlignmentDirectional(
-                                                  0.0, 0.8),
-                                              child: smooth_page_indicator
-                                                  .SmoothPageIndicator(
-                                                controller: _model
-                                                        .pageViewController ??=
-                                                    PageController(
-                                                        initialPage: max(
-                                                            0,
-                                                            min(
-                                                                0,
-                                                                photos.length -
-                                                                    1))),
-                                                count: photos.length,
-                                                axisDirection: Axis.horizontal,
-                                                onDotClicked: (i) async {
-                                                  await _model
-                                                      .pageViewController!
-                                                      .animateToPage(
-                                                    i,
-                                                    duration: Duration(
-                                                        milliseconds: 500),
-                                                    curve: Curves.ease,
-                                                  );
-                                                  safeSetState(() {});
-                                                },
-                                                effect: smooth_page_indicator
-                                                    .SlideEffect(
-                                                  spacing: 8.0,
-                                                  radius: 8.0,
-                                                  dotWidth: 8.0,
-                                                  dotHeight: 8.0,
-                                                  dotColor: FlutterFlowTheme.of(
-                                                          context)
-                                                      .thertaryText,
-                                                  activeDotColor:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .secondaryBackground,
-                                                  paintStyle:
-                                                      PaintingStyle.fill,
-                                                ),
+                                              effect: smooth_page_indicator
+                                                  .SlideEffect(
+                                                spacing: 8.0,
+                                                radius: 8.0,
+                                                dotWidth: 8.0,
+                                                dotHeight: 8.0,
+                                                dotColor:
+                                                    FlutterFlowTheme.of(context)
+                                                        .thertaryText,
+                                                activeDotColor:
+                                                    FlutterFlowTheme.of(context)
+                                                        .secondaryBackground,
+                                                paintStyle: PaintingStyle.fill,
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  );
-                                } else {
-                                  return Container(
-                                    width: double.infinity,
-                                    height: 194.0,
-                                    decoration: BoxDecoration(
-                                      color: FlutterFlowTheme.of(context)
-                                          .secondaryBackground,
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
-                                    child: GestureDetector(
-                                      onVerticalDragDown: (details) async {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Icon(
-                                        Icons.no_photography,
-                                        color: FlutterFlowTheme.of(context)
-                                            .checkBoxes,
-                                        size: 100.0,
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
+                                    );
+                                  },
+                                );
+                              } else {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 194.0,
+                                  decoration: BoxDecoration(
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryBackground,
+                                    borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                  child: Icon(
+                                    Icons.no_photography,
+                                    color:
+                                        FlutterFlowTheme.of(context).checkBoxes,
+                                    size: 100.0,
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ),
                         Padding(
@@ -898,86 +890,57 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                               ),
                                         ),
                                       ),
-                                      FutureBuilder<List<ParkingPhoto>>(
-                                        future: _parkingPhotosService
-                                            .listParkingPhotos(
-                                          parkingId: widget!.parkingId,
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: FlutterFlowTheme.of(context)
+                                              .secondaryBackground,
+                                          borderRadius:
+                                              BorderRadius.circular(8.0),
                                         ),
-                                        builder: (context, snapshot) {
-                                          // Customize what your widget looks like when it's loading.
-                                          if (!snapshot.hasData) {
-                                            return Center(
-                                              child: SizedBox(
-                                                width: 50.0,
-                                                height: 50.0,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                          Color>(
-                                                    FlutterFlowTheme.of(context)
-                                                        .primary,
+                                        child: Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  10.0, 2.0, 10.0, 2.0),
+                                          child: Text(
+                                            valueOrDefault<String>(
+                                              mainContainerViewFullParkingDetailsRow
+                                                  ?.photosCount
+                                                  ?.toString(),
+                                              '0',
+                                            ),
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodyMedium
+                                                .override(
+                                                  font: GoogleFonts.roboto(
+                                                    fontWeight:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .bodyMedium
+                                                            .fontWeight,
+                                                    fontStyle:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .bodyMedium
+                                                            .fontStyle,
                                                   ),
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .accent1,
+                                                  letterSpacing: 0.0,
+                                                  fontWeight:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .bodyMedium
+                                                          .fontWeight,
+                                                  fontStyle:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .bodyMedium
+                                                          .fontStyle,
+                                                  lineHeight: 1.4,
                                                 ),
-                                              ),
-                                            );
-                                          }
-                                          return Container(
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .secondaryBackground,
-                                              borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                            ),
-                                            child: Padding(
-                                              padding: EdgeInsetsDirectional
-                                                  .fromSTEB(
-                                                      10.0, 2.0, 10.0, 2.0),
-                                              child: Text(
-                                                valueOrDefault<String>(
-                                                  mainContainerViewFullParkingDetailsRow
-                                                      ?.photosCount
-                                                      ?.toString(),
-                                                  '0',
-                                                ),
-                                                style: FlutterFlowTheme.of(
-                                                        context)
-                                                    .bodyMedium
-                                                    .override(
-                                                      font: GoogleFonts.roboto(
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontStyle,
-                                                      ),
-                                                      color:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .accent1,
-                                                      letterSpacing: 0.0,
-                                                      fontWeight:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .bodyMedium
-                                                              .fontWeight,
-                                                      fontStyle:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .bodyMedium
-                                                              .fontStyle,
-                                                      lineHeight: 1.4,
-                                                    ),
-                                              ),
-                                            ),
-                                          );
-                                        },
+                                          ),
+                                        ),
                                       ),
                                     ].divide(SizedBox(width: 4.0)),
                                   ),

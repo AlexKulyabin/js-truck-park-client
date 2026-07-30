@@ -160,17 +160,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                             builder: (context, snapshot) {
                               // Customize what your widget looks like when it's loading.
                               if (!snapshot.hasData) {
-                                return Center(
-                                  child: SizedBox(
-                                    width: 50.0,
-                                    height: 50.0,
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        FlutterFlowTheme.of(context).primary,
-                                      ),
-                                    ),
-                                  ),
-                                );
+                                return _buildProfileHeaderLoadingCard(context);
                               }
                               List<PublicUserProfile> containerUsersRowList =
                                   snapshot.data!;
@@ -1524,6 +1514,28 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeaderLoadingCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 170.0,
+      decoration: BoxDecoration(
+        color: FlutterFlowTheme.of(context).secondaryBackground,
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Center(
+        child: SizedBox(
+          width: 50.0,
+          height: 50.0,
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              FlutterFlowTheme.of(context).primary,
             ),
           ),
         ),

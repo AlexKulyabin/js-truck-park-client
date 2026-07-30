@@ -174,6 +174,10 @@ Repository не нужен language page, статическим onboarding page
   explicit private profile boundary for `referralCode`. The Supabase gateway
   now reads `public_profiles` and `private_profiles` views instead of the
   legacy `users` table for profile reads.
+- Profile and parking details UI stability guard is documented in
+  `profile_and_parking_details_ui_stability.md`: profile loading reserves the
+  final header height, and parking details caches its main future across tab
+  changes.
 - Profile page local invite visibility state now lives in
   `features/profile/application/ProfileController` with immutable state. This is
   intentionally narrow and preserves the generated screen behavior while moving

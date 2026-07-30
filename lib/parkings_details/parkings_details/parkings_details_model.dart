@@ -1,4 +1,5 @@
 import '/backend/schema/enums/enums.dart';
+import '/features/parking_details/data/parking_details_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -25,6 +26,8 @@ class ParkingsDetailsModel extends FlutterFlowModel<ParkingsDetailsWidget> {
   ///  Local state fields for this component.
 
   TabsToggle? activeTab = TabsToggle.info;
+
+  Future<ParkingDetails?>? parkingDetailsFuture;
 
   ///  State fields for stateful widgets in this component.
 
