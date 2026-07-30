@@ -2,7 +2,7 @@
 
 Date: 2026-07-29
 
-Target build: `1.0.8 (42)`.
+Target build: `1.0.9 (43)`.
 
 Status: client capabilities prepared for the next Android closed-test Release.
 No Supabase migration, policy change or production write command is part of
@@ -10,7 +10,7 @@ this stage.
 
 ## Build artifact
 
-- file: `build/app/outputs/bundle/release/JS-Truck-Park-1.0.8-42.aab`;
+- file: `build/app/outputs/bundle/release/JS-Truck-Park-1.0.9-43.aab`;
 - SHA-256 and exact Git commit: recorded in the adjacent `.build-info` file;
 - upload certificate SHA-256:
   `AD:AE:70:BC:2E:04:2A:C4:C6:56:66:B0:7E:E3:F5:E1:78:39:D2:1F:BD:7E:E9:49:A4:9A:1A:48:2C:7B:DC:E5`;
