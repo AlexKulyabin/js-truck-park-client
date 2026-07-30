@@ -17,6 +17,26 @@ void main() {
     );
   });
 
+  test('Android does not restore transient identity or attribution state', () {
+    final manifest =
+        File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+    final legacyRules = File('android/app/src/main/res/xml/backup_rules.xml')
+        .readAsStringSync();
+    final modernRules = File(
+      'android/app/src/main/res/xml/data_extraction_rules.xml',
+    ).readAsStringSync();
+
+    expect(manifest, contains('android:fullBackupContent="@xml/backup_rules"'));
+    expect(
+      manifest,
+      contains('android:dataExtractionRules="@xml/data_extraction_rules"'),
+    );
+    for (final rules in [legacyRules, modernRules]) {
+      expect(rules, contains('path="chottu_prefs.xml"'));
+      expect(rules, contains('path="FlutterSharedPreferences.xml"'));
+    }
+  });
+
   test('iOS release declares the Chottu universal-link association', () {
     final info = File('ios/Runner/Info.plist').readAsStringSync();
     final entitlements =

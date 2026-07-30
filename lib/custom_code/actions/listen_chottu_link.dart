@@ -15,6 +15,7 @@ import 'dart:io' show Platform;
 
 import 'package:chottu_link/chottu_link.dart';
 import 'package:chottu_link/model/chottu_link_resolve_link.dart';
+import '/features/referrals/deferred_referral_readiness.dart';
 import '/features/referrals/deferred_referral_recovery.dart';
 import '/features/referrals/referral_links.dart';
 
@@ -60,6 +61,13 @@ Future<bool> recoverChottuReferral() async {
 
 Future<bool> _recoverChottuReferral() async {
   try {
+    final isReady = await DeferredReferralReadiness(
+      probe: () async => (await ChottuLink.getApiKey()).isNotEmpty,
+    ).waitUntilReady();
+    if (!isReady) {
+      return false;
+    }
+
     final recovery = DeferredReferralRecovery(
       readAttribution: () async {
         final attribution = await ChottuLink.getAttributionData();

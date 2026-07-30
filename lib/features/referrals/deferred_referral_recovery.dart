@@ -1,6 +1,6 @@
 import 'referral_links.dart';
 
-const deferredReferralReleaseMarker = 'referral-deferred-recovery-v2';
+const deferredReferralReleaseMarker = 'referral-deferred-recovery-v3';
 
 class DeferredReferralAttribution {
   const DeferredReferralAttribution({
@@ -51,8 +51,9 @@ class DeferredReferralRecovery {
 
   static const defaultAttemptDelays = <Duration>[
     Duration.zero,
+    Duration(milliseconds: 500),
     Duration(seconds: 1),
-    Duration(seconds: 1),
+    Duration(seconds: 2),
   ];
 
   final DeferredAttributionReader _readAttribution;

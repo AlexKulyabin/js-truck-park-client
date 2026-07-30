@@ -39,11 +39,14 @@ Each inbound URL family has one application-level owner:
 | foreign domain or unknown route | none | ignore safely |
 
 On Android, deferred attribution recovery starts without blocking the first
-Flutter frame. The client reads Chottu attribution immediately and retries at
-one and two seconds when the SDK cache is still empty. A completed organic
-result stops the retry schedule, and concurrent callers share one in-flight
-recovery operation. Referral codes are persisted through the existing
-`FFAppState.tempReferralCode` contract and are never written to logs.
+Flutter frame. The Flutter plugin returns from `init` before the native SDK can
+finish Install Referrer initialization, so recovery first polls native
+readiness for a bounded 3.75 seconds. It then reads Chottu attribution
+immediately and retries after 0.5, 1 and 2 seconds when the SDK cache is still
+empty. A completed organic result stops the retry schedule, and concurrent
+callers share one in-flight recovery operation. Referral codes are persisted
+through the existing `FFAppState.tempReferralCode` contract and are never
+written to logs.
 The first-run splash allows four seconds for that bounded recovery, and the
 registration action requests the same deduplicated recovery once more before
 deciding whether to call `process_referral`. It does not call the RPC when no
@@ -53,6 +56,13 @@ Flutter's built-in deep-link handler is disabled for release. This prevents it
 from navigating to a Chottu short-link path before the ChottuLink SDK resolves
 the destination. The existing `app_links` dependency now owns the legacy
 custom-scheme handoff.
+
+Android Auto Backup excludes `chottu_prefs.xml` and
+`FlutterSharedPreferences.xml` from cloud backup and device transfer. This
+prevents a reinstall from restoring Chottu's completed-attribution flag, a
+pending referral code or a Supabase session from the previous installation.
+Other application files remain eligible for the existing Android backup
+behavior. An ordinary in-place update does not clear either preferences file.
 
 The coordinator allowlists only:
 
@@ -121,7 +131,8 @@ Android, app installed:
 
 Android, app not installed:
 
-1. Remove the app or clear all app data before the test.
+1. Remove the app. Builds containing the backup exclusions must not require a
+   separate manual data clear.
 2. Open a newly generated referral link.
 3. Install the closed-test build from the Google Play page reached by the link.
 4. Open the app from Google Play, register a new test user and confirm referral
@@ -131,7 +142,7 @@ Android, app not installed:
 
 The generated referral URL must be new for each run. On first launch, allow the
 app to remain open through the splash/onboarding transition so the bounded
-attribution retries can complete.
+readiness and attribution retries can complete.
 
 iOS/TestFlight:
 

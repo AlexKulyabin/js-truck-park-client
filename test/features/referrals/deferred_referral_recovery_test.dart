@@ -2,13 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:j_s_truck_park/features/referrals/deferred_referral_recovery.dart';
 
 void main() {
-  test('retries attribution at zero, one and two seconds', () async {
+  test('retries attribution with the bounded recovery schedule', () async {
     var reads = 0;
     final pauses = <Duration>[];
     final recovery = DeferredReferralRecovery(
       readAttribution: () async {
         reads += 1;
-        if (reads < 3) {
+        if (reads < 4) {
           return null;
         }
         return const DeferredReferralAttribution(
@@ -23,8 +23,12 @@ void main() {
     );
 
     expect(await recovery.recover(), 'RETRY-CODE');
-    expect(reads, 3);
-    expect(pauses, const [Duration(seconds: 1), Duration(seconds: 1)]);
+    expect(reads, 4);
+    expect(pauses, const [
+      Duration(milliseconds: 500),
+      Duration(seconds: 1),
+      Duration(seconds: 2),
+    ]);
   });
 
   test('stops when completed attribution is organic', () async {
@@ -80,6 +84,6 @@ void main() {
     );
 
     expect(await recovery.recover(), isNull);
-    expect(reads, 3);
+    expect(reads, 4);
   });
 }

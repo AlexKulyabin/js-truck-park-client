@@ -1,6 +1,6 @@
 # Referral deferred-install closed test
 
-Target Android build: `1.0.7 (41)`.
+Target Android build: next build after `1.0.7 (41)`.
 
 ## Scope
 
@@ -9,14 +9,16 @@ This run verifies the complete new-user path:
 `ChottuLink click -> Google Play install -> deferred attribution -> registration
 -> process_referral -> Supabase eligibility -> RevenueCat referral price`.
 
-The client reads cached attribution immediately and retries at one and two
-seconds. Registration requests the same deduplicated recovery once more before
-deciding whether `process_referral` can be called.
+The client first waits for native ChottuLink readiness, then reads cached
+attribution immediately and retries after 0.5, 1 and 2 seconds. Registration
+requests the same deduplicated recovery once more before deciding whether
+`process_referral` can be called. Android backup rules prevent a reinstall from
+restoring stale Chottu attribution, pending referral or Supabase session state.
 
 ## Preconditions
 
-1. Upload build `1.0.7 (41)` to the intended Google Play test track and confirm
-   that the test account can see that exact version.
+1. Upload the next build after `1.0.7 (41)` to the intended Google Play test
+   track and confirm that the test account can see that exact version.
 2. Explicitly deploy hosting commit `2b2572a` from
    `js-truck-park-legal-main` after production-write approval.
 3. Confirm the live relay contains the published Google Play URL and no
@@ -32,7 +34,8 @@ deciding whether `process_referral` can be called.
 1. Confirm JS Truck Park is not installed on the receiving device.
 2. Send the new referral link through a messenger and tap it there.
 3. Confirm the link opens the JS Truck Park listing in Google Play.
-4. Install the app and confirm App info or the Play listing reports `1.0.7`.
+4. Install the app and confirm App info or the Play listing reports the new
+   version.
 5. Open the app from Google Play and leave it open through splash/onboarding.
 6. Register the fresh test account normally.
 7. Open the subscription screen only after registration has completed.
@@ -61,9 +64,8 @@ Interpret failures at the first missing checkpoint:
 
 The adjacent `.build-info` file must report:
 
-- `version=1.0.7`;
-- `build_number=41`;
+- the new version and build number;
 - the expected Google Play upload certificate;
-- `referral-deferred-recovery-v2` in `release_markers`.
+- `referral-deferred-recovery-v3` in `release_markers`.
 
 Do not upload an AAB when any of these values is absent.

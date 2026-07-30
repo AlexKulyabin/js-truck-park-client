@@ -30,8 +30,9 @@ time. Previous bundles are preserved under `build/release-archive/`.
   present;
 - `public-parking-details-scroll-view`: the explicit details scroll surface is
   present;
-- `referral-deferred-recovery-v2`: the bounded deferred-attribution recovery is
-  present in the release client.
+- `referral-deferred-recovery-v3`: native SDK readiness, Android backup
+  exclusions and the bounded deferred-attribution recovery are present in the
+  release client.
 
 The marker check does not replace Flutter tests. It protects the final handoff
 between tested source and uploaded binary.
