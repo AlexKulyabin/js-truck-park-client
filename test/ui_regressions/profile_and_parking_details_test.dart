@@ -33,5 +33,18 @@ void main() {
       expect(source, contains('_handlePhotoVerticalDrag'));
       expect(source, contains('shouldDismissParkingDetails'));
     });
+
+    test('parking details preserves sheet scroll position across tabs', () {
+      final widgetSource = File(
+        'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+      ).readAsStringSync();
+      expect(widgetSource, contains('controller: _detailsScrollController'));
+      expect(widgetSource, contains('_selectTab(TabsToggle.info)'));
+      expect(widgetSource, contains('_selectTab(TabsToggle.review)'));
+      expect(widgetSource, contains('_selectTab(TabsToggle.photo)'));
+      expect(widgetSource, contains('_preservedSheetScrollOffset'));
+      expect(
+          widgetSource, contains('MediaQuery.sizeOf(context).height * 0.45'));
+    });
   });
 }

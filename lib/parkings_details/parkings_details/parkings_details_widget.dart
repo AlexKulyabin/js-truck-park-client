@@ -61,6 +61,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late final ParkingDetailsController _controller;
   late final ParkingFavoriteController _favoriteController;
   final ScrollController _detailsScrollController = ScrollController();
+  double? _preservedSheetScrollOffset;
 
   @override
   void setState(VoidCallback callback) {
@@ -794,8 +795,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.info;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.info);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -847,8 +847,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.review;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.review);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -958,8 +957,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.photo;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.photo);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -1066,56 +1064,62 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                             ].divide(SizedBox(width: 8.0)),
                           ),
                         ),
-                        Builder(
-                          builder: (context) {
-                            if (_model.activeTab == TabsToggle.info) {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.infoTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: InfoTabWidget(
-                                      details: details,
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: MediaQuery.sizeOf(context).height * 0.45,
+                          ),
+                          child: Builder(
+                            builder: (context) {
+                              if (_model.activeTab == TabsToggle.info) {
+                                return Container(
+                                  decoration: BoxDecoration(),
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 0.0, 0.0, 36.0),
+                                    child: wrapWithModel(
+                                      model: _model.infoTabModel,
+                                      updateCallback: () => safeSetState(() {}),
+                                      child: InfoTabWidget(
+                                        details: details,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            } else if (_model.activeTab == TabsToggle.review) {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.reviewsTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: ReviewsTabWidget(
-                                      details: details,
-                                      detailsController: _controller,
+                                );
+                              } else if (_model.activeTab ==
+                                  TabsToggle.review) {
+                                return Container(
+                                  decoration: BoxDecoration(),
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 0.0, 0.0, 36.0),
+                                    child: wrapWithModel(
+                                      model: _model.reviewsTabModel,
+                                      updateCallback: () => safeSetState(() {}),
+                                      child: ReviewsTabWidget(
+                                        details: details,
+                                        detailsController: _controller,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            } else {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.photosTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: PhotosTabWidget(
-                                      details: details,
+                                );
+                              } else {
+                                return Container(
+                                  decoration: BoxDecoration(),
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 0.0, 0.0, 36.0),
+                                    child: wrapWithModel(
+                                      model: _model.photosTabModel,
+                                      updateCallback: () => safeSetState(() {}),
+                                      child: PhotosTabWidget(
+                                        details: details,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }
-                          },
+                                );
+                              }
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -1127,5 +1131,29 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
         ],
       ),
     );
+  }
+
+  void _selectTab(TabsToggle tab) {
+    _preservedSheetScrollOffset = _detailsScrollController.hasClients
+        ? _detailsScrollController.offset
+        : null;
+
+    _model.activeTab = tab;
+    safeSetState(() {});
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_detailsScrollController.hasClients) {
+        return;
+      }
+      final offset = _preservedSheetScrollOffset;
+      if (offset == null) {
+        return;
+      }
+
+      final position = _detailsScrollController.position;
+      _detailsScrollController.jumpTo(
+        offset.clamp(position.minScrollExtent, position.maxScrollExtent),
+      );
+    });
   }
 }
