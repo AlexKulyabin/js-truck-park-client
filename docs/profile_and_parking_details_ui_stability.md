@@ -25,8 +25,13 @@
 - Блок содержимого вкладок имеет стабильную минимальную высоту, чтобы вкладки
   `Reviews` и `Photo` не уменьшали scroll extent и не опускали sheet после
   раскрытия пользователем.
-- Из handle/photo/no-photo зон удалены vertical drag handlers. Закрытие
-  остаётся через явную кнопку закрытия и текущий внешний tap-layer.
+- Из photo/no-photo зон удалены vertical drag handlers, а прежняя
+  ненаправленная обработка handle заменена на односторонний жест закрытия.
+- Верхняя область с drag handle отслеживает только свайп вниз. После небольшого
+  порога sheet закрывается; свайп вверх по ручке не закрывает окно, а жесты по
+  фотографии и содержимому вкладок не участвуют в закрытии. Стандартный
+  `enableDrag` остаётся выключенным, чтобы не вернуть прежнюю регрессию.
+- Явное закрытие через верхний внешний tap-layer сохранено.
 - Счётчик фото в tab header больше не запускает отдельный future, так как число
   уже есть в загруженной модели parking details.
 
@@ -41,4 +46,5 @@ bottom sheet.
 Добавлен source-level тест `profile_and_parking_details_test.dart`, который
 ловит повторное появление inline future в parking details, вертикальных drag
 handlers в photo/header-зонах, потерю scroll controller/offset guard и
-нестабильного loading header в профиле.
+нестабильного loading header в профиле. Логика порога свайпа вниз отдельно
+покрыта unit-тестом `parking_sheet_dismiss_tracker_test.dart`.

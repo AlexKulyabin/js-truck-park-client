@@ -23,6 +23,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'parking_sheet_dismiss_tracker.dart';
 import 'parkings_details_model.dart';
 export 'parkings_details_model.dart';
 
@@ -42,6 +43,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late ParkingsDetailsModel _model;
   final _favoriteToggleController = FavoriteToggleController();
   final _parkingDetailsService = ParkingDetailsService();
+  final _sheetDismissTracker = ParkingSheetDismissTracker();
+  bool _isDismissing = false;
 
   @override
   void setState(VoidCallback callback) {
@@ -163,54 +166,68 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Stack(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context)
-                                    .primaryBackground,
-                              ),
-                              child: Align(
-                                alignment: AlignmentDirectional(0.0, 0.0),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 16.0, 0.0, 16.0),
-                                  child: Container(
-                                    width: 32.0,
-                                    height: 4.0,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          FlutterFlowTheme.of(context).divider,
-                                      borderRadius: BorderRadius.circular(24.0),
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onVerticalDragStart: (_) {
+                            _sheetDismissTracker.reset();
+                          },
+                          onVerticalDragUpdate: _handleSheetDragUpdate,
+                          onVerticalDragEnd: (_) {
+                            _sheetDismissTracker.reset();
+                          },
+                          onVerticalDragCancel: () {
+                            _sheetDismissTracker.reset();
+                          },
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: FlutterFlowTheme.of(context)
+                                      .primaryBackground,
+                                ),
+                                child: Align(
+                                  alignment: AlignmentDirectional(0.0, 0.0),
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 16.0, 0.0, 16.0),
+                                    child: Container(
+                                      width: 32.0,
+                                      height: 4.0,
+                                      decoration: BoxDecoration(
+                                        color: FlutterFlowTheme.of(context)
+                                            .divider,
+                                        borderRadius:
+                                            BorderRadius.circular(24.0),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional(1.0, 0.0),
-                              child: Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    0.0, 6.0, 0.0, 0.0),
-                                child: InkWell(
-                                  splashColor: Colors.transparent,
-                                  focusColor: Colors.transparent,
-                                  hoverColor: Colors.transparent,
-                                  highlightColor: Colors.transparent,
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    color: FlutterFlowTheme.of(context)
-                                        .secondaryText,
-                                    size: 24.0,
+                              Align(
+                                alignment: AlignmentDirectional(1.0, 0.0),
+                                child: Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      0.0, 6.0, 0.0, 0.0),
+                                  child: InkWell(
+                                    splashColor: Colors.transparent,
+                                    focusColor: Colors.transparent,
+                                    hoverColor: Colors.transparent,
+                                    highlightColor: Colors.transparent,
+                                    onTap: () async {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Icon(
+                                      Icons.close_rounded,
+                                      color: FlutterFlowTheme.of(context)
+                                          .secondaryText,
+                                      size: 24.0,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
@@ -1024,6 +1041,28 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
         ],
       ),
     );
+  }
+
+  void _handleSheetDragUpdate(DragUpdateDetails details) {
+    if (_isDismissing) {
+      return;
+    }
+    final delta = details.primaryDelta;
+    if (delta != null && _sheetDismissTracker.registerDragDelta(delta)) {
+      _dismissSheet();
+    }
+  }
+
+  void _dismissSheet() {
+    if (_isDismissing) {
+      return;
+    }
+    _isDismissing = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
   }
 
   void _selectTab(TabsToggle tab) {

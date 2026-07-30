@@ -54,5 +54,19 @@ void main() {
           widgetSource, contains('MediaQuery.sizeOf(context).height * 0.45'));
       expect(modelSource, contains('ScrollController? sheetScrollController'));
     });
+
+    test('parking details only dismisses from the top handle area', () {
+      final source = File(
+        'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+      ).readAsStringSync();
+
+      expect(source, contains('onVerticalDragUpdate: _handleSheetDragUpdate'));
+      expect(source, contains('ParkingSheetDismissTracker'));
+      expect(source, contains('_dismissSheet()'));
+      expect(
+        source,
+        isNot(contains('NotificationListener<ScrollNotification>')),
+      );
+    });
   });
 }
