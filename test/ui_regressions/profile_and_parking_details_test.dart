@@ -23,6 +23,17 @@ void main() {
       expect(source, isNot(contains('FutureBuilder<ParkingDetails?>')));
     });
 
+    test('parking details shows an opaque stable loading sheet', () {
+      final source = File(
+        'lib/parkings_details/parkings_details/parkings_details_widget.dart',
+      ).readAsStringSync();
+
+      expect(source, contains('return _buildParkingDetailsLoading(context)'));
+      expect(source, contains('color: theme.primaryBackground'));
+      expect(source, contains('height: 180.0'));
+      expect(source, contains('_buildSheetHandle(context)'));
+    });
+
     test('parking details separates photo scrolling from handle dismissal', () {
       final source = File(
         'lib/parkings_details/parkings_details/parkings_details_widget.dart',

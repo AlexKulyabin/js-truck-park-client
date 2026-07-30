@@ -181,18 +181,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
               final state = _controller.state;
               if (state.detailsPhase == ParkingDetailsLoadPhase.idle ||
                   state.detailsPhase == ParkingDetailsLoadPhase.loading) {
-                return Center(
-                  child: SizedBox(
-                    key: ParkingsDetailsWidget.loadingKey,
-                    width: 50.0,
-                    height: 50.0,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        FlutterFlowTheme.of(context).primary,
-                      ),
-                    ),
-                  ),
-                );
+                return _buildParkingDetailsLoading(context);
               }
               if (state.detailsPhase == ParkingDetailsLoadPhase.failure) {
                 return InkWell(
@@ -1061,6 +1050,80 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildParkingDetailsLoading(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+
+    return SafeArea(
+      child: Container(
+        key: ParkingsDetailsWidget.loadingKey,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: theme.primaryBackground,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(10.0),
+            topRight: Radius.circular(10.0),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSheetHandle(context),
+              Container(
+                width: double.infinity,
+                height: 180.0,
+                decoration: BoxDecoration(
+                  color: theme.alternate,
+                  borderRadius: BorderRadius.circular(6.0),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 18.0, 0.0, 0.0),
+                child: Container(
+                  width: 220.0,
+                  height: 18.0,
+                  decoration: BoxDecoration(
+                    color: theme.alternate,
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
+                child: Container(
+                  width: 150.0,
+                  height: 14.0,
+                  decoration: BoxDecoration(
+                    color: theme.alternate,
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 22.0, 0.0, 0.0),
+                child: Center(
+                  child: SizedBox(
+                    width: 22.0,
+                    height: 22.0,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      valueColor: AlwaysStoppedAnimation<Color>(theme.primary),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
