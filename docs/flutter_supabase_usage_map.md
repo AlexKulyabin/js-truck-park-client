@@ -34,7 +34,7 @@ Versioned `supabase/migrations/` всё ещё отсутствуют. Dump яв
 
 1. `CustomGoogleMap` получает visible region и zoom от Google Maps.
 2. Home/SelectParking вычисляют center как midpoint viewport, не как GPS пользователя.
-3. `FFAppState.filterRadius` — индекс slider; `getMetersFromIndex` переводит его в 5, 10, 50, 100 или 150 км. Если nearest выключен, передаётся `0.0`.
+3. `ParkingFilterController.radiusIndex` — индекс slider; сохранённая шкала переводит его в 5, 10, 50, 100 или 150 км. Если nearest выключен, передаётся `0.0`.
 4. Capacity defaults: 0..100. Amenity flags: gas, shower, laundry, hotel, shop, recreation.
 5. Search использует debounce 500 ms, lower-case query и принудительный zoom 20, сохраняя остальные filter/bounds params.
 6. Ответ RPC напрямую передаётся в map/search UI как dynamic JSON.
@@ -47,23 +47,23 @@ Versioned `supabase/migrations/` всё ещё отсутствуют. Dump яв
 
 | Flutter-файл / сценарий | Entity | Операция и параметры | Dart-результат | Null/error handling | Риск |
 |---|---|---|---|---|---|
-| `auth/validate_sms_code/validate_sms_code_widget.dart` / после OTP | `users` | select where `id = currentUserUid` | `List<UsersRow>` | `firstOrNull`; без catch; выбирает Home или Registration | критический |
+| `features/profile/data/user_profile_service.dart` -> `auth/validate_sms_code/validate_sms_code_widget.dart` / после OTP | `public_profiles` | select where `id = currentUserUid` | typed `PublicUserProfile?` / completion bool | empty/invalid user id -> incomplete profile; без catch; выбирает Home или Registration | средний |
 | `auth/registration/registration_widget.dart` / завершение профиля | `users` | update by id: `full_name`, optional `avatar_url`, `last_device_id` | generated update result не используется | upload length check; DB error не показана | критический |
-| `profile/profile/profile_widget.dart` / header | `users` | querySingle where id | `List<UsersRow>` max 1 | empty → nullable row/default name; FutureBuilder error не отделён от loading | высокий |
-| `profile/profile/profile_widget.dart` / referral | `users` | select by id → `referral_code` | `List<UsersRow>` | force unwrap first row/code | высокий |
+| `features/profile/data/user_profile_service.dart` -> `profile/profile/profile_widget.dart` / header | `public_profiles` | select where id | `List<PublicUserProfile>` | empty -> nullable row/default name; FutureBuilder error не отделён от loading | средний |
+| `features/profile/data/user_profile_service.dart` -> `profile/profile/profile_widget.dart` / referral | `private_profiles` | select by id -> `referral_code` | `String?` through private profile boundary | существующий UI ожидает код перед созданием ссылки | средний |
 | `profile/edit_profile/edit_profile_widget.dart` | `users` | querySingle; update `full_name`, optional `avatar_url`, `updated_at` by id | `UsersRow` list / update rows | FutureBuilder spinner; no explicit DB catch | высокий |
 | `favourites/favourites/favourites_widget.dart` | `view_user_favorites` | select where `user_id = currentUserUid` | `List<ViewUserFavoritesRow>` | empty state есть; error отдельно не показан | средний |
-| `parkings_details/parkings_details/parkings_details_widget.dart` / initial toggle | `favorites` | select where `parking_id` and `user_id` | `List<FavoritesRow>` | empty → false; no explicit error | высокий |
 | тот же / toggle | `favorites` | delete by `parking_id`; insert `user_id`, `parking_id` | `List<FavoritesRow>` | optimistic local bool до await; rollback/error UI нет; delete не фильтрует user в client predicate, security зависит от RLS | критический |
-| тот же / details | `view_full_parking_details` | querySingle where `id = parkingId` | `List<ViewFullParkingDetailsRow>` | spinner on no data; nullable row handling частичное | высокий |
-| `parkings_details/parkings_details` и request detail screens | `parking_photos` | select where `parking_id`, иногда order `created_at` | `List<ParkingPhotosRow>` | empty supported; error not distinct | средний |
-| `parkings_details/info_tab`, accepted/moderation/rejected | `reviews` | select where `parking_id` | `List<ReviewsRow>` | aggregate/display defaults; error not distinct | средний |
-| `parkings_details/reviews_tab/reviews_tab_widget.dart` | `view_reviews_with_users` | select by parking id, order `created_at` | `List<ViewReviewsWithUsersRow>` | empty state; error spins | средний |
-| `reviews/reviews_and_complaints/reviews_and_complaints_widget.dart` | `view_reviews_with_users` | select `user_id = currentUserUid`, order `created_at` | typed row list | empty state; error spins | средний |
-| тот же | `view_reports_detailed` | select `reporter_id = currentUserUid`, order `report_date` | typed row list | empty state; error spins | средний |
-| `reviews/report_create/report_create_widget.dart` | `reports` | insert `parking_id`, `user_id`, category/report/comment/status fields | `ReportsRow?` | button validation; no DB catch/typed error UI | высокий |
+| `parkings_details/parkings_details/parkings_details_widget.dart` через `features/parking_details` repository | `view_full_parking_details` | select by non-empty parking id, limit 1 | typed `ParkingDetails`; generated row hidden behind data layer | loading/empty/failure/retry, stale response guard; mismatched/malformed rows отклоняются | низкий |
+| request detail screens | `parking_photos` | select where `parking_id`, иногда order `created_at` | `List<ParkingPhotosRow>` | empty supported; error not distinct | средний |
+| accepted/moderation/rejected detail info tabs | `reviews` | select where `parking_id` | `List<ReviewsRow>` | aggregate/display defaults; error not distinct | средний |
+| `parkings_details/reviews_tab/reviews_tab_widget.dart` через `features/parking_details` repository | `view_reviews_with_users` | select by non-empty parking id, order `created_at` | typed `List<ParkingReview>`; generated row hidden behind data layer | loading/empty/failure/retry, stale response guard | низкий |
+| `features/reviews/data/supabase_user_reviews_repository.dart` через `reviews/reviews_and_complaints/reviews_and_complaints_widget.dart` | `view_reviews_with_users` | обязательный owner select `user_id = currentUserUid`, order `created_at`; пустой user ID не вызывает query | typed `List<UserReviewSummary>` | local controller: loading/empty/failure/retry, stale response guard; cross-user/malformed rows отклоняются | низкий |
+| тот же | `view_reports_detailed` | обязательный owner select `reporter_id = currentUserUid`, order `report_date`; пустой user ID не вызывает query | typed `List<UserComplaintSummary>` | local controller: loading/empty/failure/retry, stale response guard; photo query params сохранены | низкий |
+| `features/reports/data/reports_service.dart` / `reviews/report_create/report_create_widget.dart` | `reports` | insert `parking_id`, `user_id`, comment, `status = approved`, report enum name, `created_at` | `CreatedReport` | capability-gated by `reportCreate`; service validates ids/report/status; UI shows snackbar on failure | высокий |
 | `reviews/review_create/review_create_widget.dart` | `reviews` | insert parking/user/comment, five rating dimensions, timestamp | `ReviewsRow?` | response id force-used for photo path; no transaction | критический |
 | тот же | `parking_photos` | one insert per uploaded photo: URL, parking/user/review ids, timestamp | `ParkingPhotosRow?` | partial upload/rows possible; no rollback transaction | критический |
+| `features/review_submission/data/review_submission_service.dart` / `reviews/review_create/review_create_widget.dart` | `reviews`, `parking_photos`, `parking_content` | guarded review insert with optional staged uploads under `parkings/<parkingId>/reviews/<reviewId>/<index>/...` | `PreparedReviewSubmission` / `ReviewSubmissionResult` | validates JPEG/PNG/WebP, <=5 MiB and <=1920px when dimensions are known; compensates created state on failure | высокий |
 | `create_parking/add_parking/add_parking_widget.dart` | `parkings` | insert capacity, amenities, address/lowercase, lat/lng, creator, timestamp, pending status | `ParkingsRow?` | generated form validation; no transaction/catch | критический |
 | `create_parking2/create_parking/create_parking_widget.dart` | `parkings` | тот же новый flow | `ParkingsRow?` | no transaction/catch | критический |
 | оба create screens | `parking_photos` | one insert per uploaded public URL and parking/user ids | `ParkingPhotosRow?` | partial write possible if upload/insert fails | критический |
@@ -75,9 +75,9 @@ Generated helper: `backend/supabase/storage/storage.dart`. Upload делает `
 
 | Caller | Bucket/path | Операция | Error/atomicity | Security dependency |
 |---|---|---|---|---|
-| registration, edit profile | `avatars/users/<uid>/...` | upload, public URL stored in `users.avatar_url` | upload list length проверяется; DB update отдельно | bucket public, 5 MiB images; write/delete policies не проверяют owner path — P1 |
-| create parking flows | `parking_content/parkings/<parkingId>/<index>` | upload, then insert `parking_photos` | нет transaction/compensation; orphan object/partial rows возможны | bucket public, 5 MiB images; дублирующие path policies |
-| create review | `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>` | upload, then insert row | review создаётся до uploads; partial state возможен | DB photo policies допускают broad authenticated insert/delete |
+| registration, edit profile | `avatars/users/<uid>/...` | upload, public URL stored in `users.avatar_url` | upload list length проверяется; DB update отдельно; `profileUpdate` остаётся выключен до atomic/compensated avatar flow | локальная migration ограничивает write/delete owner path; production отдельно не изменяется |
+| create parking flows | `parking_content/parkings/<parkingId>/<index>/<timestamp>.<ext>` | upload, then insert `parking_photos` | нет transaction/compensation; orphan object/partial rows возможны; новый create flow пишет через typed repository boundary | локальная migration ограничивает direct content владельцем парковки |
+| create review | `parking_content/parkings/<parkingId>/reviews/<reviewId>/<index>/<timestamp>.<ext>` | upload, then insert row | staged service компенсирует созданные review/object rows при ошибке | локальные DB/Storage migrations ограничивают row owner и review-author path |
 | marker asset | public `assets` URL hardcoded в Home | read | fallback default marker on load error | bucket подтверждён public; это часть текущего UI contract |
 
 Helper `deleteSupabaseFileFromPublicUrl` существует; фактические callers в production widgets не найдены. Signed URLs не используются. Uploaded objects предполагаются public.

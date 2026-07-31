@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/parking_details/domain/parking_details.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -13,10 +13,10 @@ export 'info_tab_model.dart';
 class InfoTabWidget extends StatefulWidget {
   const InfoTabWidget({
     super.key,
-    required this.parkingRow,
+    required this.details,
   });
 
-  final ViewFullParkingDetailsRow? parkingRow;
+  final ParkingDetails details;
 
   @override
   State<InfoTabWidget> createState() => _InfoTabWidgetState();
@@ -75,7 +75,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                 Flexible(
                   child: Text(
                     valueOrDefault<String>(
-                      widget!.parkingRow?.address,
+                      widget.details.address,
                       'No address',
                     ),
                     maxLines: 2,
@@ -103,114 +103,86 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
             ),
           ),
         ),
-        FutureBuilder<List<ReviewsRow>>(
-          future: ReviewsTable().queryRows(
-            queryFn: (q) => q.eqOrNull(
-              'parking_id',
-              widget!.parkingRow?.id,
-            ),
+        Container(
+          width: double.infinity,
+          height: 72.0,
+          decoration: BoxDecoration(
+            color: FlutterFlowTheme.of(context).secondaryBackground,
+            borderRadius: BorderRadius.circular(10.0),
           ),
-          builder: (context, snapshot) {
-            // Customize what your widget looks like when it's loading.
-            if (!snapshot.hasData) {
-              return Center(
-                child: SizedBox(
-                  width: 50.0,
-                  height: 50.0,
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      FlutterFlowTheme.of(context).primary,
-                    ),
+          child: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(0.0),
+                  child: SvgPicture.asset(
+                    'assets/images/review.svg',
+                    width: 30.0,
+                    height: 30.0,
+                    fit: BoxFit.cover,
                   ),
                 ),
-              );
-            }
-            List<ReviewsRow> reviewsContainerReviewsRowList = snapshot.data!;
-
-            return Container(
-              width: double.infinity,
-              height: 72.0,
-              decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).secondaryBackground,
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-                child: Row(
+                Column(
                   mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(0.0),
-                      child: SvgPicture.asset(
-                        'assets/images/review.svg',
-                        width: 30.0,
-                        height: 30.0,
-                        fit: BoxFit.cover,
+                    Text(
+                      valueOrDefault<String>(
+                        widget.details.rating?.toString(),
+                        '4.0',
                       ),
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          valueOrDefault<String>(
-                            widget!.parkingRow?.rating?.toString(),
-                            '4.0',
+                      style: FlutterFlowTheme.of(context).bodyLarge.override(
+                            font: GoogleFonts.roboto(
+                              fontWeight: FontWeight.w500,
+                              fontStyle: FlutterFlowTheme.of(context)
+                                  .bodyLarge
+                                  .fontStyle,
+                            ),
+                            letterSpacing: 0.0,
+                            fontWeight: FontWeight.w500,
+                            fontStyle: FlutterFlowTheme.of(context)
+                                .bodyLarge
+                                .fontStyle,
                           ),
-                          style:
-                              FlutterFlowTheme.of(context).bodyLarge.override(
-                                    font: GoogleFonts.roboto(
-                                      fontWeight: FontWeight.w500,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyLarge
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FontWeight.w500,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyLarge
-                                        .fontStyle,
-                                  ),
-                        ),
-                        Text(
-                          valueOrDefault<String>(
-                            '${valueOrDefault<String>(
-                              reviewsContainerReviewsRowList.length.toString(),
-                              '0',
-                            )} ${FFLocalizations.of(context).getVariableText(
-                              enText: 'reviews',
-                              ruText: 'отзывов',
-                            )}',
-                            '0',
-                          ),
-                          style:
-                              FlutterFlowTheme.of(context).labelLarge.override(
-                                    font: GoogleFonts.roboto(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .labelLarge
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .labelLarge
-                                          .fontStyle,
-                                    ),
-                                    fontSize: 15.0,
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelLarge
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelLarge
-                                        .fontStyle,
-                                  ),
-                        ),
-                      ].divide(SizedBox(height: 4.0)),
                     ),
-                  ].divide(SizedBox(width: 12.0)),
+                    Text(
+                      valueOrDefault<String>(
+                        '${valueOrDefault<String>(
+                          widget.details.reviewsCount?.toString(),
+                          '0',
+                        )} ${FFLocalizations.of(context).getVariableText(
+                          enText: 'reviews',
+                          ruText: 'отзывов',
+                        )}',
+                        '0',
+                      ),
+                      style: FlutterFlowTheme.of(context).labelLarge.override(
+                            font: GoogleFonts.roboto(
+                              fontWeight: FlutterFlowTheme.of(context)
+                                  .labelLarge
+                                  .fontWeight,
+                              fontStyle: FlutterFlowTheme.of(context)
+                                  .labelLarge
+                                  .fontStyle,
+                            ),
+                            fontSize: 15.0,
+                            letterSpacing: 0.0,
+                            fontWeight: FlutterFlowTheme.of(context)
+                                .labelLarge
+                                .fontWeight,
+                            fontStyle: FlutterFlowTheme.of(context)
+                                .labelLarge
+                                .fontStyle,
+                          ),
+                    ),
+                  ].divide(SizedBox(height: 4.0)),
                 ),
-              ),
-            );
-          },
+              ].divide(SizedBox(width: 12.0)),
+            ),
+          ),
         ),
         Container(
           width: double.infinity,
@@ -258,7 +230,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                     ),
                     Text(
                       valueOrDefault<String>(
-                        widget!.parkingRow?.totalSpaces?.toString(),
+                        widget.details.totalSpaces?.toString(),
                         '-',
                       ),
                       style: FlutterFlowTheme.of(context).labelLarge.override(
@@ -318,7 +290,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                         ),
                   ),
                 ),
-                if (widget!.parkingRow?.hasGasStation ?? true)
+                if (widget.details.hasGasStation ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -360,7 +332,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasShower ?? true)
+                if (widget.details.hasShower ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -402,7 +374,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasLaundry ?? true)
+                if (widget.details.hasLaundry ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -444,7 +416,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasHotel ?? true)
+                if (widget.details.hasHotel ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -486,7 +458,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasShop ?? true)
+                if (widget.details.hasShop ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
@@ -528,7 +500,7 @@ class _InfoTabWidgetState extends State<InfoTabWidget> {
                       ].divide(SizedBox(width: 16.0)),
                     ),
                   ),
-                if (widget!.parkingRow?.hasRecreationArea ?? true)
+                if (widget.details.hasRecreationArea ?? true)
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),

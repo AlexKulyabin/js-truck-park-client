@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:j_s_truck_park/core/localization/locale_store.dart';
+import 'package:j_s_truck_park/features/language/application/language_controller.dart';
 import 'package:j_s_truck_park/flutter_flow/flutter_flow_widgets.dart';
 import 'package:j_s_truck_park/flutter_flow/internationalization.dart';
 import 'package:j_s_truck_park/language/language_widget.dart';
+import 'package:provider/provider.dart';
+
+class _MemoryLocaleStore implements LocaleStore {
+  String? languageCode;
+
+  @override
+  String? readLanguageCode() => languageCode;
+
+  @override
+  Future<void> writeLanguageCode(String languageCode) async {
+    this.languageCode = languageCode;
+  }
+}
 
 Widget _buildSubject({
   required Locale locale,
   ValueChanged<String>? onLanguageSelected,
   ThemeMode themeMode = ThemeMode.light,
+  LanguageController? languageController,
 }) {
-  return MaterialApp(
+  final app = MaterialApp(
     localizationsDelegates: const [
       FFLocalizationsDelegate(),
       GlobalMaterialLocalizations.delegate,
@@ -24,6 +40,13 @@ Widget _buildSubject({
     themeMode: themeMode,
     home: LanguageWidget(onLanguageSelected: onLanguageSelected),
   );
+
+  return languageController == null
+      ? app
+      : ChangeNotifierProvider.value(
+          value: languageController,
+          child: app,
+        );
 }
 
 void main() {
@@ -68,6 +91,24 @@ void main() {
     await tester.pump();
 
     expect(selectedLanguages, ['en', 'ru']);
+  });
+
+  testWidgets('uses the application controller through the default boundary',
+      (tester) async {
+    final store = _MemoryLocaleStore();
+    final controller = LanguageController(localeStore: store);
+    await tester.pumpWidget(
+      _buildSubject(
+        locale: const Locale('en'),
+        languageController: controller,
+      ),
+    );
+
+    await tester.tap(find.text('Ru'));
+    await tester.pump();
+
+    expect(controller.state.locale?.languageCode, 'ru');
+    expect(store.languageCode, 'ru');
   });
 
   testWidgets('preserves the current empty Russian translations',

@@ -1,4 +1,24 @@
-# План следующей backend-сессии
+# Первый backend-этап: ограничение обновлений users
+
+## Статус реализации
+
+Статус: реализовано и проверяется локально; в production не применено.
+
+- PR с исходным аудитом слит в `main`.
+- Реферальные Flutter-изменения изначально были изолированы в отдельном draft PR;
+  позднее hosted/deferred deep-link flow перенесён в текущую ветку отдельным
+  коммитом без изменения этого backend-этапа.
+- Создан стандартный `supabase/config.toml` для PostgreSQL 17.
+- `20260723173000_remote_schema.sql` фиксирует локальный baseline существующего проекта без данных.
+- `20260723180000_restrict_user_profile_updates.sql` содержит только grants hardening.
+- `users_authorization_test.sql` проверяет Auth trigger, column grants, own/cross-user RLS, anon и service role.
+- Два чистых reset/test: по 20 tests, PASS.
+- Schema diff: пустой. Flutter: 21 test PASS, format чистый, blocking analyzer errors нет.
+- DB lint содержит только baseline findings PostGIS и старых функций; migration-specific findings отсутствуют.
+- Commit `security(supabase): restrict mutable user profile columns` опубликован в draft PR #3.
+- Production write-команды не выполнялись.
+
+Baseline migration нельзя повторно выполнять на существующей production-базе: перед будущим rollout её migration version нужно отдельно отметить как already applied после проверки migration history. Это действие не входит в текущий этап.
 
 ## Выбранный модуль
 
@@ -23,8 +43,10 @@ Supabase authorization baseline для `public.users`: блокировка са
 
 - `diagnostics/supabase_schema_2026-07-23.sql`;
 - `diagnostics/supabase_backend_metadata_2026-07-23.json`;
-- будущая migration в `supabase/migrations/`;
-- будущие database tests в `supabase/tests/database/`.
+- `supabase/config.toml`;
+- `supabase/migrations/20260723173000_remote_schema.sql`;
+- `supabase/migrations/20260723180000_restrict_user_profile_updates.sql`;
+- `supabase/tests/database/users_authorization_test.sql`.
 
 ### Flutter callers, которые должны пройти regression
 
@@ -62,8 +84,10 @@ Supabase authorization baseline для `public.users`: блокировка са
 
 ```text
 supabase/
+  config.toml
   migrations/
-    <timestamp>_restrict_user_profile_updates.sql
+    20260723173000_remote_schema.sql
+    20260723180000_restrict_user_profile_updates.sql
   tests/
     database/
       users_authorization_test.sql
@@ -72,22 +96,24 @@ docs/
   backend_next_session_plan.md
 ```
 
-Migration должна:
+Hardening migration:
 
 1. зафиксировать текущие grants;
-2. revoke table-level UPDATE у `authenticated`;
+2. revoke table-level UPDATE у `anon` и `authenticated`;
 3. grant UPDATE только `full_name`, `avatar_url`, `updated_at`, `last_device_id`;
 4. сохранить полный доступ `service_role`;
 5. не менять SELECT policy, Auth trigger, RPC, таблицы, колонки или данные;
 6. содержать обратимый down/rollback SQL в runbook, но не запускать его автоматически.
 
-## Файлы, которые будут созданы
+## Созданные файлы
 
-- `supabase/migrations/<timestamp>_restrict_user_profile_updates.sql`;
+- `supabase/.gitignore`;
+- `supabase/config.toml`;
+- `supabase/migrations/20260723173000_remote_schema.sql`;
+- `supabase/migrations/20260723180000_restrict_user_profile_updates.sql`;
 - `supabase/tests/database/users_authorization_test.sql`;
-- при отсутствии тестового bootstrap — один минимальный helper под `supabase/tests/database/support/`.
 
-## Файлы, которые будут изменены
+## Изменённые файлы
 
 - `docs/backend_security_audit.md` — фактический результат tests;
 - `docs/backend_next_session_plan.md` — status/rollback evidence.
@@ -106,16 +132,16 @@ Production Flutter files на первом backend-этапе изменятьс
 
 ## Последовательность
 
-1. Создать локальный или отдельный staging Supabase; production не использовать для tests.
-2. Применить актуальный schema baseline.
-3. Написать negative tests для update `is_admin`, `is_premium`, `status`, referral fields.
-4. Написать positive tests для `full_name`, `avatar_url`, `updated_at`, `last_device_id`.
-5. Добавить migration grants.
-6. Выполнить reset/test/lint минимум два раза с чистого состояния.
-7. Запустить Flutter unit/analyze и ручной integration smoke против staging.
-8. Проверить diff: только одна migration, tests и docs.
-9. Сделать отдельный Git-коммит.
-10. Production deployment — только отдельное явное решение после staging evidence.
+1. [x] Создать локальный Supabase; production не использовать для tests.
+2. [x] Применить актуальный schema baseline без данных.
+3. [x] Написать negative tests для update `is_admin`, `is_premium`, `status`, referral fields.
+4. [x] Написать positive tests для `full_name`, `avatar_url`, `updated_at`, `last_device_id`.
+5. [x] Добавить migration grants.
+6. [x] Выполнить reset/test/lint второй раз с чистого состояния.
+7. [x] Запустить Flutter unit/analyze.
+8. [x] Проверить финальный diff: config, baseline, одна hardening migration, tests и docs.
+9. [x] Сделать отдельный Git-коммит и draft PR.
+10. [ ] Staging/production deployment — только отдельное явное решение.
 
 ## Необходимые тесты
 
@@ -137,9 +163,9 @@ Production Flutter files на первом backend-этапе изменятьс
 ## Команды проверки
 
 ```bash
-supabase start
+supabase start -x vector,logflare,studio,storage-api,imgproxy,edge-runtime,mailpit,postgres-meta,postgrest,realtime,gotrue,kong,supavisor
 supabase db reset
-supabase test db
+supabase test db supabase/tests/database/users_authorization_test.sql --local
 supabase db lint --level warning
 supabase db diff --local --schema public
 dart format --output=none --set-exit-if-changed lib test
@@ -174,13 +200,133 @@ git status --short
 
 `security(supabase): restrict mutable user profile columns`
 
+## Текущая следующая сессия
+
+Статус: второй backend-hardening блок продолжается; production не затрагивать.
+Локальный `supabase db reset` сейчас заблокирован окружением: Docker daemon недоступен. До rollout обязательно повторить pgTAP на локальном Supabase или staging clone.
+
+Выполненные локальные этапы:
+
+1. удалить broad parking update policy и ограничить прямые client update grants;
+2. harden `process_referral` и перевести Flutter RPC call на authenticated bearer;
+3. ограничить broad DB policies для `parking_photos`;
+4. зафиксировать Storage baseline;
+5. ограничить avatar Storage mutations owner path;
+6. ограничить `parking_content` Storage mutations owner/review-author path.
+7. изолировать parking-content ownership lookup от client table grants и
+   подтвердить локальными pgTAP-тестами совместимость с avatar policies.
+
 ## Следующие отдельные этапы
 
-После успешного первого коммита, каждый отдельно:
+Каждый отдельно:
 
-1. удалить broad parking update policy;
-2. harden `process_referral` и grants;
-3. ограничить DB/Storage photo ownership;
-4. ввести public/private profile projections;
-5. harden SECURITY DEFINER search paths;
-6. добавить domain constraints после data audit.
+1. перед production rollout сделать read-only diff hosted Storage policies и подтвердить parity;
+2. перед включением profile writes выполнить `profile_security_activation_checklist.md`;
+3. пройти `profile_select_rollout_checklist.md` перед отдельным rollout для
+   закрытия broad `users SELECT *`;
+4. harden SECURITY DEFINER search paths;
+5. добавить domain constraints после data audit.
+
+## Текущий Flutter write-pilot: favorites
+
+Статус: реализовано локально отдельными коммитами; production write-команды не
+выполнялись. Цель этапа — начать разрешать только малые user-owned изменения
+данных через явную client-side capability и typed service boundary, не меняя
+Supabase-контракты.
+
+Выполненные этапы:
+
+1. `refactor(config): gate allowed write operations` — добавлен
+   `AppWriteOperation.favoriteToggle` и единая проверка
+   `AppConfig.canPerformWrite(...)`.
+2. `refactor(favorites): move toggle writes into service` — toggle избранного
+   вынесен в `features/favorites/data/FavoritesService`; delete теперь
+   фильтруется по `parking_id` и `user_id`; UI делает optimistic update с
+   rollback/snackbar.
+3. Документация и verification — `integration_runbook`,
+   `flutter_supabase_usage_map` и `target_architecture_proposal` обновлены под
+   новый pilot.
+4. `refactor(favorites): move list reads into service` — список избранного
+   читает `view_user_favorites` через `FavoritesService`, а UI получает
+   typed `FavoriteParking` вместо generated Supabase row.
+5. `refactor(favorites): introduce list controller state` — страница
+   избранного использует feature-scoped `FavoritesController` и immutable
+   `FavoritesState` через текущий `provider`, без глобальной замены state
+   manager.
+6. `refactor(reviews): isolate parking detail reads` — `info_tab` и
+   `reviews_tab` читают `reviews` / `view_reviews_with_users` через
+   `ReviewsService`; карточка parking details получает `ParkingReview`, а
+   создание reviews/reports не менялось.
+7. `test(reports): document create authorization contract` — добавлен
+   транзакционный pgTAP contract test для `reports`: owner insert, запрет
+   cross-user/anon insert, owner/admin select и service-role insert. Схема и
+   Flutter UI не менялись, production write-команды не выполнялись. Локальный
+   запуск `supabase test db ... --local` заблокирован отсутствующим соединением
+   с local Postgres/Supabase (`LegacyDbConnectError`).
+8. `refactor(reports): move create writes into service` — report-create UI
+   пишет через `ReportsService` и `AppWriteOperation.reportCreate`, сохраняя
+   текущие поля insert. На ошибке UI показывает snackbar и не закрывает экран.
+9. `security(reviews): allow owner review mutations` — добавлен локальный
+   Supabase contract для отзывов: owner insert сохранён, owner/admin могут
+   менять только `comment` и пять rating fields, owner/admin могут удалить
+   review row. Identity, parking, timestamp и calculated `average_score`
+   закрыты для прямого client update. Production write-команды не выполнялись.
+10. `refactor(config): guard test write pilots` — добавлен
+    `APP_ENABLE_TEST_WRITES`; review-create capability включается только в
+    Debug/Profile integration build и только при non-production Supabase URL.
+    По умолчанию `reviewCreate` остаётся выключенным.
+11. `refactor(reviews): add no-photo submit gateway` —
+    `ReviewSubmissionService` получил Supabase gateway для одного атомарного
+    insert в `reviews` без фото. Photo payload пока явно отклоняется до
+    staged upload/compensation этапа; UI ещё не подключён.
+12. `refactor(reviews): wire no-photo review create UI` — кнопка Leave a
+    review теперь проверяет `AppWriteOperation.reviewCreate` и вызывает
+    `ReviewSubmissionService`; legacy direct review insert/upload loop удалён
+    из button action. Выбранные фото пока дают явную ошибку до photo-flow
+    этапа.
+13. `refactor(reviews): add owner update service` — добавлен
+    `AppWriteOperation.reviewUpdate` под тем же guarded test-write флагом и
+    typed `ReviewsService.updateReview(...)`. Сервис валидирует review id,
+    owner id, content и ratings; Supabase gateway обновляет только `comment`
+    и пять rating fields с фильтром по `id` + `user_id`. UI ещё не подключён.
+14. `refactor(reviews): add owner delete service` — добавлен
+    `ReviewsService.deleteReview(...)` за `AppWriteOperation.reviewDelete`.
+    Gateway сначала читает owner-scoped photo URLs, затем удаляет review row
+    по `id` + `user_id`, после чего best-effort чистит public Storage objects
+    и возвращает счётчик успешных/неуспешных cleanup операций. UI ещё не
+    подключён.
+15. `refactor(reviews): enable staged review photos` —
+    `ReviewSubmissionService` принимает bytes выбранных FlutterFlow photos,
+    сохраняет constraints `1920x1920`, quality `80`, MIME jpeg/png/webp и
+    5 MiB, загружает объекты в `parking_content` по review-author path,
+    создаёт `parking_photos` rows и компенсирует review/object state при
+    ошибке. Review-create UI передаёт выбранные фото в сервис.
+16. `test(reviews): cover photo submission failure boundaries` —
+    добавлен отдельный тест на падение Storage upload после создания review:
+    сервис удаляет owner-scoped review row, не создаёт `parking_photos` rows
+    и не пытается чистить несуществующий public URL. Документирован предел
+    текущей клиентской компенсации: для fully duplicate-safe retry нужен
+    будущий server-owned endpoint/RPC с idempotency key.
+
+Проверки:
+
+- `dart format --output=none --set-exit-if-changed lib test`;
+- `flutter analyze --no-fatal-infos --no-fatal-warnings`;
+- `flutter test`;
+- `git diff --check`.
+
+Ограничения:
+
+- локальный полный pgTAP-набор запускается; Storage/profile tests
+  проходят, но `reports_authorization_test.sql` отдельно выявил отсутствие
+  ожидаемого `service_role INSERT` grant в baseline. Исправлять grant или
+  корректировать ожидание теста нужно отдельным reports-этапом;
+- favorite toggle в parking details всё ещё хранит локальный bool в
+  FlutterFlow model; перенос optimistic action в controller лучше делать
+  отдельным этапом после read-side pilots;
+- reviews/reports profile tabs и request detail screens всё ещё используют
+  generated rows напрямую и должны мигрировать отдельными маленькими этапами;
+- review create уже переведён на `ReviewSubmissionService` и поддерживает
+  staged photo upload за guarded test-write flag; перед широким production
+  rollout нужен отдельный server-owned idempotency contract для безопасных
+  повторов после сетевых сбоев.

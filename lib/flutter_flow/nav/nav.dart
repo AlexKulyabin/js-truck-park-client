@@ -98,8 +98,12 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) =>
-              appStateNotifier.loggedIn ? SplashWidget() : SplashWidget(),
+          builder: (context, params) => SplashWidget(
+            ref: params.getParam(
+              'ref',
+              ParamType.String,
+            ),
+          ),
         ),
         FFRoute(
           name: HomePageWidget.routeName,

@@ -114,6 +114,85 @@ Repository возвращает typed DTO/entity или `Result<T, AppFailure>`,
 
 Repository не нужен language page, статическим onboarding pages и простому UI-only dialog.
 
+### Current migration notes
+
+- Favorites toggle now uses `features/favorites/data/FavoritesService` for the
+  write path. It validates `parkingId/userId`, checks
+  `AppConfig.canPerformWrite(AppWriteOperation.favoriteToggle)`, and scopes
+  deletes by both `parking_id` and `user_id`.
+- Favorites list reads `view_user_favorites` through the same feature service
+  and maps generated rows into the typed `FavoriteParking` read model before
+  reaching FlutterFlow widgets.
+- The favorites page now uses feature-scoped `FavoritesController` +
+  immutable `FavoritesState` on top of the existing `provider` package for
+  list loading state. This keeps the transitional state-management strategy
+  local to one feature.
+- Parking details favorite state now uses `FavoriteToggleController` with
+  immutable `FavoriteToggleState`; the generated page no longer owns the
+  initial favorite read or optimistic rollback.
+- Parking details review reads now use `features/reviews/data/ReviewsService`.
+  The details info tab receives a typed count and the reviews tab/card receive
+  `ParkingReview`, while review creation remains outside this read-only stage.
+- Report creation now uses `features/reports/data/ReportsService` with
+  `AppWriteOperation.reportCreate`. The service preserves the current insert
+  payload, validates the user/parking/report/status boundary and returns a
+  typed `CreatedReport`.
+- Profile reviews/complaints reads now go through `ReviewsService` and
+  `ReportsService`. The UI receives typed `ParkingReview`/`UserReport`
+  objects instead of querying generated Supabase views directly.
+- Parking photo reads for details/request detail screens now use
+  `features/parking_photos/data/ParkingPhotosService`. Photo uploads remain in
+  the legacy create/review flows until a separate transactional write stage.
+- Request detail review counts now use `ReviewsService`; accepted, rejected and
+  moderation presentation no longer query the generated `reviews` table.
+- Parking request list reads now use `ParkingRequestsService`, which owns the
+  current-user and typed status filters. `ParkingsRow` remains temporarily as a
+  route-compatible result until request state migration is complete.
+- Request tab selection and loading now use `ParkingRequestsController` with
+  immutable state and stale-response protection. The generated page model no
+  longer owns three mutable tab booleans.
+- Main parking detail reads now use `ParkingDetailsService`. The detail sheet
+  and its info/reviews/photos tabs receive typed `ParkingDetails` and
+  `ParkingDetailPhoto` data instead of the generated Supabase view row.
+- Review submission now has a typed validation and gateway contract in
+  `ReviewSubmissionService`. The Supabase gateway supports review inserts and
+  staged photo uploads behind the guarded review-create capability, preserving
+  FlutterFlow image constraints and compensating created review/object state on
+  failure. The review-create UI now calls this service instead of the legacy
+  direct insert/upload loop.
+- Review owner updates are prepared in `ReviewsService.updateReview(...)`
+  behind the guarded review-update capability. The service only accepts mutable
+  review content (`comment` and five ratings) and scopes the Supabase update by
+  both `id` and `user_id`; UI wiring remains a separate stage.
+- Review owner deletion is prepared in `ReviewsService.deleteReview(...)`
+  behind the guarded review-delete capability. It deletes the owner-scoped
+  review row and performs best-effort cleanup of associated public Storage
+  objects, reporting cleanup failures without reintroducing the deleted row.
+- Profile header, edit initial form and post-OTP profile-completion check now
+  consume `PublicUserProfile` (`id`, `fullName`, `avatarUrl`) through
+  `features/profile/data/UserProfileService`. Invite referral lookup uses the
+  explicit private profile boundary for `referralCode`. The Supabase gateway
+  now reads `public_profiles` and `private_profiles` views instead of the
+  legacy `users` table for profile reads.
+- Profile and parking details UI stability guard is documented in
+  `profile_and_parking_details_ui_stability.md`: profile loading reserves the
+  final header height, while the parking details controller keeps loaded data
+  stable across tab changes.
+- PayWall price loading state is documented in
+  `pay_wall_price_loading.md`: plan price rows show compact spinners until
+  RevenueCat smart prices are loaded.
+- Profile page local invite visibility state now lives in
+  `features/profile/application/ProfileController` with immutable state. This is
+  intentionally narrow and preserves the generated screen behavior while moving
+  profile UI state out of `ProfileModel`.
+- Edit profile initial form data now also uses `UserProfileService`, so profile
+  read paths are behind the typed boundary. The save action is intentionally
+  still legacy until the guarded profile update contract is introduced.
+- Profile update now has a typed validation and atomic gateway contract in
+  `UserProfileService`. `AppWriteOperation.profileUpdate` remains disabled, no
+  Supabase update gateway exists and the legacy edit UI is not wired to it;
+  activation prerequisites are recorded in `profile_update_contract.md`.
+
 ## Где нужен service
 
 Service/adapter нужен для внешней capability, не являющейся CRUD aggregate:

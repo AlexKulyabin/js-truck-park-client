@@ -1,0 +1,26 @@
+import '../database.dart';
+
+class PublicProfilesTable extends SupabaseTable<PublicProfilesRow> {
+  @override
+  String get tableName => 'public_profiles';
+
+  @override
+  PublicProfilesRow createRow(Map<String, dynamic> data) =>
+      PublicProfilesRow(data);
+}
+
+class PublicProfilesRow extends SupabaseDataRow {
+  PublicProfilesRow(super.data);
+
+  @override
+  SupabaseTable get table => PublicProfilesTable();
+
+  String get id => getField<String>('id')!;
+  set id(String value) => setField<String>('id', value);
+
+  String? get fullName => getField<String>('full_name');
+  set fullName(String? value) => setField<String>('full_name', value);
+
+  String? get avatarUrl => getField<String>('avatar_url');
+  set avatarUrl(String? value) => setField<String>('avatar_url', value);
+}

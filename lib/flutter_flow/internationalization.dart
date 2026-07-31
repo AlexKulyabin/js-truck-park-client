@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-const _kLocaleStorageKey = '__locale_key__';
+import '/core/localization/app_locale.dart';
+import '/core/localization/locale_store.dart';
+import '/core/localization/shared_preferences_locale_store.dart';
 
 class FFLocalizations {
   FFLocalizations(this.locale);
@@ -15,15 +15,13 @@ class FFLocalizations {
 
   static List<String> languages() => ['en', 'ru'];
 
-  static late SharedPreferences _prefs;
-  static Future initialize() async =>
-      _prefs = await SharedPreferences.getInstance();
-  static Future storeLocale(String locale) =>
-      _prefs.setString(_kLocaleStorageKey, locale);
-  static Locale? getStoredLocale() {
-    final locale = _prefs.getString(_kLocaleStorageKey);
-    return locale != null && locale.isNotEmpty ? createLocale(locale) : null;
-  }
+  static late LocaleStore _localeStore;
+  static Future<void> initialize({LocaleStore? localeStore}) async =>
+      _localeStore = localeStore ?? await SharedPreferencesLocaleStore.create();
+  static Future<void> storeLocale(String locale) =>
+      _localeStore.writeLanguageCode(locale);
+  static Locale? getStoredLocale() =>
+      createStoredAppLocale(_localeStore.readLanguageCode());
 
   String get languageCode => locale.toString();
   String? get languageShortCode =>
@@ -127,12 +125,7 @@ class FFLocalizationsDelegate extends LocalizationsDelegate<FFLocalizations> {
   bool shouldReload(FFLocalizationsDelegate old) => false;
 }
 
-Locale createLocale(String language) => language.contains('_')
-    ? Locale.fromSubtags(
-        languageCode: language.split('_').first,
-        scriptCode: language.split('_').last,
-      )
-    : Locale(language);
+Locale createLocale(String language) => createAppLocale(language);
 
 bool _isSupportedLocale(Locale locale) {
   final language = locale.toString();

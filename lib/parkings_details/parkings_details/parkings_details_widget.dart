@@ -1,7 +1,12 @@
-import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
-import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/features/parking_details/application/parking_favorite_controller.dart';
+import '/features/parking_details/application/parking_details_controller.dart';
+import '/features/parking_details/data/supabase_parking_favorite_repository.dart';
+import '/features/parking_details/data/supabase_parking_details_repository.dart';
+import '/features/parking_details/domain/parking_favorite_repository.dart';
+import '/features/parking_details/domain/parking_details_repository.dart';
+import '/features/parking_details/presentation/parking_details_links.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -10,6 +15,7 @@ import '/parkings_details/photos_tab/photos_tab_widget.dart';
 import '/parkings_details/reviews_tab/reviews_tab_widget.dart';
 import '/subscription/guest_dialog/guest_dialog_widget.dart';
 import '/subscription/subscription_dialog/subscription_dialog_widget.dart';
+import 'dart:async';
 import 'dart:ui';
 import '/custom_code/actions/index.dart' as actions;
 import '/flutter_flow/custom_functions.dart' as functions;
@@ -17,11 +23,12 @@ import '/index.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart'
     as smooth_page_indicator;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'parking_sheet_drag_handle.dart';
+import 'parking_sheet_route_controller.dart';
 import 'parkings_details_model.dart';
 export 'parkings_details_model.dart';
 
@@ -29,9 +36,22 @@ class ParkingsDetailsWidget extends StatefulWidget {
   const ParkingsDetailsWidget({
     super.key,
     required this.parkingId,
+    this.detailsRepository,
+    this.favoriteRepository,
   });
 
   final String? parkingId;
+  final ParkingDetailsRepository? detailsRepository;
+  final ParkingFavoriteRepository? favoriteRepository;
+
+  static const loadingKey = Key('public-parking-details-loading');
+  static const failureKey = Key('public-parking-details-failure');
+  static const emptyKey = Key('public-parking-details-empty');
+  static const scrollViewKey = Key('public-parking-details-scroll-view');
+  static const dragHandleKey = Key('public-parking-details-drag-handle');
+  static const photoGalleryKey = Key('public-parking-details-photo-gallery');
+  static const favoriteButtonKey = Key('public-parking-favorite-button');
+  static const favoriteUpdatingKey = Key('public-parking-favorite-updating');
 
   @override
   State<ParkingsDetailsWidget> createState() => _ParkingsDetailsWidgetState();
@@ -39,6 +59,12 @@ class ParkingsDetailsWidget extends StatefulWidget {
 
 class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   late ParkingsDetailsModel _model;
+  late final ParkingDetailsController _controller;
+  late final ParkingFavoriteController _favoriteController;
+  final ScrollController _detailsScrollController = ScrollController();
+  final ParkingSheetRouteController _sheetRouteController =
+      ParkingSheetRouteController();
+  double? _preservedSheetScrollOffset;
 
   @override
   void setState(VoidCallback callback) {
@@ -50,36 +76,72 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ParkingsDetailsModel());
-
-    // On component load action.
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.isFavoriteOut = await FavoritesTable().queryRows(
-        queryFn: (q) => q
-            .eqOrNull(
-              'parking_id',
-              widget!.parkingId,
-            )
-            .eqOrNull(
-              'user_id',
-              currentUserUid,
-            ),
-      );
-      if ((_model.isFavoriteOut != null &&
-              (_model.isFavoriteOut)!.isNotEmpty) ==
-          true) {
-        _model.isFavorite = true;
-        safeSetState(() {});
-      } else {
-        _model.isFavorite = false;
-        safeSetState(() {});
-      }
-    });
+    _controller = ParkingDetailsController(
+      repository:
+          widget.detailsRepository ?? SupabaseParkingDetailsRepository(),
+      parkingId: widget.parkingId ?? '',
+    )..addListener(_onDetailsStateChanged);
+    _favoriteController = ParkingFavoriteController(
+      repository:
+          widget.favoriteRepository ?? SupabaseParkingFavoriteRepository(),
+      parkingId: widget.parkingId ?? '',
+    )..addListener(_onFavoriteStateChanged);
+    unawaited(_controller.loadDetails());
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
+  void _onDetailsStateChanged() {
+    final details = _controller.state.details;
+    if (details != null) {
+      _favoriteController.initialize(details.isFavorited);
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _onFavoriteStateChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _showFavoriteFailure(ParkingFavoriteFailureKind? kind) {
+    final isRussian = Localizations.localeOf(context).languageCode == 'ru';
+    final message = kind == ParkingFavoriteFailureKind.unauthenticated
+        ? (isRussian
+            ? 'Сессия завершена. Войдите снова.'
+            : 'Your session has expired. Please sign in again.')
+        : (isRussian
+            ? 'Не удалось обновить избранное. Попробуйте ещё раз.'
+            : 'Unable to update favorites. Please try again.');
+    showSnackbar(context, message);
+  }
+
+  void _handlePhotoVerticalDrag(DragUpdateDetails details) {
+    final delta = details.primaryDelta;
+    if (delta == null || !_detailsScrollController.hasClients) {
+      return;
+    }
+
+    final position = _detailsScrollController.position;
+    final target = (position.pixels - delta).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    _detailsScrollController.jumpTo(target);
+  }
+
   @override
   void dispose() {
+    _controller
+      ..removeListener(_onDetailsStateChanged)
+      ..dispose();
+    _favoriteController
+      ..removeListener(_onFavoriteStateChanged)
+      ..dispose();
+    _detailsScrollController.dispose();
     _model.maybeDispose();
 
     super.dispose();
@@ -88,8 +150,15 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    final canToggleFavorite =
+        AppConfig.current.canPerformWrite(AppWriteOperation.favoriteToggle);
+    final canUseFavoriteButton = canToggleFavorite &&
+        _favoriteController.state.phase !=
+            ParkingFavoriteMutationPhase.updating;
 
     return SingleChildScrollView(
+      key: ParkingsDetailsWidget.scrollViewKey,
+      controller: _detailsScrollController,
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
@@ -109,39 +178,49 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
               ),
             ),
           ),
-          FutureBuilder<List<ViewFullParkingDetailsRow>>(
-            future: ViewFullParkingDetailsTable().querySingleRow(
-              queryFn: (q) => q.eqOrNull(
-                'id',
-                widget!.parkingId,
-              ),
-            ),
-            builder: (context, snapshot) {
-              // Customize what your widget looks like when it's loading.
-              if (!snapshot.hasData) {
-                return Center(
-                  child: SizedBox(
-                    width: 50.0,
-                    height: 50.0,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        FlutterFlowTheme.of(context).primary,
+          Builder(
+            builder: (context) {
+              final state = _controller.state;
+              if (state.detailsPhase == ParkingDetailsLoadPhase.idle ||
+                  state.detailsPhase == ParkingDetailsLoadPhase.loading) {
+                return _buildParkingDetailsLoading(context);
+              }
+              if (state.detailsPhase == ParkingDetailsLoadPhase.failure) {
+                return InkWell(
+                  key: ParkingsDetailsWidget.failureKey,
+                  onTap: () => unawaited(_controller.loadDetails()),
+                  child: Center(
+                    child: SizedBox(
+                      width: 50.0,
+                      height: 50.0,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          FlutterFlowTheme.of(context).primary,
+                        ),
                       ),
                     ),
                   ),
                 );
               }
-              List<ViewFullParkingDetailsRow>
-                  mainContainerViewFullParkingDetailsRowList = snapshot.data!;
-
-              final mainContainerViewFullParkingDetailsRow =
-                  mainContainerViewFullParkingDetailsRowList.isNotEmpty
-                      ? mainContainerViewFullParkingDetailsRowList.first
-                      : null;
+              final details = state.details;
+              if (details == null) {
+                return SizedBox(
+                  key: ParkingsDetailsWidget.emptyKey,
+                  height: 194.0,
+                  child: Icon(
+                    Icons.location_off_outlined,
+                    color: FlutterFlowTheme.of(context).checkBoxes,
+                    size: 72.0,
+                  ),
+                );
+              }
 
               return SafeArea(
                 child: Container(
                   width: double.infinity,
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.sizeOf(context).height,
+                  ),
                   decoration: BoxDecoration(
                     color: FlutterFlowTheme.of(context).primaryBackground,
                     borderRadius: BorderRadius.only(
@@ -155,78 +234,20 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Stack(
-                          children: [
-                            GestureDetector(
-                              onVerticalDragEnd: (details) async {
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                ),
-                                child: Align(
-                                  alignment: AlignmentDirectional(0.0, 0.0),
-                                  child: Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 16.0, 0.0, 16.0),
-                                    child: Container(
-                                      width: 32.0,
-                                      height: 4.0,
-                                      decoration: BoxDecoration(
-                                        color: FlutterFlowTheme.of(context)
-                                            .divider,
-                                        borderRadius:
-                                            BorderRadius.circular(24.0),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional(1.0, 0.0),
-                              child: Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    0.0, 6.0, 0.0, 0.0),
-                                child: InkWell(
-                                  splashColor: Colors.transparent,
-                                  focusColor: Colors.transparent,
-                                  hoverColor: Colors.transparent,
-                                  highlightColor: Colors.transparent,
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    color: FlutterFlowTheme.of(context)
-                                        .secondaryText,
-                                    size: 24.0,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        _buildSheetHandle(context),
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
                               0.0, 0.0, 0.0, 16.0),
                           child: GestureDetector(
-                            onVerticalDragEnd: (details) async {},
+                            key: ParkingsDetailsWidget.photoGalleryKey,
+                            behavior: HitTestBehavior.translucent,
+                            onVerticalDragUpdate: _handlePhotoVerticalDrag,
                             child: Builder(
                               builder: (context) {
-                                if (mainContainerViewFullParkingDetailsRow
-                                        ?.allPhotos !=
-                                    null) {
+                                if (details.photos != null) {
                                   return Builder(
                                     builder: (context) {
-                                      final photos =
-                                          mainContainerViewFullParkingDetailsRow
-                                                  ?.allPhotos
-                                                  ?.toList() ??
-                                              [];
+                                      final photos = details.photos ?? const [];
 
                                       return Container(
                                         width: double.infinity,
@@ -265,10 +286,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                       queryParameters: {
                                                         'photoPath':
                                                             serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.url''',
-                                                          ).toString(),
+                                                          photosItem.url,
                                                           ParamType.String,
                                                         ),
                                                         'index': serializeParam(
@@ -277,29 +295,21 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                         ),
                                                         'address':
                                                             serializeParam(
-                                                          mainContainerViewFullParkingDetailsRow
-                                                              ?.address,
+                                                          details.address,
                                                           ParamType.String,
                                                         ),
                                                         'photoCount':
                                                             serializeParam(
-                                                          mainContainerViewFullParkingDetailsRow
-                                                              ?.photosCount,
+                                                          details.photosCount,
                                                           ParamType.int,
                                                         ),
                                                         'photoRef':
                                                             serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.url''',
-                                                          ).toString(),
+                                                          photosItem.url,
                                                           ParamType.String,
                                                         ),
                                                         'data': serializeParam(
-                                                          getJsonField(
-                                                            photosItem,
-                                                            r'''$.date_display''',
-                                                          ).toString(),
+                                                          photosItem.photoDate,
                                                           ParamType.String,
                                                         ),
                                                       }.withoutNulls,
@@ -310,13 +320,24 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                         BorderRadius.circular(
                                                             8.0),
                                                     child: Image.network(
-                                                      getJsonField(
-                                                        photosItem,
-                                                        r'''$.url''',
-                                                      ).toString(),
+                                                      photosItem.url,
                                                       width: double.infinity,
                                                       height: 194.0,
                                                       fit: BoxFit.cover,
+                                                      errorBuilder: (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) =>
+                                                          Icon(
+                                                        Icons
+                                                            .no_photography_outlined,
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                          context,
+                                                        ).checkBoxes,
+                                                        size: 72.0,
+                                                      ),
                                                     ),
                                                   ),
                                                 );
@@ -381,16 +402,11 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                           .secondaryBackground,
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
-                                    child: GestureDetector(
-                                      onVerticalDragDown: (details) async {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Icon(
-                                        Icons.no_photography,
-                                        color: FlutterFlowTheme.of(context)
-                                            .checkBoxes,
-                                        size: 100.0,
-                                      ),
+                                    child: Icon(
+                                      Icons.no_photography,
+                                      color: FlutterFlowTheme.of(context)
+                                          .checkBoxes,
+                                      size: 100.0,
                                     ),
                                   );
                                 }
@@ -436,10 +452,9 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                       if (FFAppState().premiumUntil != null) {
                                         await actions.openGoogleMapsRoute(
                                           functions.convertToLatLng(
-                                              mainContainerViewFullParkingDetailsRow!
-                                                  .latitude!,
-                                              mainContainerViewFullParkingDetailsRow!
-                                                  .longitude!),
+                                            details.latitude!,
+                                            details.longitude!,
+                                          ),
                                         );
                                       } else {
                                         await showDialog(
@@ -459,12 +474,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                           Directionality.of(
                                                               context)),
                                               child: SubscriptionDialogWidget(
-                                                lat:
-                                                    mainContainerViewFullParkingDetailsRow!
-                                                        .latitude!,
-                                                lng:
-                                                    mainContainerViewFullParkingDetailsRow!
-                                                        .longitude!,
+                                                lat: details.latitude!,
+                                                lng: details.longitude!,
                                               ),
                                             );
                                           },
@@ -522,14 +533,14 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                               ),
                               Builder(
                                 builder: (context) => InkWell(
+                                  key: ParkingsDetailsWidget.favoriteButtonKey,
                                   splashColor: Colors.transparent,
                                   focusColor: Colors.transparent,
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
-                                  onTap: AppConfig.current.integrationReadOnly
+                                  onTap: !canUseFavoriteButton
                                       ? null
                                       : () async {
-                                          var _shouldSetState = false;
                                           if (FFAppState().isGuest == true) {
                                             await showDialog(
                                               barrierColor:
@@ -552,57 +563,58 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                 );
                                               },
                                             );
-
-                                            if (_shouldSetState) {
-                                              safeSetState(() {});
-                                            }
                                             return;
                                           }
-                                          if (_model.isFavorite == true) {
-                                            _model.isFavorite = false;
-                                            safeSetState(() {});
-                                            _model.deletefavoriteOut =
-                                                await FavoritesTable().delete(
-                                              matchingRows: (rows) =>
-                                                  rows.eqOrNull(
-                                                'parking_id',
-                                                widget!.parkingId,
-                                              ),
-                                              returnRows: true,
+                                          final outcome =
+                                              await _favoriteController
+                                                  .toggle();
+                                          if (outcome ==
+                                                  ParkingFavoriteToggleOutcome
+                                                      .failed &&
+                                              mounted) {
+                                            _showFavoriteFailure(
+                                              _favoriteController
+                                                  .state.failureKind,
                                             );
-                                            _shouldSetState = true;
-                                          } else {
-                                            _model.isFavorite = true;
-                                            safeSetState(() {});
-                                            _model.addFavoriteOut =
-                                                await FavoritesTable().insert({
-                                              'user_id': currentUserUid,
-                                              'parking_id': widget!.parkingId,
-                                            });
-                                            _shouldSetState = true;
-                                          }
-
-                                          if (_shouldSetState) {
-                                            safeSetState(() {});
                                           }
                                         },
                                   child: Container(
                                     width: 56.0,
                                     height: 56.0,
                                     decoration: BoxDecoration(
-                                      color:
-                                          AppConfig.current.integrationReadOnly
-                                              ? FlutterFlowTheme.of(context)
-                                                  .inactiveButton
-                                              : FlutterFlowTheme.of(context)
-                                                  .buttons,
+                                      color: !canToggleFavorite
+                                          ? FlutterFlowTheme.of(context)
+                                              .inactiveButton
+                                          : FlutterFlowTheme.of(context)
+                                              .buttons,
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
                                     child: Align(
                                       alignment: AlignmentDirectional(0.0, 0.0),
                                       child: Builder(
                                         builder: (context) {
-                                          if (_model.isFavorite == true) {
+                                          final favoriteState =
+                                              _favoriteController.state;
+                                          if (favoriteState.phase ==
+                                              ParkingFavoriteMutationPhase
+                                                  .updating) {
+                                            return SizedBox(
+                                              key: ParkingsDetailsWidget
+                                                  .favoriteUpdatingKey,
+                                              width: 24.0,
+                                              height: 24.0,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.0,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(
+                                                  FlutterFlowTheme.of(context)
+                                                      .primaryBackground,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          if (favoriteState.isFavorite) {
                                             return ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(0.0),
@@ -660,11 +672,9 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
 
                                       return;
                                     }
-                                    if (mainContainerViewFullParkingDetailsRow
-                                            ?.allPhotos !=
-                                        null) {
+                                    if (details.photos != null) {
                                       await Share.share(
-                                        'https://js-truck-park.web.app/deeplink.html?targetParkingId=${widget!.parkingId}&targetLat=${mainContainerViewFullParkingDetailsRow?.latitude?.toString()}&targetLng=${mainContainerViewFullParkingDetailsRow?.longitude?.toString()}',
+                                        buildParkingShareUrl(details),
                                         sharePositionOrigin:
                                             getWidgetBoundingBox(context),
                                       );
@@ -711,8 +721,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.info;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.info);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -764,8 +773,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.review;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.review);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -828,9 +836,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                                   10.0, 2.0, 10.0, 2.0),
                                           child: Text(
                                             valueOrDefault<String>(
-                                              mainContainerViewFullParkingDetailsRow
-                                                  ?.reviewsCount
-                                                  ?.toString(),
+                                              details.reviewsCount?.toString(),
                                               '0',
                                             ),
                                             style: FlutterFlowTheme.of(context)
@@ -877,8 +883,7 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  _model.activeTab = TabsToggle.photo;
-                                  safeSetState(() {});
+                                  _selectTab(TabsToggle.photo);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -928,92 +933,55 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                               ),
                                         ),
                                       ),
-                                      FutureBuilder<List<ParkingPhotosRow>>(
-                                        future: ParkingPhotosTable().queryRows(
-                                          queryFn: (q) => q.eqOrNull(
-                                            'parking_id',
-                                            widget!.parkingId,
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: FlutterFlowTheme.of(context)
+                                              .secondaryBackground,
+                                          borderRadius:
+                                              BorderRadius.circular(8.0),
+                                        ),
+                                        child: Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  10.0, 2.0, 10.0, 2.0),
+                                          child: Text(
+                                            valueOrDefault<String>(
+                                              details.photosCount?.toString(),
+                                              '0',
+                                            ),
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodyMedium
+                                                .override(
+                                                  font: GoogleFonts.roboto(
+                                                    fontWeight:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .bodyMedium
+                                                            .fontWeight,
+                                                    fontStyle:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .bodyMedium
+                                                            .fontStyle,
+                                                  ),
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .accent1,
+                                                  letterSpacing: 0.0,
+                                                  fontWeight:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .bodyMedium
+                                                          .fontWeight,
+                                                  fontStyle:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .bodyMedium
+                                                          .fontStyle,
+                                                  lineHeight: 1.4,
+                                                ),
                                           ),
                                         ),
-                                        builder: (context, snapshot) {
-                                          // Customize what your widget looks like when it's loading.
-                                          if (!snapshot.hasData) {
-                                            return Center(
-                                              child: SizedBox(
-                                                width: 50.0,
-                                                height: 50.0,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                          Color>(
-                                                    FlutterFlowTheme.of(context)
-                                                        .primary,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                          List<ParkingPhotosRow>
-                                              containerParkingPhotosRowList =
-                                              snapshot.data!;
-
-                                          return Container(
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .secondaryBackground,
-                                              borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                            ),
-                                            child: Padding(
-                                              padding: EdgeInsetsDirectional
-                                                  .fromSTEB(
-                                                      10.0, 2.0, 10.0, 2.0),
-                                              child: Text(
-                                                valueOrDefault<String>(
-                                                  mainContainerViewFullParkingDetailsRow
-                                                      ?.photosCount
-                                                      ?.toString(),
-                                                  '0',
-                                                ),
-                                                style: FlutterFlowTheme.of(
-                                                        context)
-                                                    .bodyMedium
-                                                    .override(
-                                                      font: GoogleFonts.roboto(
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontStyle,
-                                                      ),
-                                                      color:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .accent1,
-                                                      letterSpacing: 0.0,
-                                                      fontWeight:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .bodyMedium
-                                                              .fontWeight,
-                                                      fontStyle:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .bodyMedium
-                                                              .fontStyle,
-                                                      lineHeight: 1.4,
-                                                    ),
-                                              ),
-                                            ),
-                                          );
-                                        },
                                       ),
                                     ].divide(SizedBox(width: 4.0)),
                                   ),
@@ -1022,58 +990,62 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                             ].divide(SizedBox(width: 8.0)),
                           ),
                         ),
-                        Builder(
-                          builder: (context) {
-                            if (_model.activeTab == TabsToggle.info) {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.infoTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: InfoTabWidget(
-                                      parkingRow:
-                                          mainContainerViewFullParkingDetailsRow!,
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: MediaQuery.sizeOf(context).height * 0.45,
+                          ),
+                          child: Builder(
+                            builder: (context) {
+                              if (_model.activeTab == TabsToggle.info) {
+                                return Container(
+                                  decoration: BoxDecoration(),
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 0.0, 0.0, 36.0),
+                                    child: wrapWithModel(
+                                      model: _model.infoTabModel,
+                                      updateCallback: () => safeSetState(() {}),
+                                      child: InfoTabWidget(
+                                        details: details,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            } else if (_model.activeTab == TabsToggle.review) {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.reviewsTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: ReviewsTabWidget(
-                                      parkingRow:
-                                          mainContainerViewFullParkingDetailsRow!,
+                                );
+                              } else if (_model.activeTab ==
+                                  TabsToggle.review) {
+                                return Container(
+                                  decoration: BoxDecoration(),
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 0.0, 0.0, 36.0),
+                                    child: wrapWithModel(
+                                      model: _model.reviewsTabModel,
+                                      updateCallback: () => safeSetState(() {}),
+                                      child: ReviewsTabWidget(
+                                        details: details,
+                                        detailsController: _controller,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            } else {
-                              return Container(
-                                decoration: BoxDecoration(),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 0.0, 36.0),
-                                  child: wrapWithModel(
-                                    model: _model.photosTabModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: PhotosTabWidget(
-                                      parkingRow:
-                                          mainContainerViewFullParkingDetailsRow!,
+                                );
+                              } else {
+                                return Container(
+                                  decoration: BoxDecoration(),
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 0.0, 0.0, 36.0),
+                                    child: wrapWithModel(
+                                      model: _model.photosTabModel,
+                                      updateCallback: () => safeSetState(() {}),
+                                      child: PhotosTabWidget(
+                                        details: details,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }
-                          },
+                                );
+                              }
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -1085,5 +1057,118 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
         ],
       ),
     );
+  }
+
+  Widget _buildParkingDetailsLoading(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+
+    return SafeArea(
+      child: Container(
+        key: ParkingsDetailsWidget.loadingKey,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: theme.primaryBackground,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(10.0),
+            topRight: Radius.circular(10.0),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSheetHandle(context),
+              Container(
+                width: double.infinity,
+                height: 180.0,
+                decoration: BoxDecoration(
+                  color: theme.alternate,
+                  borderRadius: BorderRadius.circular(6.0),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 18.0, 0.0, 0.0),
+                child: Container(
+                  width: 220.0,
+                  height: 18.0,
+                  decoration: BoxDecoration(
+                    color: theme.alternate,
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
+                child: Container(
+                  width: 150.0,
+                  height: 14.0,
+                  decoration: BoxDecoration(
+                    color: theme.alternate,
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 22.0, 0.0, 0.0),
+                child: Center(
+                  child: SizedBox(
+                    width: 22.0,
+                    height: 22.0,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      valueColor: AlwaysStoppedAnimation<Color>(theme.primary),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetHandle(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+    return ParkingSheetDragHandle(
+      key: ParkingsDetailsWidget.dragHandleKey,
+      backgroundColor: theme.primaryBackground,
+      handleColor: theme.divider,
+      iconColor: theme.secondaryText,
+      onDismiss: _dismissSheet,
+    );
+  }
+
+  void _dismissSheet() {
+    _sheetRouteController.dismiss(context);
+  }
+
+  void _selectTab(TabsToggle tab) {
+    _preservedSheetScrollOffset = _detailsScrollController.hasClients
+        ? _detailsScrollController.offset
+        : null;
+
+    _model.activeTab = tab;
+    safeSetState(() {});
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_detailsScrollController.hasClients) {
+        return;
+      }
+      final offset = _preservedSheetScrollOffset;
+      if (offset == null) {
+        return;
+      }
+
+      final position = _detailsScrollController.position;
+      _detailsScrollController.jumpTo(
+        offset.clamp(position.minScrollExtent, position.maxScrollExtent),
+      );
+    });
   }
 }

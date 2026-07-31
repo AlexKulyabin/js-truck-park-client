@@ -8,8 +8,30 @@ void main() {
 
       expect(config.environment, AppEnvironment.integration);
       expect(config.integrationReadOnly, isTrue);
+      expect(config.testWritesEnabled, isFalse);
       expect(config.enableRevenueCat, isFalse);
       expect(config.enableDeepLinks, isFalse);
+      expect(config.enableReferrals, isFalse);
+      expect(
+        config.canPerformWrite(AppWriteOperation.favoriteToggle),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reportCreate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.profileUpdate),
+        isFalse,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewCreate),
+        isFalse,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewPhotoCreate),
+        isFalse,
+      );
       expect(config.appDisplayName, 'JS Truck Park Dev');
     });
 
@@ -18,8 +40,38 @@ void main() {
 
       expect(config.environment, AppEnvironment.production);
       expect(config.integrationReadOnly, isFalse);
+      expect(config.testWritesEnabled, isFalse);
       expect(config.enableRevenueCat, isTrue);
       expect(config.enableDeepLinks, isTrue);
+      expect(config.enableReferrals, isTrue);
+      expect(
+        config.canPerformWrite(AppWriteOperation.favoriteToggle),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reportCreate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.profileUpdate),
+        isFalse,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewCreate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewPhotoCreate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewUpdate),
+        isFalse,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewDelete),
+        isFalse,
+      );
       expect(config.appDisplayName, 'JS Truck Park');
     });
 
@@ -37,6 +89,80 @@ void main() {
         'https://example.supabase.co/rest/v1/rpc/read_something',
       );
       expect(config.anonymousSupabaseHeaders['apikey'], 'sb_publishable_test');
+    });
+
+    test('builds authenticated Supabase headers with a user token', () {
+      final config = AppConfig.resolve(
+        isReleaseMode: false,
+        supabasePublishableKeyOverride: 'sb_publishable_test',
+      );
+
+      expect(
+        config.authenticatedSupabaseHeaders('user-jwt'),
+        {
+          'apikey': 'sb_publishable_test',
+          'Authorization': 'Bearer user-jwt',
+        },
+      );
+    });
+
+    test('enables test writes only for a non-production endpoint', () {
+      final config = AppConfig.resolve(
+        isReleaseMode: false,
+        supabaseUrlOverride: 'http://127.0.0.1:54321',
+        supabasePublishableKeyOverride: 'sb_publishable_test',
+        testWritesOverride: 'true',
+      );
+
+      expect(config.testWritesEnabled, isTrue);
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewCreate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewUpdate),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewDelete),
+        isTrue,
+      );
+      expect(
+        config.canPerformWrite(AppWriteOperation.reviewPhotoCreate),
+        isTrue,
+      );
+      expect(config.integrationReadOnly, isTrue);
+    });
+
+    test('rejects test writes against the production Supabase endpoint', () {
+      expect(
+        () => AppConfig.resolve(
+          isReleaseMode: false,
+          testWritesOverride: 'true',
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('rejects test writes in release builds', () {
+      expect(
+        () => AppConfig.resolve(
+          isReleaseMode: true,
+          supabaseUrlOverride: 'https://staging.example.supabase.co',
+          testWritesOverride: 'true',
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('rejects an unknown test write flag', () {
+      expect(
+        () => AppConfig.resolve(
+          isReleaseMode: false,
+          testWritesOverride: 'maybe',
+        ),
+        throwsArgumentError,
+      );
     });
 
     test('rejects an unknown environment', () {

@@ -1,8 +1,16 @@
-import '/backend/api_requests/api_calls.dart';
 import '/create_parking2/create_parking_dialog2/create_parking_dialog2_widget.dart';
+import '/features/geocoding/application/reverse_geocoding_service.dart';
+import '/features/geocoding/data/google_reverse_geocoding_repository.dart';
+import '/features/geocoding/domain/reverse_geocoding_repository.dart';
+import '/features/map/application/parking_filter_controller.dart';
+import '/features/map/application/parking_map_controller.dart';
+import '/features/map/data/supabase_parking_map_repository.dart';
+import '/features/map/domain/map_bounds.dart';
+import '/features/map/domain/map_parking_query.dart';
+import '/features/map/domain/parking_map_repository.dart';
+import '/features/map/presentation/map_read_adapter.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/parkings_details/parkings_details/parkings_details_widget.dart';
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
@@ -14,7 +22,14 @@ import 'select_parking_model.dart';
 export 'select_parking_model.dart';
 
 class SelectParkingWidget extends StatefulWidget {
-  const SelectParkingWidget({super.key});
+  const SelectParkingWidget({
+    super.key,
+    this.parkingMapRepository,
+    this.reverseGeocodingRepository,
+  });
+
+  final ParkingMapRepository? parkingMapRepository;
+  final ReverseGeocodingRepository? reverseGeocodingRepository;
 
   static String routeName = 'SelectParking';
   static String routePath = '/selectParking';
@@ -25,6 +40,8 @@ class SelectParkingWidget extends StatefulWidget {
 
 class _SelectParkingWidgetState extends State<SelectParkingWidget> {
   late SelectParkingModel _model;
+  late final ParkingMapController _parkingMapController;
+  late final ReverseGeocodingService _reverseGeocodingService;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   LatLng? currentUserLocationValue;
@@ -33,6 +50,13 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => SelectParkingModel());
+    _parkingMapController = ParkingMapController(
+      repository: widget.parkingMapRepository ?? SupabaseParkingMapRepository(),
+    );
+    _reverseGeocodingService = ReverseGeocodingService(
+      repository: widget.reverseGeocodingRepository ??
+          GoogleReverseGeocodingRepository(),
+    );
 
     getCurrentUserLocation(defaultLocation: LatLng(0.0, 0.0), cached: true)
         .then((loc) => safeSetState(() => currentUserLocationValue = loc));
@@ -41,9 +65,60 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
 
   @override
   void dispose() {
+    _parkingMapController.dispose();
     _model.dispose();
 
     super.dispose();
+  }
+
+  MapFilterSnapshot _currentFilterSnapshot() => toMapFilterSnapshot(
+        context.read<ParkingFilterController>().state,
+      );
+
+  MapParkingQuery _buildMapQuery({
+    required double minLat,
+    required double minLng,
+    required double maxLat,
+    required double maxLng,
+    required double zoom,
+  }) =>
+      buildMapParkingQuery(
+        bounds: MapBounds(
+          minLatitude: minLat,
+          minLongitude: minLng,
+          maxLatitude: maxLat,
+          maxLongitude: maxLng,
+        ),
+        zoom: zoom,
+        filter: _currentFilterSnapshot(),
+      );
+
+  Future<void> _loadMapPoints(MapParkingQuery query) async {
+    await _parkingMapController.load(query);
+    if (!mounted) {
+      return;
+    }
+    final state = _parkingMapController.state;
+    if (!identical(state.query, query) ||
+        state.phase != ParkingMapLoadPhase.loaded) {
+      return;
+    }
+    safeSetState(() {
+      _model.parkingsOnMap = toMapMarkerItems(state.points);
+    });
+  }
+
+  Future<void> _updateTemporaryAddress({
+    required double latitude,
+    required double longitude,
+  }) async {
+    FFAppState().tempAddress = await _reverseGeocodingService.resolveAddress(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    if (mounted) {
+      safeSetState(() {});
+    }
   }
 
   @override
@@ -96,7 +171,7 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
                         markerIconPath:
                             'https://jckksrcdmhtafwbimzov.supabase.co/storage/v1/object/public/assets/icnLocation.png',
                         markerSize: 30,
-                        markerData: _model.parkingsOnMap,
+                        markers: _model.parkingsOnMap,
                         centerToMoveTo: _model.searchCoord,
                         isDarkMode: false,
                         onMarkerTap: (markerId) async {
@@ -132,37 +207,15 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
                           _model.lngMax = maxLng;
                           _model.currentZoom = zoom;
                           safeSetState(() {});
-                          _model.getFilteredParkings =
-                              await GetFilteredParkingsCall.call(
-                            minLat: minLat,
-                            maxLat: maxLat,
-                            minLng: minLng,
-                            maxLng: maxLng,
-                            isActive: FFAppState().isFilterApplied,
-                            radius: FFAppState().isFilterShowNearest
-                                ? functions.getMetersFromIndex(
-                                    FFAppState().filterRadius)
-                                : 0.0,
-                            lat: (minLat + maxLat) / 2,
-                            lng: (minLng + maxLng) / 2,
-                            minCap: FFAppState().filterCapacityFrom,
-                            maxCap: FFAppState().filterCapacityTo,
-                            gas: FFAppState().isFilterHasGas,
-                            shower: FFAppState().isFilterHasShower,
-                            laundry: FFAppState().isFilterHasLaundry,
-                            hotel: FFAppState().isFilterHasHotel,
-                            shop: FFAppState().isFilterHasShop,
-                            recreation: FFAppState().isFilterHasRecreation,
-                            zoom: zoom,
+                          await _loadMapPoints(
+                            _buildMapQuery(
+                              minLat: minLat,
+                              minLng: minLng,
+                              maxLat: maxLat,
+                              maxLng: maxLng,
+                              zoom: zoom,
+                            ),
                           );
-
-                          if ((_model.getFilteredParkings?.succeeded ?? true)) {
-                            _model.parkingsOnMap =
-                                (_model.getFilteredParkings?.jsonBody ?? '');
-                            safeSetState(() {});
-                          }
-
-                          safeSetState(() {});
                         },
                         onLongPress: (longPressedPoint) async {
                           FFAppState().tempLat =
@@ -170,19 +223,12 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
                           FFAppState().tempLng =
                               functions.getLng(longPressedPoint);
                           safeSetState(() {});
-                          _model.getAddressFromCoordsRes =
-                              await GetAddressFromCoordsCall.call(
-                            lat: FFAppState().tempLat,
-                            lng: FFAppState().tempLng,
+                          await _updateTemporaryAddress(
+                            latitude: FFAppState().tempLat,
+                            longitude: FFAppState().tempLng,
                           );
-
-                          if ((_model.getAddressFromCoordsRes?.succeeded ??
-                              true)) {
-                            FFAppState().tempAddress = getJsonField(
-                              (_model.getAddressFromCoordsRes?.jsonBody ?? ''),
-                              r'''$.results[0].formatted_address''',
-                            ).toString();
-                            safeSetState(() {});
+                          if (!mounted) {
+                            return;
                           }
                           await showDialog(
                             barrierColor: Color(0x66000000),

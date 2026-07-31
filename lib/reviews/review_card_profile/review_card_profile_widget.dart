@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/reviews/data/reviews_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -17,7 +17,7 @@ class ReviewCardProfileWidget extends StatefulWidget {
     required this.reviewRow,
   });
 
-  final ViewReviewsWithUsersRow? reviewRow;
+  final ParkingReview? reviewRow;
 
   @override
   State<ReviewCardProfileWidget> createState() =>
@@ -293,14 +293,14 @@ class _ReviewCardProfileWidgetState extends State<ReviewCardProfileWidget> {
                 padding: EdgeInsetsDirectional.fromSTEB(66.0, 0.0, 0.0, 0.0),
                 child: Builder(
                   builder: (context) {
-                    if (widget!.reviewRow?.reviewPhotos != null) {
+                    if (widget!.reviewRow?.hasPhotoPayload ?? false) {
                       return Container(
                         height: 64.0,
                         decoration: BoxDecoration(),
                         child: Builder(
                           builder: (context) {
                             final photos =
-                                widget!.reviewRow?.reviewPhotos?.toList() ?? [];
+                                widget!.reviewRow?.photoUrls.toList() ?? [];
 
                             return ListView.separated(
                               padding: EdgeInsets.zero,

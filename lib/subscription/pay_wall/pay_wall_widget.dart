@@ -1,4 +1,5 @@
 import '/backend/schema/structs/index.dart';
+import '/core/config/app_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -36,7 +37,16 @@ class _PayWallWidgetState extends State<PayWallWidget> {
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.smartPrices = await actions.getSmartSubscriptionPrices();
+      if (AppConfig.current.integrationReadOnly) {
+        _model.smartPrices = createSubscriptionPricesStructStruct(
+          monthly: '4.99 €',
+          annual: '49.99 €',
+          referral: '3.99 €',
+          isEligible: false,
+        );
+      } else {
+        _model.smartPrices = await actions.getSmartSubscriptionPrices();
+      }
       _model.isPageload = true;
       safeSetState(() {});
     });
@@ -288,39 +298,10 @@ class _PayWallWidgetState extends State<PayWallWidget> {
                                                           .fontStyle,
                                                 ),
                                           ),
-                                          if (_model.isPageload)
-                                            Text(
-                                              '${functions.getDisplayedMonthlyPrice(_model.smartPrices)}/month',
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .labelLarge
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontStyle,
-                                                      ),
-                                            ),
+                                          _buildSubscriptionPrice(
+                                            context,
+                                            '${functions.getDisplayedMonthlyPrice(_model.smartPrices)}/month',
+                                          ),
                                         ].divide(SizedBox(height: 4.0)),
                                       ),
                                       Builder(
@@ -448,39 +429,10 @@ class _PayWallWidgetState extends State<PayWallWidget> {
                                                           .fontStyle,
                                                 ),
                                           ),
-                                          if (_model.isPageload)
-                                            Text(
-                                              '${_model.smartPrices?.annual}/year',
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .labelLarge
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelLarge
-                                                                .fontStyle,
-                                                      ),
-                                            ),
+                                          _buildSubscriptionPrice(
+                                            context,
+                                            '${_model.smartPrices?.annual}/year',
+                                          ),
                                         ].divide(SizedBox(height: 4.0)),
                                       ),
                                       Builder(
@@ -556,6 +508,9 @@ class _PayWallWidgetState extends State<PayWallWidget> {
                     children: [
                       FFButtonWidget(
                         onPressed: () async {
+                          if (AppConfig.current.integrationReadOnly) {
+                            return;
+                          }
                           await revenue_cat.restorePurchases();
                           _model.fetchPremiumExpirationDateOut2 =
                               await actions.fetchPremiumExpirationDate();
@@ -640,6 +595,9 @@ class _PayWallWidgetState extends State<PayWallWidget> {
                       ),
                       FFButtonWidget(
                         onPressed: () async {
+                          if (AppConfig.current.integrationReadOnly) {
+                            return;
+                          }
                           var _shouldSetState = false;
                           _model.purchaseSmartPackageOut =
                               await actions.purchaseSmartPackage(
@@ -868,6 +826,44 @@ class _PayWallWidgetState extends State<PayWallWidget> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSubscriptionPrice(
+    BuildContext context,
+    String priceText,
+  ) {
+    if (!_model.isPageload) {
+      return SizedBox(
+        width: 64.0,
+        height: 20.0,
+        child: Align(
+          alignment: AlignmentDirectional(-1.0, 0.0),
+          child: SizedBox(
+            width: 16.0,
+            height: 16.0,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.0,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                FlutterFlowTheme.of(context).primary,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Text(
+      priceText,
+      style: FlutterFlowTheme.of(context).labelLarge.override(
+            font: GoogleFonts.roboto(
+              fontWeight: FlutterFlowTheme.of(context).labelLarge.fontWeight,
+              fontStyle: FlutterFlowTheme.of(context).labelLarge.fontStyle,
+            ),
+            letterSpacing: 0.0,
+            fontWeight: FlutterFlowTheme.of(context).labelLarge.fontWeight,
+            fontStyle: FlutterFlowTheme.of(context).labelLarge.fontStyle,
+          ),
     );
   }
 }

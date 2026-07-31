@@ -1,10 +1,20 @@
-import '/backend/api_requests/api_calls.dart';
 import '/core/config/app_config.dart';
 import '/create_parking/create_parking_dialog/create_parking_dialog_widget.dart';
+import '/features/geocoding/application/reverse_geocoding_service.dart';
+import '/features/geocoding/data/google_reverse_geocoding_repository.dart';
+import '/features/geocoding/domain/reverse_geocoding_repository.dart';
+import '/features/map/application/home_map_read_controller.dart';
+import '/features/map/application/parking_filter_controller.dart';
+import '/features/map/data/supabase_parking_map_repository.dart';
+import '/features/map/domain/map_bounds.dart';
+import '/features/map/domain/map_parking_query.dart';
+import '/features/map/domain/parking_map_repository.dart';
+import '/features/map/presentation/home_map_search_panel.dart';
+import '/features/map/presentation/map_read_adapter.dart';
+import '/features/map/presentation/map_search_result_item.dart';
 import '/filter/filter/filter_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/parkings_details/parkings_details/parkings_details_widget.dart';
 import '/subscription/guest_dialog/guest_dialog_widget.dart';
 import 'dart:ui';
@@ -13,11 +23,9 @@ import '/custom_code/widgets/index.dart' as custom_widgets;
 import '/flutter_flow/custom_functions.dart' as functions;
 import '/index.dart';
 import 'search_panel_layout.dart';
-import 'package:easy_debounce/easy_debounce.dart';
+import 'user_location_target.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'home_page_model.dart';
 export 'home_page_model.dart';
@@ -28,11 +36,15 @@ class HomePageWidget extends StatefulWidget {
     this.targetParkingId,
     this.targetLat,
     this.targetLng,
+    this.parkingMapRepository,
+    this.reverseGeocodingRepository,
   });
 
   final String? targetParkingId;
   final double? targetLat;
   final double? targetLng;
+  final ParkingMapRepository? parkingMapRepository;
+  final ReverseGeocodingRepository? reverseGeocodingRepository;
 
   static String routeName = 'HomePage';
   static String routePath = '/homePage';
@@ -43,6 +55,8 @@ class HomePageWidget extends StatefulWidget {
 
 class _HomePageWidgetState extends State<HomePageWidget> {
   late HomePageModel _model;
+  late final HomeMapReadController _homeMapReadController;
+  late final ReverseGeocodingService _reverseGeocodingService;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   LatLng? currentUserLocationValue;
@@ -51,16 +65,23 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => HomePageModel());
+    final parkingMapRepository =
+        widget.parkingMapRepository ?? SupabaseParkingMapRepository();
+    _homeMapReadController = HomeMapReadController(
+      repository: parkingMapRepository,
+    );
+    _reverseGeocodingService = ReverseGeocodingService(
+      repository: widget.reverseGeocodingRepository ??
+          GoogleReverseGeocodingRepository(),
+    );
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      if (AppConfig.current.integrationReadOnly) {
+      if (!AppConfig.current.integrationReadOnly &&
+          FFAppState().isGuest == true) {
         return;
       }
-      if (FFAppState().isGuest == true) {
-        return;
-      }
-      if (widget!.targetParkingId != null && widget!.targetParkingId != '') {
+      if (widget.targetParkingId != null && widget.targetParkingId != '') {
         await showModalBottomSheet(
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
@@ -75,12 +96,15 @@ class _HomePageWidgetState extends State<HomePageWidget> {
               child: Padding(
                 padding: MediaQuery.viewInsetsOf(context),
                 child: ParkingsDetailsWidget(
-                  parkingId: widget!.targetParkingId!,
+                  parkingId: widget.targetParkingId!,
                 ),
               ),
             );
           },
         ).then((value) => safeSetState(() {}));
+      }
+      if (AppConfig.current.integrationReadOnly) {
+        return;
       }
       _model.fetchPremiumExpirationDateOut =
           await actions.fetchPremiumExpirationDate();
@@ -98,14 +122,188 @@ class _HomePageWidgetState extends State<HomePageWidget> {
 
   @override
   void dispose() {
+    _homeMapReadController.dispose();
     _model.dispose();
 
     super.dispose();
   }
 
+  MapFilterSnapshot _currentFilterSnapshot() => toMapFilterSnapshot(
+        context.read<ParkingFilterController>().state,
+      );
+
+  MapParkingQuery _buildMapQuery({
+    required double minLat,
+    required double minLng,
+    required double maxLat,
+    required double maxLng,
+    required double zoom,
+    String searchQuery = '',
+  }) =>
+      buildMapParkingQuery(
+        bounds: MapBounds(
+          minLatitude: minLat,
+          minLongitude: minLng,
+          maxLatitude: maxLat,
+          maxLongitude: maxLng,
+        ),
+        zoom: zoom,
+        filter: _currentFilterSnapshot(),
+        searchQuery: searchQuery,
+      );
+
+  MapParkingQuery? _buildCurrentMapQuery({
+    double? zoom,
+    String searchQuery = '',
+  }) {
+    final minLat = _model.latMin;
+    final minLng = _model.lngMin;
+    final maxLat = _model.latMax;
+    final maxLng = _model.lngMax;
+    final currentZoom = zoom ?? _model.currentZoom;
+    if (minLat == null ||
+        minLng == null ||
+        maxLat == null ||
+        maxLng == null ||
+        currentZoom == null) {
+      return null;
+    }
+    return _buildMapQuery(
+      minLat: minLat,
+      minLng: minLng,
+      maxLat: maxLat,
+      maxLng: maxLng,
+      zoom: currentZoom,
+      searchQuery: searchQuery,
+    );
+  }
+
+  Future<void> _loadMapPoints(MapParkingQuery query) async {
+    final points = await _homeMapReadController.loadViewport(query);
+    if (!mounted) {
+      return;
+    }
+    if (points == null) {
+      return;
+    }
+    safeSetState(() {
+      _model.parkingsOnMap = toMapMarkerItems(points);
+    });
+  }
+
+  Future<void> _loadSearchResults(MapParkingQuery query) async {
+    final points = await _homeMapReadController.loadSearch(query);
+    if (!mounted) {
+      return;
+    }
+    if (points == null) {
+      return;
+    }
+    safeSetState(() {
+      _model.searchResults = toMapSearchResultItems(points);
+      _model.isSearching = true;
+    });
+  }
+
+  void _clearSearchResults() {
+    _homeMapReadController.resetSearch();
+    safeSetState(() {
+      _model.isSearching = false;
+      _model.searchResults = [];
+    });
+  }
+
+  Future<void> _handleSearchQueryChanged(String queryText) async {
+    if (queryText.isEmpty) {
+      _clearSearchResults();
+      return;
+    }
+    final query = _buildCurrentMapQuery(
+      zoom: 20.0,
+      searchQuery: functions.textToLower(queryText),
+    );
+    if (query != null) {
+      await _loadSearchResults(query);
+    }
+  }
+
+  Future<void> _handleSearchResultSelected(
+    MapSearchResultItem result,
+  ) async {
+    _model.searchCoord = LatLng(result.latitude, result.longitude);
+    _model.isMapLocked = false;
+    _model.textController?.clear();
+    _homeMapReadController.resetSearch();
+    _model.isSearching = false;
+    _model.searchResults = [];
+    safeSetState(() {});
+    await actions.hideKeyboard();
+    if (!mounted) {
+      return;
+    }
+    await showModalBottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      enableDrag: false,
+      context: context,
+      builder: (context) => GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Padding(
+          padding: MediaQuery.viewInsetsOf(context),
+          child: ParkingsDetailsWidget(parkingId: result.id),
+        ),
+      ),
+    ).then((_) => safeSetState(() {}));
+  }
+
+  Future<void> _handleFilterSelected() async {
+    await showModalBottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      enableDrag: false,
+      context: context,
+      builder: (context) => GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Padding(
+          padding: MediaQuery.viewInsetsOf(context),
+          child: FilterWidget(),
+        ),
+      ),
+    ).then(
+      (value) => safeSetState(() => _model.filterOut = value),
+    );
+    if (!mounted || _model.filterOut != true) {
+      return;
+    }
+    final query = _buildCurrentMapQuery();
+    if (query != null) {
+      await _loadMapPoints(query);
+    }
+  }
+
+  Future<void> _updateTemporaryAddress({
+    required double latitude,
+    required double longitude,
+  }) async {
+    FFAppState().tempAddress = await _reverseGeocodingService.resolveAddress(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    if (mounted) {
+      safeSetState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    final filterState = context.watch<ParkingFilterController>().state;
     if (currentUserLocationValue == null) {
       return Container(
         color: FlutterFlowTheme.of(context).primaryBackground,
@@ -153,19 +351,20 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                             child: custom_widgets.CustomGoogleMap(
                               width: MediaQuery.sizeOf(context).width * 1.0,
                               height: MediaQuery.sizeOf(context).height * 1.0,
-                              initialLat: widget!.targetLat != null
-                                  ? widget!.targetLat!
+                              initialLat: widget.targetLat != null
+                                  ? widget.targetLat!
                                   : functions.getLat(currentUserLocationValue),
-                              initialLng: widget!.targetLng != null
-                                  ? widget!.targetLng!
+                              initialLng: widget.targetLng != null
+                                  ? widget.targetLng!
                                   : functions.getLng(currentUserLocationValue),
                               initialZoom: 13.0,
                               allowGestures: true,
                               markerIconPath:
                                   'https://jckksrcdmhtafwbimzov.supabase.co/storage/v1/object/public/assets/icnLocation.png',
                               markerSize: 30,
-                              markerData: _model.parkingsOnMap,
+                              markers: _model.parkingsOnMap,
                               centerToMoveTo: _model.searchCoord,
+                              centerMoveRequestId: _model.mapCenterRequestId,
                               isDarkMode: Theme.of(context).brightness ==
                                   Brightness.dark,
                               clusterSize: 120,
@@ -204,40 +403,15 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                 _model.lngMax = maxLng;
                                 _model.currentZoom = zoom;
                                 safeSetState(() {});
-                                _model.getFilteredParkings =
-                                    await GetFilteredParkingsCall.call(
-                                  minLat: minLat,
-                                  maxLat: maxLat,
-                                  minLng: minLng,
-                                  maxLng: maxLng,
-                                  isActive: FFAppState().isFilterApplied,
-                                  radius: FFAppState().isFilterShowNearest
-                                      ? functions.getMetersFromIndex(
-                                          FFAppState().filterRadius)
-                                      : 0.0,
-                                  lat: (minLat + maxLat) / 2,
-                                  lng: (minLng + maxLng) / 2,
-                                  minCap: FFAppState().filterCapacityFrom,
-                                  maxCap: FFAppState().filterCapacityTo,
-                                  gas: FFAppState().isFilterHasGas,
-                                  shower: FFAppState().isFilterHasShower,
-                                  laundry: FFAppState().isFilterHasLaundry,
-                                  hotel: FFAppState().isFilterHasHotel,
-                                  shop: FFAppState().isFilterHasShop,
-                                  recreation:
-                                      FFAppState().isFilterHasRecreation,
-                                  zoom: zoom,
+                                await _loadMapPoints(
+                                  _buildMapQuery(
+                                    minLat: minLat,
+                                    minLng: minLng,
+                                    maxLat: maxLat,
+                                    maxLng: maxLng,
+                                    zoom: zoom,
+                                  ),
                                 );
-
-                                if ((_model.getFilteredParkings?.succeeded ??
-                                    true)) {
-                                  _model.parkingsOnMap =
-                                      (_model.getFilteredParkings?.jsonBody ??
-                                          '');
-                                  safeSetState(() {});
-                                }
-
-                                safeSetState(() {});
                               },
                               onLongPress: (longPressedPoint) async {
                                 if (AppConfig.current.integrationReadOnly) {
@@ -248,21 +422,12 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                 FFAppState().tempLng =
                                     functions.getLng(longPressedPoint);
                                 safeSetState(() {});
-                                _model.getAddressFromCoordsRes =
-                                    await GetAddressFromCoordsCall.call(
-                                  lat: FFAppState().tempLat,
-                                  lng: FFAppState().tempLng,
+                                await _updateTemporaryAddress(
+                                  latitude: FFAppState().tempLat,
+                                  longitude: FFAppState().tempLng,
                                 );
-
-                                if ((_model
-                                        .getAddressFromCoordsRes?.succeeded ??
-                                    true)) {
-                                  FFAppState().tempAddress = getJsonField(
-                                    (_model.getAddressFromCoordsRes?.jsonBody ??
-                                        ''),
-                                    r'''$.results[0].formatted_address''',
-                                  ).toString();
-                                  safeSetState(() {});
+                                if (!mounted) {
+                                  return;
                                 }
                                 FFAppState().isMapUnLocked = false;
                                 safeSetState(() {});
@@ -395,16 +560,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              currentUserLocationValue =
-                                  await getCurrentUserLocation(
-                                      defaultLocation: LatLng(0.0, 0.0));
-                              await Future.delayed(
-                                Duration(
-                                  milliseconds: 100,
-                                ),
-                              );
-                              _model.searchCoord = currentUserLocationValue;
-                              safeSetState(() {});
+                              await _centerMapOnDeviceLocation();
                             },
                             child: Material(
                               color: Colors.transparent,
@@ -431,775 +587,26 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                       ),
                     ],
                   ),
-                Align(
-                  alignment: AlignmentDirectional(0.0, 1.0),
-                  child: Container(
-                    width: double.infinity,
-                    constraints: BoxConstraints(
-                      maxHeight: searchPanelMaxHeight(
-                        screenHeight: mediaQuery.size.height,
-                        keyboardInset: keyboardInset,
-                      ),
-                    ),
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(10.0),
-                        topRight: Radius.circular(10.0),
-                      ),
-                    ),
-                    child: Stack(
-                      alignment: AlignmentDirectional(0.0, 1.0),
-                      children: [
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  0.0, 8.0, 0.0, 8.0),
-                              child: GestureDetector(
-                                onVerticalDragEnd: (details) async {
-                                  _model.isSearching = false;
-                                  safeSetState(() {});
-                                  safeSetState(() {
-                                    _model.textController?.clear();
-                                  });
-                                },
-                                child: Container(
-                                  width: 36.0,
-                                  height: 5.0,
-                                  decoration: BoxDecoration(
-                                    color: FlutterFlowTheme.of(context).divider,
-                                    borderRadius: BorderRadius.circular(24.0),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (_model.isSearching)
-                              Flexible(
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      16.0, 0.0, 16.0, 0.0),
-                                  child: Builder(
-                                    builder: (context) {
-                                      final parkingsItem =
-                                          _model.searchResults.toList();
-
-                                      return ListView.separated(
-                                        padding: EdgeInsets.zero,
-                                        shrinkWrap: true,
-                                        scrollDirection: Axis.vertical,
-                                        itemCount: parkingsItem.length,
-                                        separatorBuilder: (_, __) =>
-                                            SizedBox(height: 2.0),
-                                        itemBuilder:
-                                            (context, parkingsItemIndex) {
-                                          final parkingsItemItem =
-                                              parkingsItem[parkingsItemIndex];
-                                          return GestureDetector(
-                                            onTap: () async {
-                                              _model.searchCoord =
-                                                  functions.convertToLatLng(
-                                                      getJsonField(
-                                                        parkingsItemItem,
-                                                        r'''$.lat''',
-                                                      ),
-                                                      getJsonField(
-                                                        parkingsItemItem,
-                                                        r'''$.lng''',
-                                                      ));
-                                              _model.isSearching = false;
-                                              _model.isMapLocked = false;
-                                              safeSetState(() {});
-                                              safeSetState(() {
-                                                _model.textController?.clear();
-                                              });
-                                              await actions.hideKeyboard();
-                                              await showModalBottomSheet(
-                                                isScrollControlled: true,
-                                                backgroundColor:
-                                                    Colors.transparent,
-                                                enableDrag: false,
-                                                context: context,
-                                                builder: (context) {
-                                                  return GestureDetector(
-                                                    onTap: () {
-                                                      FocusScope.of(context)
-                                                          .unfocus();
-                                                      FocusManager
-                                                          .instance.primaryFocus
-                                                          ?.unfocus();
-                                                    },
-                                                    child: Padding(
-                                                      padding: MediaQuery
-                                                          .viewInsetsOf(
-                                                              context),
-                                                      child:
-                                                          ParkingsDetailsWidget(
-                                                        parkingId: getJsonField(
-                                                          parkingsItemItem,
-                                                          r'''$.id''',
-                                                        ).toString(),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ).then((value) =>
-                                                  safeSetState(() {}));
-                                            },
-                                            onVerticalDragEnd: (details) async {
-                                              safeSetState(() {
-                                                _model.textController?.clear();
-                                              });
-                                              _model.isSearching = false;
-                                              safeSetState(() {});
-                                            },
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  valueOrDefault<String>(
-                                                    getJsonField(
-                                                      parkingsItemItem,
-                                                      r'''$.address''',
-                                                    )?.toString(),
-                                                    'No address',
-                                                  ),
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                        fontSize: 17.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                                Divider(
-                                                  thickness: 2.0,
-                                                  color: FlutterFlowTheme.of(
-                                                          context)
-                                                      .checksFormsButtons,
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            Align(
-                              alignment: AlignmentDirectional(0.0, 1.0),
-                              child: Container(
-                                decoration: BoxDecoration(),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          16.0, 0.0, 16.0, 20.0),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              height: 40.0,
-                                              decoration: BoxDecoration(),
-                                              child: Container(
-                                                width: double.infinity,
-                                                child: TextFormField(
-                                                  controller:
-                                                      _model.textController,
-                                                  focusNode:
-                                                      _model.textFieldFocusNode,
-                                                  onChanged: (_) =>
-                                                      EasyDebounce.debounce(
-                                                    '_model.textController',
-                                                    Duration(milliseconds: 500),
-                                                    () async {
-                                                      if (_model.textController
-                                                                  .text !=
-                                                              null &&
-                                                          _model.textController
-                                                                  .text !=
-                                                              '') {
-                                                        _model.getFilteredParkingsOut =
-                                                            await GetFilteredParkingsCall
-                                                                .call(
-                                                          searchQuery: functions
-                                                              .textToLower(_model
-                                                                  .textController
-                                                                  .text),
-                                                          isActive: FFAppState()
-                                                              .isFilterApplied,
-                                                          zoom: 20.0,
-                                                          radius: FFAppState()
-                                                                  .isFilterShowNearest
-                                                              ? functions
-                                                                  .getMetersFromIndex(
-                                                                      FFAppState()
-                                                                          .filterRadius)
-                                                              : 0.0,
-                                                          lat: ((_model
-                                                                      .latMin!) +
-                                                                  (_model
-                                                                      .latMax!)) /
-                                                              2,
-                                                          lng: ((_model
-                                                                      .lngMin!) +
-                                                                  (_model
-                                                                      .lngMax!)) /
-                                                              2,
-                                                          minLat: _model.latMin,
-                                                          maxLat: _model.latMax,
-                                                          minLng: _model.lngMin,
-                                                          maxLng: _model.lngMax,
-                                                          minCap: FFAppState()
-                                                              .filterCapacityFrom,
-                                                          maxCap: FFAppState()
-                                                              .filterCapacityTo,
-                                                          gas: FFAppState()
-                                                              .isFilterHasGas,
-                                                          shower: FFAppState()
-                                                              .isFilterHasShower,
-                                                          laundry: FFAppState()
-                                                              .isFilterHasLaundry,
-                                                          hotel: FFAppState()
-                                                              .isFilterHasHotel,
-                                                          shop: FFAppState()
-                                                              .isFilterHasShop,
-                                                          recreation: FFAppState()
-                                                              .isFilterHasRecreation,
-                                                        );
-
-                                                        _model.searchResults =
-                                                            (_model.getFilteredParkingsOut
-                                                                        ?.jsonBody ??
-                                                                    '')
-                                                                .toList()
-                                                                .cast<
-                                                                    dynamic>();
-                                                        _model.isSearching =
-                                                            true;
-                                                        safeSetState(() {});
-                                                      } else {
-                                                        _model.isSearching =
-                                                            false;
-                                                        _model.searchResults =
-                                                            [];
-                                                        safeSetState(() {});
-                                                      }
-
-                                                      safeSetState(() {});
-                                                    },
-                                                  ),
-                                                  autofocus: false,
-                                                  enabled: true,
-                                                  obscureText: false,
-                                                  decoration: InputDecoration(
-                                                    isDense: true,
-                                                    labelStyle:
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .labelMedium
-                                                            .override(
-                                                              font: GoogleFonts
-                                                                  .roboto(
-                                                                fontWeight: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .labelMedium
-                                                                    .fontWeight,
-                                                                fontStyle: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .labelMedium
-                                                                    .fontStyle,
-                                                              ),
-                                                              color: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .searchMapsHinit,
-                                                              letterSpacing:
-                                                                  0.0,
-                                                              fontWeight:
-                                                                  FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .labelMedium
-                                                                      .fontWeight,
-                                                              fontStyle:
-                                                                  FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .labelMedium
-                                                                      .fontStyle,
-                                                            ),
-                                                    hintText:
-                                                        FFLocalizations.of(
-                                                                context)
-                                                            .getText(
-                                                      '601bzdk7' /* Search Maps */,
-                                                    ),
-                                                    hintStyle: FlutterFlowTheme
-                                                            .of(context)
-                                                        .labelLarge
-                                                        .override(
-                                                          font: GoogleFonts
-                                                              .roboto(
-                                                            fontWeight:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .labelLarge
-                                                                    .fontWeight,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .labelLarge
-                                                                    .fontStyle,
-                                                          ),
-                                                          color:
-                                                              Color(0xFF6C6C6C),
-                                                          fontSize: 17.0,
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                    enabledBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                        color:
-                                                            Color(0x00000000),
-                                                        width: 1.0,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                      ),
-                                                    ),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                        color:
-                                                            Color(0x00000000),
-                                                        width: 1.0,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                      ),
-                                                    ),
-                                                    errorBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                        color:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .error,
-                                                        width: 1.0,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                      ),
-                                                    ),
-                                                    focusedErrorBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                        color:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .error,
-                                                        width: 1.0,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                                10.0),
-                                                      ),
-                                                    ),
-                                                    filled: true,
-                                                    fillColor: FlutterFlowTheme
-                                                            .of(context)
-                                                        .secondaryBackground,
-                                                    contentPadding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(6.0, 0.0,
-                                                                0.0, 0.0),
-                                                    prefixIcon: Icon(
-                                                      FFIcons.kicnSearch,
-                                                      color: Color(0xFF6C6C6C),
-                                                      size: 20.0,
-                                                    ),
-                                                    suffixIcon:
-                                                        _model.textController!
-                                                                .text.isNotEmpty
-                                                            ? InkWell(
-                                                                onTap:
-                                                                    () async {
-                                                                  _model
-                                                                      .textController
-                                                                      ?.clear();
-                                                                  if (_model.textController
-                                                                              .text !=
-                                                                          null &&
-                                                                      _model.textController
-                                                                              .text !=
-                                                                          '') {
-                                                                    _model.getFilteredParkingsOut =
-                                                                        await GetFilteredParkingsCall
-                                                                            .call(
-                                                                      searchQuery: functions.textToLower(_model
-                                                                          .textController
-                                                                          .text),
-                                                                      isActive:
-                                                                          FFAppState()
-                                                                              .isFilterApplied,
-                                                                      zoom:
-                                                                          20.0,
-                                                                      radius: FFAppState()
-                                                                              .isFilterShowNearest
-                                                                          ? functions
-                                                                              .getMetersFromIndex(FFAppState().filterRadius)
-                                                                          : 0.0,
-                                                                      lat: ((_model.latMin!) +
-                                                                              (_model.latMax!)) /
-                                                                          2,
-                                                                      lng: ((_model.lngMin!) +
-                                                                              (_model.lngMax!)) /
-                                                                          2,
-                                                                      minLat: _model
-                                                                          .latMin,
-                                                                      maxLat: _model
-                                                                          .latMax,
-                                                                      minLng: _model
-                                                                          .lngMin,
-                                                                      maxLng: _model
-                                                                          .lngMax,
-                                                                      minCap: FFAppState()
-                                                                          .filterCapacityFrom,
-                                                                      maxCap: FFAppState()
-                                                                          .filterCapacityTo,
-                                                                      gas: FFAppState()
-                                                                          .isFilterHasGas,
-                                                                      shower: FFAppState()
-                                                                          .isFilterHasShower,
-                                                                      laundry:
-                                                                          FFAppState()
-                                                                              .isFilterHasLaundry,
-                                                                      hotel: FFAppState()
-                                                                          .isFilterHasHotel,
-                                                                      shop: FFAppState()
-                                                                          .isFilterHasShop,
-                                                                      recreation:
-                                                                          FFAppState()
-                                                                              .isFilterHasRecreation,
-                                                                    );
-
-                                                                    _model
-                                                                        .searchResults = (_model.getFilteredParkingsOut?.jsonBody ??
-                                                                            '')
-                                                                        .toList()
-                                                                        .cast<
-                                                                            dynamic>();
-                                                                    _model.isSearching =
-                                                                        true;
-                                                                    safeSetState(
-                                                                        () {});
-                                                                  } else {
-                                                                    _model.isSearching =
-                                                                        false;
-                                                                    _model.searchResults =
-                                                                        [];
-                                                                    safeSetState(
-                                                                        () {});
-                                                                  }
-
-                                                                  safeSetState(
-                                                                      () {});
-                                                                  safeSetState(
-                                                                      () {});
-                                                                },
-                                                                child: Icon(
-                                                                  Icons.clear,
-                                                                  color: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .searchMapsHinit,
-                                                                  size: 22,
-                                                                ),
-                                                              )
-                                                            : null,
-                                                  ),
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodyLarge
-                                                      .override(
-                                                        font:
-                                                            GoogleFonts.roboto(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyLarge
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyLarge
-                                                                  .fontStyle,
-                                                        ),
-                                                        fontSize: 17.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyLarge
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyLarge
-                                                                .fontStyle,
-                                                      ),
-                                                  cursorColor:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .primaryText,
-                                                  enableInteractiveSelection:
-                                                      true,
-                                                  validator: _model
-                                                      .textControllerValidator
-                                                      .asValidator(context),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    0.0, 0.0, 10.0, 0.0),
-                                            child: InkWell(
-                                              splashColor: Colors.transparent,
-                                              focusColor: Colors.transparent,
-                                              hoverColor: Colors.transparent,
-                                              highlightColor:
-                                                  Colors.transparent,
-                                              onTap: () async {
-                                                _model.isSearching = false;
-                                                safeSetState(() {});
-                                                safeSetState(() {
-                                                  _model.textController
-                                                      ?.clear();
-                                                });
-                                                await showModalBottomSheet(
-                                                  isScrollControlled: true,
-                                                  backgroundColor:
-                                                      Colors.transparent,
-                                                  enableDrag: false,
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return GestureDetector(
-                                                      onTap: () {
-                                                        FocusScope.of(context)
-                                                            .unfocus();
-                                                        FocusManager.instance
-                                                            .primaryFocus
-                                                            ?.unfocus();
-                                                      },
-                                                      child: Padding(
-                                                        padding: MediaQuery
-                                                            .viewInsetsOf(
-                                                                context),
-                                                        child: FilterWidget(),
-                                                      ),
-                                                    );
-                                                  },
-                                                ).then((value) => safeSetState(
-                                                    () => _model.filterOut =
-                                                        value));
-
-                                                if (_model.filterOut!) {
-                                                  _model.apiResultund =
-                                                      await GetFilteredParkingsCall
-                                                          .call(
-                                                    minLat: _model.latMin,
-                                                    maxLat: _model.latMax,
-                                                    minLng: _model.lngMin,
-                                                    maxLng: _model.lngMax,
-                                                    radius: FFAppState()
-                                                            .isFilterShowNearest
-                                                        ? functions
-                                                            .getMetersFromIndex(
-                                                                FFAppState()
-                                                                    .filterRadius)
-                                                        : 0.0,
-                                                    minCap: FFAppState()
-                                                        .filterCapacityFrom,
-                                                    maxCap: FFAppState()
-                                                        .filterCapacityTo,
-                                                    gas: FFAppState()
-                                                        .isFilterHasGas,
-                                                    shower: FFAppState()
-                                                        .isFilterHasShower,
-                                                    laundry: FFAppState()
-                                                        .isFilterHasLaundry,
-                                                    hotel: FFAppState()
-                                                        .isFilterHasHotel,
-                                                    shop: FFAppState()
-                                                        .isFilterHasShop,
-                                                    recreation: FFAppState()
-                                                        .isFilterHasRecreation,
-                                                    isActive: FFAppState()
-                                                        .isFilterApplied,
-                                                    zoom: _model.currentZoom,
-                                                    lat: ((_model.latMin!) +
-                                                            (_model.latMax!)) /
-                                                        2,
-                                                    lng: ((_model.lngMin!) +
-                                                            (_model.lngMax!)) /
-                                                        2,
-                                                  );
-
-                                                  if ((_model.apiResultund
-                                                          ?.succeeded ??
-                                                      true)) {
-                                                    _model.parkingsOnMap =
-                                                        (_model.apiResultund
-                                                                ?.jsonBody ??
-                                                            '');
-                                                    safeSetState(() {});
-                                                  }
-                                                }
-
-                                                safeSetState(() {});
-                                              },
-                                              child: Container(
-                                                width: 40.0,
-                                                height: 40.0,
-                                                decoration: BoxDecoration(
-                                                  color: FlutterFlowTheme.of(
-                                                          context)
-                                                      .secondaryBackground,
-                                                  borderRadius:
-                                                      BorderRadius.only(
-                                                    topRight:
-                                                        Radius.circular(10.0),
-                                                    bottomRight:
-                                                        Radius.circular(10.0),
-                                                  ),
-                                                ),
-                                                child: Align(
-                                                  alignment:
-                                                      AlignmentDirectional(
-                                                          0.0, 0.0),
-                                                  child: Icon(
-                                                    FFIcons.ksetting4,
-                                                    color: FFAppState()
-                                                            .isFilterApplied
-                                                        ? FlutterFlowTheme.of(
-                                                                context)
-                                                            .primary
-                                                        : Color(0xFF8E8E93),
-                                                    size: 20.0,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          InkWell(
-                                            splashColor: Colors.transparent,
-                                            focusColor: Colors.transparent,
-                                            hoverColor: Colors.transparent,
-                                            highlightColor: Colors.transparent,
-                                            onTap: () async {
-                                              context.pushNamed(
-                                                  ProfileWidget.routeName);
-                                            },
-                                            child: Container(
-                                              width: 36.0,
-                                              height: 36.0,
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    FlutterFlowTheme.of(context)
-                                                        .secondaryBackground,
-                                                borderRadius:
-                                                    BorderRadius.circular(10.0),
-                                              ),
-                                              child: ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(0.0),
-                                                child: SvgPicture.asset(
-                                                  'assets/images/menu.svg',
-                                                  width: 24.0,
-                                                  height: 24.0,
-                                                  fit: BoxFit.none,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    custom_widgets.BottomSpacer(
-                                      width: double.infinity,
-                                      height: 10.0,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                HomeMapSearchPanel(
+                  maxHeight: searchPanelMaxHeight(
+                    screenHeight: mediaQuery.size.height,
+                    keyboardInset: keyboardInset,
+                    topSafeAreaInset: mediaQuery.padding.top,
                   ),
+                  textController: _model.textController!,
+                  focusNode: _model.textFieldFocusNode!,
+                  validator:
+                      _model.textControllerValidator.asValidator(context),
+                  isSearching: _model.isSearching,
+                  results: _model.searchResults,
+                  isFilterApplied: filterState.isApplied,
+                  onQueryChanged: _handleSearchQueryChanged,
+                  onClear: _clearSearchResults,
+                  onResultSelected: _handleSearchResultSelected,
+                  onFilterSelected: _handleFilterSelected,
+                  onProfileSelected: () {
+                    context.pushNamed(ProfileWidget.routeName);
+                  },
                 ),
               ],
             ),
@@ -1207,5 +614,49 @@ class _HomePageWidgetState extends State<HomePageWidget> {
         ),
       ),
     );
+  }
+
+  Future<void> _centerMapOnDeviceLocation() async {
+    final cachedLocation = currentUserLocationValue;
+    if (isUsableUserLocation(cachedLocation)) {
+      _requestMapCenter(cachedLocation!);
+    }
+
+    if (_model.isRefreshingUserLocation) {
+      return;
+    }
+
+    _model.isRefreshingUserLocation = true;
+    safeSetState(() {});
+
+    try {
+      final freshLocation = await getCurrentUserLocation(
+        defaultLocation: cachedLocation ?? LatLng(0.0, 0.0),
+      );
+      if (!mounted) {
+        return;
+      }
+
+      if (shouldApplyFreshUserLocation(
+        previous: cachedLocation,
+        fresh: freshLocation,
+      )) {
+        currentUserLocationValue = freshLocation;
+        _requestMapCenter(freshLocation);
+      } else if (isUsableUserLocation(freshLocation)) {
+        currentUserLocationValue = freshLocation;
+      }
+    } finally {
+      _model.isRefreshingUserLocation = false;
+      if (mounted) {
+        safeSetState(() {});
+      }
+    }
+  }
+
+  void _requestMapCenter(LatLng location) {
+    _model.searchCoord = location;
+    _model.mapCenterRequestId += 1;
+    safeSetState(() {});
   }
 }

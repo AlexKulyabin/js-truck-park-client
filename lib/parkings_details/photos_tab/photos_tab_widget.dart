@@ -1,4 +1,4 @@
-import '/backend/supabase/supabase.dart';
+import '/features/parking_details/domain/parking_details.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -13,10 +13,10 @@ export 'photos_tab_model.dart';
 class PhotosTabWidget extends StatefulWidget {
   const PhotosTabWidget({
     super.key,
-    required this.parkingRow,
+    required this.details,
   });
 
-  final ViewFullParkingDetailsRow? parkingRow;
+  final ParkingDetails details;
 
   @override
   State<PhotosTabWidget> createState() => _PhotosTabWidgetState();
@@ -50,12 +50,12 @@ class _PhotosTabWidgetState extends State<PhotosTabWidget> {
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
-        if (widget!.parkingRow?.allPhotos != null) {
+        if (widget.details.photos != null) {
           return Padding(
             padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 60.0),
             child: Builder(
               builder: (context) {
-                final photos = widget!.parkingRow?.allPhotos?.toList() ?? [];
+                final photos = widget.details.photos ?? const [];
 
                 return MasonryGridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
@@ -80,10 +80,7 @@ class _PhotosTabWidgetState extends State<PhotosTabWidget> {
                             PhotoDetailedWidget.routeName,
                             queryParameters: {
                               'photoPath': serializeParam(
-                                getJsonField(
-                                  photosItem,
-                                  r'''$.url''',
-                                ).toString(),
+                                photosItem.url,
                                 ParamType.String,
                               ),
                               'index': serializeParam(
@@ -91,25 +88,19 @@ class _PhotosTabWidgetState extends State<PhotosTabWidget> {
                                 ParamType.int,
                               ),
                               'address': serializeParam(
-                                widget!.parkingRow?.address,
+                                widget.details.address,
                                 ParamType.String,
                               ),
                               'photoCount': serializeParam(
-                                widget!.parkingRow?.photosCount,
+                                widget.details.photosCount,
                                 ParamType.int,
                               ),
                               'photoRef': serializeParam(
-                                getJsonField(
-                                  photosItem,
-                                  r'''$.url''',
-                                ).toString(),
+                                photosItem.url,
                                 ParamType.String,
                               ),
                               'data': serializeParam(
-                                getJsonField(
-                                  photosItem,
-                                  r'''$.photo_date''',
-                                ).toString(),
+                                photosItem.photoDate,
                                 ParamType.String,
                               ),
                             }.withoutNulls,
@@ -118,10 +109,7 @@ class _PhotosTabWidgetState extends State<PhotosTabWidget> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(0.0),
                           child: Image.network(
-                            getJsonField(
-                              photosItem,
-                              r'''$.url''',
-                            ).toString(),
+                            photosItem.url,
                             width: double.infinity,
                             fit: BoxFit.cover,
                           ),

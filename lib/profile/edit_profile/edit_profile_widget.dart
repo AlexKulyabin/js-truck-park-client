@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/profile/data/user_profile_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -49,12 +50,9 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<UsersRow>>(
-      future: UsersTable().querySingleRow(
-        queryFn: (q) => q.eqOrNull(
-          'id',
-          currentUserUid,
-        ),
+    return FutureBuilder<List<PublicUserProfile>>(
+      future: UserProfileService().listPublicProfilesByUserId(
+        userId: currentUserUid,
       ),
       builder: (context, snapshot) {
         // Customize what your widget looks like when it's loading.
@@ -74,7 +72,7 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
             ),
           );
         }
-        List<UsersRow> editProfileUsersRowList = snapshot.data!;
+        List<PublicUserProfile> editProfileUsersRowList = snapshot.data!;
 
         final editProfileUsersRow = editProfileUsersRowList.isNotEmpty
             ? editProfileUsersRowList.first

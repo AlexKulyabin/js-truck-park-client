@@ -10,6 +10,8 @@ export 'tables/geography_columns.dart';
 export 'tables/geometry_columns.dart';
 export 'tables/parking_photos.dart';
 export 'tables/parkings.dart';
+export 'tables/private_profiles.dart';
+export 'tables/public_profiles.dart';
 export 'tables/referral_stats.dart';
 export 'tables/reports.dart';
 export 'tables/reviews.dart';

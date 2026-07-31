@@ -1,13 +1,15 @@
 import '/auth/supabase_auth/auth_util.dart';
-import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/features/parking_details/application/parking_details_controller.dart';
+import '/features/parking_details/domain/parking_details.dart';
+import '/features/parking_details/presentation/parking_review_card.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/reviews/report_create/report_create_widget.dart';
-import '/reviews/review_card_parking_details/review_card_parking_details_widget.dart';
 import '/reviews/review_create/review_create_widget.dart';
 import '/subscription/guest_dialog/guest_dialog_widget.dart';
+import 'dart:async';
 import 'dart:ui';
 import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
@@ -22,10 +24,15 @@ export 'reviews_tab_model.dart';
 class ReviewsTabWidget extends StatefulWidget {
   const ReviewsTabWidget({
     super.key,
-    required this.parkingRow,
+    required this.details,
+    required this.detailsController,
   });
 
-  final ViewFullParkingDetailsRow? parkingRow;
+  final ParkingDetails details;
+  final ParkingDetailsController detailsController;
+
+  static const loadingKey = Key('public-parking-reviews-loading');
+  static const failureKey = Key('public-parking-reviews-failure');
 
   @override
   State<ReviewsTabWidget> createState() => _ReviewsTabWidgetState();
@@ -44,12 +51,25 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ReviewsTabModel());
+    widget.detailsController.addListener(_onReviewsStateChanged);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(widget.detailsController.loadReviews());
+        safeSetState(() {});
+      }
+    });
+  }
+
+  void _onReviewsStateChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    widget.detailsController.removeListener(_onReviewsStateChanged);
     _model.maybeDispose();
 
     super.dispose();
@@ -59,20 +79,14 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
 
-    return FutureBuilder<List<ViewReviewsWithUsersRow>>(
-      future: ViewReviewsWithUsersTable().queryRows(
-        queryFn: (q) => q
-            .eqOrNull(
-              'parking_id',
-              widget!.parkingRow?.id,
-            )
-            .order('created_at'),
-      ),
-      builder: (context, snapshot) {
-        // Customize what your widget looks like when it's loading.
-        if (!snapshot.hasData) {
+    return Builder(
+      builder: (context) {
+        final state = widget.detailsController.state;
+        if (state.reviewsPhase == ParkingDetailsLoadPhase.idle ||
+            state.reviewsPhase == ParkingDetailsLoadPhase.loading) {
           return Center(
             child: SizedBox(
+              key: ReviewsTabWidget.loadingKey,
               width: 50.0,
               height: 50.0,
               child: CircularProgressIndicator(
@@ -83,8 +97,24 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
             ),
           );
         }
-        List<ViewReviewsWithUsersRow> containerViewReviewsWithUsersRowList =
-            snapshot.data!;
+        if (state.reviewsPhase == ParkingDetailsLoadPhase.failure) {
+          return InkWell(
+            key: ReviewsTabWidget.failureKey,
+            onTap: () => unawaited(widget.detailsController.loadReviews()),
+            child: Center(
+              child: SizedBox(
+                width: 50.0,
+                height: 50.0,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    FlutterFlowTheme.of(context).primary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        final reviews = state.reviews;
 
         return Container(
           decoration: BoxDecoration(
@@ -107,7 +137,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                         children: [
                           Text(
                             valueOrDefault<String>(
-                              widget!.parkingRow?.rating?.toString(),
+                              widget.details.rating?.toString(),
                               '4.0',
                             ),
                             style: FlutterFlowTheme.of(context)
@@ -129,7 +159,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                           ),
                           Text(
                             valueOrDefault<String>(
-                              '${containerViewReviewsWithUsersRowList.length.toString()} ${FFLocalizations.of(context).getVariableText(
+                              '${reviews.length.toString()} ${FFLocalizations.of(context).getVariableText(
                                 enText: ' reviews ',
                                 ruText: 'отзывов',
                               )}',
@@ -256,12 +286,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars5!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars5 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -277,12 +307,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -322,12 +352,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -367,12 +397,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -412,12 +442,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             LinearPercentIndicator(
                               percent: valueOrDefault<double>(
                                 functions.calculateRatingPercentage(
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars1!,
-                                    widget!.parkingRow!.stars2!,
-                                    widget!.parkingRow!.stars3!,
-                                    widget!.parkingRow!.stars4!,
-                                    widget!.parkingRow!.stars5!),
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars1 ?? 0,
+                                    widget.details.stars2 ?? 0,
+                                    widget.details.stars3 ?? 0,
+                                    widget.details.stars4 ?? 0,
+                                    widget.details.stars5 ?? 0),
                                 0.0,
                               ),
                               lineHeight: 4.0,
@@ -511,7 +541,8 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                       Expanded(
                         child: Builder(
                           builder: (context) => FFButtonWidget(
-                            onPressed: AppConfig.current.integrationReadOnly
+                            onPressed: !AppConfig.current.canPerformWrite(
+                                    AppWriteOperation.reportCreate)
                                 ? null
                                 : () async {
                                     if (FFAppState().isGuest == true) {
@@ -548,7 +579,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                                           padding:
                                               MediaQuery.viewInsetsOf(context),
                                           child: ReportCreateWidget(
-                                            parkingId: widget!.parkingRow!.id!,
+                                            parkingId: widget.details.id,
                                           ),
                                         );
                                       },
@@ -594,9 +625,10 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                       Expanded(
                         child: Builder(
                           builder: (context) => FFButtonWidget(
-                            onPressed: AppConfig.current.integrationReadOnly ||
+                            onPressed: !AppConfig.current.canPerformWrite(
+                                        AppWriteOperation.reviewCreate) ||
                                     functions.hasUserReviewed(
-                                        containerViewReviewsWithUsersRowList
+                                        reviews
                                             .map((e) => e.userId)
                                             .withoutNulls
                                             .toList(),
@@ -635,7 +667,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                                           padding:
                                               MediaQuery.viewInsetsOf(context),
                                           child: ReviewCreateWidget(
-                                            parkingId: widget!.parkingRow!.id!,
+                                            parkingId: widget.details.id,
                                           ),
                                         );
                                       },
@@ -702,15 +734,12 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
               ),
               Builder(
                 builder: (context) {
-                  if (containerViewReviewsWithUsersRowList.length > 0) {
+                  if (reviews.isNotEmpty) {
                     return Padding(
                       padding:
                           EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 60.0),
                       child: Builder(
                         builder: (context) {
-                          final reviews =
-                              containerViewReviewsWithUsersRowList.toList();
-
                           return ListView.builder(
                             padding: EdgeInsets.zero,
                             primary: false,
@@ -719,10 +748,10 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
                             itemCount: reviews.length,
                             itemBuilder: (context, reviewsIndex) {
                               final reviewsItem = reviews[reviewsIndex];
-                              return ReviewCardParkingDetailsWidget(
+                              return ParkingReviewCard(
                                 key: Key(
                                     'Key7hq_${reviewsIndex}_of_${reviews.length}'),
-                                reviewRow: reviewsItem,
+                                review: reviewsItem,
                               );
                             },
                           );

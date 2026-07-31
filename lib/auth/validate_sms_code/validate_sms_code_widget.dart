@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/profile/data/user_profile_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_timer.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -509,19 +510,14 @@ class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
                                     milliseconds: 1000,
                                   ),
                                 );
-                                _model.currentUser =
-                                    await UsersTable().queryRows(
-                                  queryFn: (q) => q.eqOrNull(
-                                    'id',
-                                    currentUserUid,
-                                  ),
+                                _model.currentUser = await UserProfileService()
+                                    .getPublicProfileByUserId(
+                                  userId: currentUserUid,
                                 );
                                 FFAppState().isGuest = false;
                                 safeSetState(() {});
-                                if (_model.currentUser?.firstOrNull?.fullName !=
-                                        null &&
-                                    _model.currentUser?.firstOrNull?.fullName !=
-                                        '') {
+                                if (_model.currentUser?.hasCompletedProfile ==
+                                    true) {
                                   context.goNamed(HomePageWidget.routeName);
                                 } else {
                                   context.goNamed(RegistrationWidget.routeName);

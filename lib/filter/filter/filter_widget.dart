@@ -2,6 +2,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import 'dart:ui';
+import '/features/map/application/parking_filter_controller.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -31,13 +32,14 @@ class _FilterWidgetState extends State<FilterWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => FilterModel());
+    final filterState = context.read<ParkingFilterController>().state;
 
     _model.capasityFromTextController ??=
-        TextEditingController(text: FFAppState().filterCapacityFrom.toString());
+        TextEditingController(text: filterState.capacityFrom.toString());
     _model.capasityFromFocusNode ??= FocusNode();
 
     _model.capasityUpToTextController ??=
-        TextEditingController(text: FFAppState().filterCapacityTo.toString());
+        TextEditingController(text: filterState.capacityTo.toString());
     _model.capasityUpToFocusNode ??= FocusNode();
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
@@ -50,9 +52,17 @@ class _FilterWidgetState extends State<FilterWidget> {
     super.dispose();
   }
 
+  ParkingFilterState _updateFilter(
+    void Function(ParkingFilterController controller) update,
+  ) {
+    final controller = context.read<ParkingFilterController>();
+    update(controller);
+    return controller.state;
+  }
+
   @override
   Widget build(BuildContext context) {
-    context.watch<FFAppState>();
+    final filterState = context.watch<ParkingFilterController>().state;
 
     return SafeArea(
       child: Container(
@@ -135,35 +145,23 @@ class _FilterWidgetState extends State<FilterWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              FFAppState().filterCapacityFrom = 0;
-                              FFAppState().filterCapacityTo = 100;
-                              FFAppState().isFilterHasGas = false;
-                              FFAppState().isFilterHasShower = false;
-                              FFAppState().isFilterHasLaundry = false;
-                              FFAppState().isFilterHasHotel = false;
-                              FFAppState().isFilterHasShop = false;
-                              FFAppState().isFilterHasRecreation = false;
-                              FFAppState().isFilterShowNearest = false;
-                              FFAppState().isFilterApplied = false;
-                              FFAppState().filterRadius = 0.0;
+                              final nextState = _updateFilter(
+                                (controller) => controller.reset(),
+                              );
                               safeSetState(() {});
                               safeSetState(() {
                                 _model.capasityFromTextController?.clear();
                                 _model.capasityUpToTextController?.clear();
                               });
                               safeSetState(() {
-                                _model.gasCheckboxValue =
-                                    FFAppState().isFilterHasGas;
-                                _model.sowerCheckboxValue =
-                                    FFAppState().isFilterHasShower;
+                                _model.gasCheckboxValue = nextState.hasGas;
+                                _model.sowerCheckboxValue = nextState.hasShower;
                                 _model.laundryCheckboxValue =
-                                    FFAppState().isFilterHasLaundry;
-                                _model.hotelCheckboxValue =
-                                    FFAppState().isFilterHasHotel;
-                                _model.shopCheckboxValue =
-                                    FFAppState().isFilterHasShop;
+                                    nextState.hasLaundry;
+                                _model.hotelCheckboxValue = nextState.hasHotel;
+                                _model.shopCheckboxValue = nextState.hasShop;
                                 _model.recrCheckboxValue =
-                                    FFAppState().isFilterHasRecreation;
+                                    nextState.hasRecreation;
                               });
                               safeSetState(() {
                                 _model.sliderValue = 0.0;
@@ -220,7 +218,7 @@ class _FilterWidgetState extends State<FilterWidget> {
                   children: [
                     Builder(
                       builder: (context) {
-                        if (FFAppState().isFilterShowNearest) {
+                        if (filterState.showNearest) {
                           return Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
@@ -344,20 +342,20 @@ class _FilterWidgetState extends State<FilterWidget> {
                                                         ),
                                                         TextSpan(
                                                           text: () {
-                                                            if (FFAppState()
-                                                                    .filterRadius ==
+                                                            if (filterState
+                                                                    .radiusIndex ==
                                                                 0.0) {
                                                               return '5';
-                                                            } else if (FFAppState()
-                                                                    .filterRadius ==
+                                                            } else if (filterState
+                                                                    .radiusIndex ==
                                                                 1.0) {
                                                               return '10';
-                                                            } else if (FFAppState()
-                                                                    .filterRadius ==
+                                                            } else if (filterState
+                                                                    .radiusIndex ==
                                                                 2.0) {
                                                               return '50';
-                                                            } else if (FFAppState()
-                                                                    .filterRadius ==
+                                                            } else if (filterState
+                                                                    .radiusIndex ==
                                                                 3.0) {
                                                               return '100';
                                                             } else {
@@ -466,8 +464,7 @@ class _FilterWidgetState extends State<FilterWidget> {
                                           ),
                                           Builder(
                                             builder: (context) {
-                                              if (FFAppState()
-                                                  .isFilterShowNearest) {
+                                              if (filterState.showNearest) {
                                                 return InkWell(
                                                   splashColor:
                                                       Colors.transparent,
@@ -478,11 +475,10 @@ class _FilterWidgetState extends State<FilterWidget> {
                                                   highlightColor:
                                                       Colors.transparent,
                                                   onTap: () async {
-                                                    FFAppState()
-                                                            .isFilterShowNearest =
-                                                        false;
-                                                    FFAppState().filterRadius =
-                                                        0.0;
+                                                    _updateFilter(
+                                                      (controller) => controller
+                                                          .disableNearestAndResetRadius(),
+                                                    );
                                                     safeSetState(() {});
                                                     safeSetState(() {
                                                       _model.sliderValue = 0.0;
@@ -544,9 +540,10 @@ class _FilterWidgetState extends State<FilterWidget> {
                                                   highlightColor:
                                                       Colors.transparent,
                                                   onTap: () async {
-                                                    FFAppState()
-                                                            .isFilterShowNearest =
-                                                        true;
+                                                    _updateFilter(
+                                                      (controller) => controller
+                                                          .setShowNearest(true),
+                                                    );
                                                     safeSetState(() {});
                                                   },
                                                   child: Container(
@@ -658,15 +655,19 @@ class _FilterWidgetState extends State<FilterWidget> {
                                             min: 0.0,
                                             max: 4.0,
                                             value: _model.sliderValue ??=
-                                                FFAppState().filterRadius,
+                                                filterState.radiusIndex,
                                             divisions: 4,
                                             onChanged: (newValue) async {
                                               newValue = double.parse(
                                                   newValue.toStringAsFixed(0));
                                               safeSetState(() => _model
                                                   .sliderValue = newValue);
-                                              FFAppState().filterRadius =
-                                                  _model.sliderValue!;
+                                              _updateFilter(
+                                                (controller) =>
+                                                    controller.setRadiusIndex(
+                                                  _model.sliderValue!,
+                                                ),
+                                              );
                                               safeSetState(() {});
                                             },
                                           ),
@@ -972,15 +973,17 @@ class _FilterWidgetState extends State<FilterWidget> {
                                   ),
                                   Builder(
                                     builder: (context) {
-                                      if (FFAppState().isFilterShowNearest) {
+                                      if (filterState.showNearest) {
                                         return InkWell(
                                           splashColor: Colors.transparent,
                                           focusColor: Colors.transparent,
                                           hoverColor: Colors.transparent,
                                           highlightColor: Colors.transparent,
                                           onTap: () async {
-                                            FFAppState().isFilterShowNearest =
-                                                false;
+                                            _updateFilter(
+                                              (controller) => controller
+                                                  .setShowNearest(false),
+                                            );
                                             safeSetState(() {});
                                           },
                                           child: Container(
@@ -1026,8 +1029,10 @@ class _FilterWidgetState extends State<FilterWidget> {
                                           hoverColor: Colors.transparent,
                                           highlightColor: Colors.transparent,
                                           onTap: () async {
-                                            FFAppState().isFilterShowNearest =
-                                                true;
+                                            _updateFilter(
+                                              (controller) => controller
+                                                  .setShowNearest(true),
+                                            );
                                             safeSetState(() {});
                                           },
                                           child: Container(
@@ -1141,10 +1146,14 @@ class _FilterWidgetState extends State<FilterWidget> {
                                         '_model.capasityFromTextController',
                                         Duration(milliseconds: 2000),
                                         () async {
-                                          FFAppState().filterCapacityFrom =
+                                          _updateFilter(
+                                            (controller) =>
+                                                controller.setCapacityFrom(
                                               int.parse(_model
                                                   .capasityFromTextController
-                                                  .text);
+                                                  .text),
+                                            ),
+                                          );
                                           safeSetState(() {});
                                         },
                                       ),
@@ -1292,10 +1301,14 @@ class _FilterWidgetState extends State<FilterWidget> {
                                         '_model.capasityUpToTextController',
                                         Duration(milliseconds: 2000),
                                         () async {
-                                          FFAppState().filterCapacityTo =
+                                          _updateFilter(
+                                            (controller) =>
+                                                controller.setCapacityTo(
                                               int.parse(_model
                                                   .capasityUpToTextController
-                                                  .text);
+                                                  .text),
+                                            ),
+                                          );
                                           safeSetState(() {});
                                         },
                                       ),
@@ -1563,19 +1576,18 @@ class _FilterWidgetState extends State<FilterWidget> {
                                         ),
                                         child: Checkbox(
                                           value: _model.gasCheckboxValue ??=
-                                              FFAppState().isFilterHasGas,
+                                              filterState.hasGas,
                                           onChanged: (newValue) async {
                                             safeSetState(() => _model
                                                 .gasCheckboxValue = newValue!);
-                                            if (newValue!) {
-                                              FFAppState().isFilterHasGas =
-                                                  true;
-                                              safeSetState(() {});
-                                            } else {
-                                              FFAppState().isFilterHasGas =
-                                                  false;
-                                              safeSetState(() {});
-                                            }
+                                            _updateFilter(
+                                              (controller) =>
+                                                  controller.setService(
+                                                ParkingFilterService.gas,
+                                                newValue!,
+                                              ),
+                                            );
+                                            safeSetState(() {});
                                           },
                                           side: (FlutterFlowTheme.of(context)
                                                       .checkBoxes !=
@@ -1674,20 +1686,19 @@ class _FilterWidgetState extends State<FilterWidget> {
                                         ),
                                         child: Checkbox(
                                           value: _model.sowerCheckboxValue ??=
-                                              FFAppState().isFilterHasShower,
+                                              filterState.hasShower,
                                           onChanged: (newValue) async {
                                             safeSetState(() =>
                                                 _model.sowerCheckboxValue =
                                                     newValue!);
-                                            if (newValue!) {
-                                              FFAppState().isFilterHasShower =
-                                                  true;
-                                              safeSetState(() {});
-                                            } else {
-                                              FFAppState().isFilterHasShower =
-                                                  false;
-                                              safeSetState(() {});
-                                            }
+                                            _updateFilter(
+                                              (controller) =>
+                                                  controller.setService(
+                                                ParkingFilterService.shower,
+                                                newValue!,
+                                              ),
+                                            );
+                                            safeSetState(() {});
                                           },
                                           side: (FlutterFlowTheme.of(context)
                                                       .checkBoxes !=
@@ -1786,20 +1797,19 @@ class _FilterWidgetState extends State<FilterWidget> {
                                         ),
                                         child: Checkbox(
                                           value: _model.laundryCheckboxValue ??=
-                                              FFAppState().isFilterHasLaundry,
+                                              filterState.hasLaundry,
                                           onChanged: (newValue) async {
                                             safeSetState(() =>
                                                 _model.laundryCheckboxValue =
                                                     newValue!);
-                                            if (newValue!) {
-                                              FFAppState().isFilterHasLaundry =
-                                                  true;
-                                              safeSetState(() {});
-                                            } else {
-                                              FFAppState().isFilterHasLaundry =
-                                                  false;
-                                              safeSetState(() {});
-                                            }
+                                            _updateFilter(
+                                              (controller) =>
+                                                  controller.setService(
+                                                ParkingFilterService.laundry,
+                                                newValue!,
+                                              ),
+                                            );
+                                            safeSetState(() {});
                                           },
                                           side: (FlutterFlowTheme.of(context)
                                                       .checkBoxes !=
@@ -1898,20 +1908,19 @@ class _FilterWidgetState extends State<FilterWidget> {
                                         ),
                                         child: Checkbox(
                                           value: _model.hotelCheckboxValue ??=
-                                              FFAppState().isFilterHasHotel,
+                                              filterState.hasHotel,
                                           onChanged: (newValue) async {
                                             safeSetState(() =>
                                                 _model.hotelCheckboxValue =
                                                     newValue!);
-                                            if (newValue!) {
-                                              FFAppState().isFilterHasHotel =
-                                                  true;
-                                              safeSetState(() {});
-                                            } else {
-                                              FFAppState().isFilterHasHotel =
-                                                  false;
-                                              safeSetState(() {});
-                                            }
+                                            _updateFilter(
+                                              (controller) =>
+                                                  controller.setService(
+                                                ParkingFilterService.hotel,
+                                                newValue!,
+                                              ),
+                                            );
+                                            safeSetState(() {});
                                           },
                                           side: (FlutterFlowTheme.of(context)
                                                       .checkBoxes !=
@@ -2010,19 +2019,18 @@ class _FilterWidgetState extends State<FilterWidget> {
                                         ),
                                         child: Checkbox(
                                           value: _model.shopCheckboxValue ??=
-                                              FFAppState().isFilterHasShop,
+                                              filterState.hasShop,
                                           onChanged: (newValue) async {
                                             safeSetState(() => _model
                                                 .shopCheckboxValue = newValue!);
-                                            if (newValue!) {
-                                              FFAppState().isFilterHasShop =
-                                                  true;
-                                              safeSetState(() {});
-                                            } else {
-                                              FFAppState().isFilterHasShop =
-                                                  false;
-                                              safeSetState(() {});
-                                            }
+                                            _updateFilter(
+                                              (controller) =>
+                                                  controller.setService(
+                                                ParkingFilterService.shop,
+                                                newValue!,
+                                              ),
+                                            );
+                                            safeSetState(() {});
                                           },
                                           side: (FlutterFlowTheme.of(context)
                                                       .checkBoxes !=
@@ -2114,19 +2122,18 @@ class _FilterWidgetState extends State<FilterWidget> {
                                       ),
                                       child: Checkbox(
                                         value: _model.recrCheckboxValue ??=
-                                            FFAppState().isFilterHasRecreation,
+                                            filterState.hasRecreation,
                                         onChanged: (newValue) async {
                                           safeSetState(() => _model
                                               .recrCheckboxValue = newValue!);
-                                          if (newValue!) {
-                                            FFAppState().isFilterHasRecreation =
-                                                true;
-                                            safeSetState(() {});
-                                          } else {
-                                            FFAppState().isFilterHasRecreation =
-                                                false;
-                                            safeSetState(() {});
-                                          }
+                                          _updateFilter(
+                                            (controller) =>
+                                                controller.setService(
+                                              ParkingFilterService.recreation,
+                                              newValue!,
+                                            ),
+                                          );
+                                          safeSetState(() {});
                                         },
                                         side: (FlutterFlowTheme.of(context)
                                                     .checkBoxes !=
@@ -2158,7 +2165,9 @@ class _FilterWidgetState extends State<FilterWidget> {
                           EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 59.0),
                       child: FFButtonWidget(
                         onPressed: () async {
-                          FFAppState().isFilterApplied = true;
+                          _updateFilter(
+                            (controller) => controller.apply(),
+                          );
                           safeSetState(() {});
                           Navigator.pop(context, true);
                         },

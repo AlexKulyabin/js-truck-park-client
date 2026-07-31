@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:provider/provider.dart';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -10,11 +13,18 @@ import 'auth/supabase_auth/auth_util.dart';
 
 import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
+import '/core/localization/shared_preferences_locale_store.dart';
+import '/core/theme/shared_preferences_theme_store.dart';
+import '/features/language/application/language_controller.dart';
+import '/features/deep_links/application/incoming_app_link_coordinator.dart';
+import '/features/map/application/parking_filter_controller.dart';
+import '/features/settings/application/theme_controller.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/internationalization.dart';
 import 'flutter_flow/nav/nav.dart';
 import 'index.dart';
+import 'custom_code/actions/index.dart' as actions;
 import 'flutter_flow/revenue_cat_util.dart' as revenue_cat;
 
 void main() async {
@@ -22,14 +32,36 @@ void main() async {
   GoRouter.optionURLReflectsImperativeAPIs = true;
   usePathUrlStrategy();
 
+  AppLinks? appLinks;
+  Future<Uri?>? initialAppLink;
+  if (AppConfig.current.enableDeepLinks) {
+    appLinks = AppLinks();
+    initialAppLink = _readInitialAppLink(appLinks);
+  }
+
   await SupaFlow.initialize();
 
-  await FlutterFlowTheme.initialize();
+  final themeStore = await SharedPreferencesThemeStore.create();
+  await FlutterFlowTheme.initialize(themeStore: themeStore);
+  final themeController = ThemeController(themeStore: themeStore);
 
-  await FFLocalizations.initialize();
+  final localeStore = await SharedPreferencesLocaleStore.create();
+  await FFLocalizations.initialize(localeStore: localeStore);
+  final languageController = LanguageController(localeStore: localeStore);
+  final parkingFilterController = ParkingFilterController();
 
   final appState = FFAppState(); // Initialize FFAppState
   await appState.initializePersistedState();
+
+  if (AppConfig.current.enableDeepLinks) {
+    try {
+      await actions.initChottuLink();
+      await actions.listenChottuLink();
+      unawaited(actions.recoverChottuReferral());
+    } catch (error) {
+      debugPrint('Chottu Link initialization failed: $error');
+    }
+  }
 
   if (AppConfig.current.enableRevenueCat) {
     await revenue_cat.initialize(
@@ -39,13 +71,44 @@ void main() async {
     );
   }
 
-  runApp(ChangeNotifierProvider(
-    create: (context) => appState,
-    child: MyApp(),
-  ));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => appState),
+        ChangeNotifierProvider(create: (_) => languageController),
+        ChangeNotifierProvider(create: (_) => parkingFilterController),
+        ChangeNotifierProvider(create: (_) => themeController),
+      ],
+      child: MyApp(
+        appLinks: appLinks,
+        initialAppLink: initialAppLink,
+      ),
+    ),
+  );
+}
+
+Future<Uri?> _readInitialAppLink(AppLinks appLinks) async {
+  try {
+    return await appLinks.getInitialLink();
+  } catch (error) {
+    debugPrint(
+      'Initial app link failed '
+      '[$deepLinkColdStartReleaseMarker]: ${error.runtimeType}',
+    );
+    return null;
+  }
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({
+    super.key,
+    this.appLinks,
+    this.initialAppLink,
+  });
+
+  final AppLinks? appLinks;
+  final Future<Uri?>? initialAppLink;
+
   // This widget is the root of your application.
   @override
   State<MyApp> createState() => _MyAppState();
@@ -64,12 +127,9 @@ class MyAppScrollBehavior extends MaterialScrollBehavior {
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale? _locale = FFLocalizations.getStoredLocale();
-
-  ThemeMode _themeMode = FlutterFlowTheme.themeMode;
-
   late AppStateNotifier _appStateNotifier;
   late GoRouter _router;
+  IncomingAppLinkCoordinator? _incomingAppLinks;
   String getRoute([RouteMatch? routeMatch]) {
     final RouteMatch lastMatch =
         routeMatch ?? _router.routerDelegate.currentConfiguration.last;
@@ -100,20 +160,39 @@ class _MyAppState extends State<MyApp> {
       Duration(milliseconds: 1000),
       () => _appStateNotifier.stopShowingSplashImage(),
     );
-  }
-
-  void setLocale(String language) {
-    safeSetState(() => _locale = createLocale(language));
-    FFLocalizations.storeLocale(language);
-  }
-
-  void setThemeMode(ThemeMode mode) => safeSetState(() {
-        _themeMode = mode;
-        FlutterFlowTheme.saveThemeMode(mode);
+    if (AppConfig.current.enableDeepLinks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _incomingAppLinks = IncomingAppLinkCoordinator(
+          links: widget.appLinks!.uriLinkStream,
+          initialLink: widget.initialAppLink,
+          openLocation: _router.go,
+          persistReferralCode: (referralCode) {
+            FFAppState().update(() {
+              FFAppState().tempReferralCode = referralCode;
+            });
+          },
+          onError: (error, _) {
+            debugPrint('Incoming app link failed: ${error.runtimeType}');
+          },
+        )..start();
       });
+    }
+  }
+
+  @override
+  void dispose() {
+    _incomingAppLinks?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.watch<LanguageController>().state.locale;
+    final themeMode = context.watch<ThemeController>().state.themeMode;
+
     return MaterialApp.router(
       debugShowCheckedModeBanner: AppConfig.current.isIntegration,
       title: AppConfig.current.appDisplayName,
@@ -137,7 +216,7 @@ class _MyAppState extends State<MyApp> {
         FallbackMaterialLocalizationDelegate(),
         FallbackCupertinoLocalizationDelegate(),
       ],
-      locale: _locale,
+      locale: locale,
       supportedLocales: const [
         Locale('en'),
         Locale('ru'),
@@ -150,7 +229,7 @@ class _MyAppState extends State<MyApp> {
         brightness: Brightness.dark,
         useMaterial3: false,
       ),
-      themeMode: _themeMode,
+      themeMode: themeMode,
       routerConfig: _router,
     );
   }

@@ -1,6 +1,19 @@
 # Backend security audit
 
-Дата: 2026-07-23. Scope: фактическая production-схема Supabase и Flutter callers. Проверка была read-only; SQL migrations, policies, данные и production-код не изменялись.
+Дата: 2026-07-23. Scope: фактическая production-схема Supabase и Flutter callers. Исходный аудит был read-only. Первый hardening patch реализован и проверен только в локальном Supabase; production schema, policies и данные не изменялись.
+
+## Статус первого hardening-этапа
+
+- Добавлен воспроизводимый локальный Supabase PostgreSQL 17 config.
+- Зафиксирован schema baseline существующего hosted-проекта без пользовательских данных.
+- Миграция `20260723180000_restrict_user_profile_updates.sql` удаляет table-level `UPDATE` у `anon` и `authenticated`.
+- `authenticated` получает UPDATE только для `full_name`, `avatar_url`, `updated_at`, `last_device_id`.
+- `service_role`, RLS policies, Auth trigger, RPC, таблицы и данные не меняются.
+- Два чистых `db reset` и два запуска pgTAP прошли: 20 tests, PASS в каждом запуске.
+- `supabase db diff --local --schema public`: изменений не найдено.
+- DB lint повторяет существующие замечания PostGIS и legacy-функций; новых findings от grants migration нет.
+- Flutter regression: 21 test PASS; format без изменений; analyzer — 2297 существующих warning/info, blocking errors нет.
+- Миграция в production не применялась. Finding остаётся P0 для работающего production до отдельного rollout-решения.
 
 ## Итог
 
@@ -28,6 +41,8 @@ Impact: пользователь может изменить собственн�
 3. менять `is_admin`, `is_premium`, `status`, referral linkage только server-side функциями с явной авторизацией;
 4. добавить негативные SQL tests до применения.
 
+Локальная реализация: выполнена в отдельной migration и покрыта pgTAP. Production status: не применено.
+
 ### P0 — любой authenticated user может изменять любую парковку
 
 Evidence: policy `Allow authenticated users to update parkings` имеет `USING (true) WITH CHECK (true)`. Policies permissive, поэтому она логически OR-ится с более строгой `parkings_update`.
@@ -36,9 +51,19 @@ Impact: изменение координат, адреса, владельца,
 
 Fix: удалить broad policy; разделить owner update и admin moderation. Owner должен менять только разрешённые business columns и не должен менять `status`, `created_by`, `admin_comment`, `rejection_reason`, `is_active`.
 
+Локальная реализация: начата в `20260724100000_restrict_parking_updates.sql`; migration удаляет broad policy, пересоздаёт owner/admin RLS с `WITH CHECK` и даёт authenticated UPDATE только на owner-maintained поля. pgTAP test добавлен, но локальный запуск сейчас заблокирован недоступным Docker daemon. Production status: не применено.
+
 ### P0 — публичное раскрытие профилей и персональных полей
 
 Evidence: `users_select_all` разрешает `SELECT` для `anon` и `authenticated` с `USING true`; generic Flutter adapter запрашивает `select *`.
+
+Local mitigation in progress: migration
+`20260725100000_add_profile_projections.sql` adds `public_profiles`
+(`id`, `full_name`, `avatar_url`) and owner/admin `private_profiles` views with
+pgTAP coverage. This does not close production `users SELECT *` until Flutter
+callers are verified against the projections and a separate revoke rollout is
+approved. The rollout gate is documented in
+`profile_select_rollout_checklist.md`.
 
 Exposed contract: UUID, phone, premium/admin flags, moderation status, referral relation, device id, profile fields.
 
@@ -73,6 +98,8 @@ Fix:
 - добавить уникальность referral code и controlled retry генерации;
 - rate-limit на backend/edge boundary.
 
+Локальная реализация: начата в `20260724101000_harden_process_referral.sql`; функция теперь требует authenticated EXECUTE, сравнивает `p_referee_id` с `auth.uid()`, возвращает стабильные публичные ошибки без `SQLERRM`, а Flutter RPC wrapper передаёт текущий JWT. pgTAP test добавлен, но локальный запуск сейчас заблокирован недоступным Docker daemon. Production status: не применено.
+
 ### P1 — произвольное удаление/создание parking photos
 
 Evidence:
@@ -85,6 +112,21 @@ Impact: удаление чужих photo records, подмена `user_id`, п�
 
 Fix: owner/admin delete; insert должен требовать `user_id=auth.uid()` и допустимую parking/review связь. Проверить, кто имеет право добавлять контент к существующей парковке.
 
+Локальная реализация DB-части: начата в `20260724102000_restrict_parking_photo_policies.sql`; broad insert/delete policies удалены, `photos_insert` требует `auth.uid() = user_id`, `photos_delete` оставляет owner/admin. Storage ownership не менялся, потому что storage policies пока не зафиксированы в versioned baseline. pgTAP test добавлен, но локальный запуск сейчас заблокирован недоступным Docker daemon. Production status: не применено.
+
+Локальная реализация Storage-части: начата в `20260724104000_restrict_parking_content_storage_policies.sql`; migration удаляет mutation policies для `parking_content`/stale `parking-images`, если они найдены в `pg_policies`, и создаёт owner-scoped insert/update/delete для direct parking paths и review-author paths. Миграция `20260725110000_harden_parking_content_storage_checks.sql` переносит ownership lookup в закрытую `SECURITY DEFINER` helper-функцию с пустым `search_path`: authenticated-клиенту не нужен прямой `SELECT` на `parkings`/`reviews`, а policies других buckets больше не получают permission error. Она также добавляет owner-scoped `SELECT`, необходимый PostgreSQL для UPDATE/DELETE объекта. Локальные parking-content и avatar pgTAP tests проходят. Production status: не применено.
+
+### P1 — review mutations require owner-scoped grants
+
+Current production RLS allows public review reads and owner inserts, but direct
+owner edit/delete was not available as a reviewed contract. Local migration
+`20260725120000_allow_owner_review_mutations.sql` keeps owner inserts, allows
+owner/admin update only for `comment` and five rating fields, allows owner/admin
+delete, and blocks direct client updates to `user_id`, `parking_id`,
+`created_at` and `average_score`. The contract is covered by
+`reviews_authorization_test.sql` with 16 pgTAP checks. Production status: не
+применено.
+
 ### P1 — Storage avatars не ограничены владельцем
 
 Policies `Avatar_Update` и `Avatar_Delete` проверяют только `bucket_id='avatars'`; `Avatar_Upload` также не проверяет path owner.
@@ -92,6 +134,8 @@ Policies `Avatar_Update` и `Avatar_Delete` проверяют только `buc
 Impact: authenticated user может менять или удалять чужие avatar objects при известном path. Bucket публичный, что допустимо для отображения, но write должен быть owner-only.
 
 Fix: единый path `users/<auth.uid()>/...`; INSERT/UPDATE/DELETE проверяют соответствующий segment. Не полагаться на UI path generation как на security boundary.
+
+Локальная реализация: начата в `20260724103000_restrict_avatar_storage_policies.sql`; migration удаляет bucket-only `Avatar_Upload`, `Avatar_Update`, `Avatar_Delete` и создаёт owner-scoped policies для `avatars/users/<auth.uid()>/...`. `20260725110000_harden_parking_content_storage_checks.sql` добавляет owner-scoped object `SELECT`, необходимый для UPDATE/DELETE при включённом RLS. После изоляции Storage policies локальный `storage_avatars_authorization_test.sql` проходит все 9 проверок. Production status: не применено.
 
 ### P1 — SECURITY DEFINER без безопасного `search_path`
 
@@ -130,9 +174,14 @@ Impact: неоднозначный referrer, обход device uniqueness, infor
 
 Impact: некорректные агрегаты, невозможные координаты, drift business states.
 
+Report creation RLS is now covered by a local pgTAP contract test for the
+current owner-only insert and owner/admin select behavior. This does not change
+the typo default or add enum/check constraints; those remain separate backend
+hardening tasks after data audit.
+
 ### P2 — публичные buckets и stale policies
 
-`assets`, `avatars`, `parking_content` публичные. Это может быть намеренно для UI, но URL не должен считаться приватным. В policies остались правила для отсутствующего `parking-images`; правила `parking_content` дублируются и используют разные path assumptions.
+`assets`, `avatars`, `parking_content` публичные. Это может быть намеренно для UI, но URL не должен считаться приватным. Локальные migrations теперь закрывают avatar и parking_content write/delete по owner path; до production rollout нужен read-only diff hosted Storage policies, чтобы подтвердить отсутствие дополнительных permissive rules.
 
 ### P2 — неограниченные read RPC
 
@@ -143,7 +192,7 @@ Impact: resource abuse и неожиданный объём ответа. Нуж
 ## Положительные свойства текущей схемы
 
 - RLS включён на всех прикладных tables.
-- Все четыре views используют `security_invoker=true`.
+- Существующие views используют `security_invoker=true`.
 - Favorites ownership выражен через `auth.uid()` и уникальную пару user/parking.
 - Review insert и report insert проверяют `user_id=auth.uid()`.
 - `referral_stats` имеет unique device/referee constraints.
@@ -218,9 +267,9 @@ Impact: resource abuse и неожиданный объём ответа. Нуж
 Команды выполняются только против локального Supabase или отдельного staging project:
 
 ```bash
-supabase start
+supabase start -x vector,logflare,studio,storage-api,imgproxy,edge-runtime,mailpit,postgres-meta,postgrest,realtime,gotrue,kong,supavisor
 supabase db reset
-supabase test db
+supabase test db supabase/tests/database/users_authorization_test.sql --local
 supabase db lint --level warning
 supabase db diff --local --schema public,storage
 dart format --output=none --set-exit-if-changed lib test

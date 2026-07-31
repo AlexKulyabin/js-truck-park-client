@@ -42,6 +42,39 @@ void main() {
       }
     });
 
+    test('allows the read-only profile shell', () {
+      expect(
+        integrationReadOnlyRedirect(
+          enabled: true,
+          loggedIn: true,
+          requestedPath: '/profile',
+        ),
+        isNull,
+      );
+    });
+
+    test('allows read-only profile destinations', () {
+      for (final path in [
+        '/payWall',
+        '/requests',
+        '/moderationParking',
+        '/acceptedParking',
+        '/rejectedParking',
+        '/reviewsAndComplaints',
+        '/favourites',
+      ]) {
+        expect(
+          integrationReadOnlyRedirect(
+            enabled: true,
+            loggedIn: true,
+            requestedPath: path,
+          ),
+          isNull,
+          reason: path,
+        );
+      }
+    });
+
     test('redirects authenticated users away from write-capable routes', () {
       for (final path in [
         '/registration',

@@ -19,12 +19,10 @@ import 'package:provider/provider.dart';
 class ProfileModel extends FlutterFlowModel<ProfileWidget> {
   ///  Local state fields for this page.
 
-  bool tempInvite = false;
-
   ///  State fields for stateful widgets in this page.
 
-  // Stores action output result for [Backend Call - Query Rows] action in InviteContainer widget.
-  List<UsersRow>? currentUserOut;
+  // Stores action output result for [Profile service - Referral Code] action in InviteContainer widget.
+  String? currentUserReferralCode;
   // Stores action output result for [Custom Action - createReferralLink] action in InviteContainer widget.
   String? referralLink;
 

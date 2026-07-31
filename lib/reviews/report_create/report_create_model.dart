@@ -1,6 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
+import '/features/reports/data/reports_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -24,8 +25,9 @@ class ReportCreateModel extends FlutterFlowModel<ReportCreateWidget> {
   FocusNode? textFieldFocusNode;
   TextEditingController? textController;
   String? Function(BuildContext, String?)? textControllerValidator;
-  // Stores action output result for [Backend Call - Insert Row] action in Button widget.
-  ReportsRow? createReportOut;
+  final reportsService = ReportsService();
+  // Stores action output result for [ReportsService.createReport] action in Button widget.
+  CreatedReport? createReportOut;
 
   @override
   void initState(BuildContext context) {}

@@ -10,10 +10,14 @@ void main() {
       );
     });
 
-    test('uses only visible height when the keyboard is open', () {
+    test('leaves a top safe-area gutter when the keyboard is open', () {
       expect(
-        searchPanelMaxHeight(screenHeight: 800, keyboardInset: 300),
-        500,
+        searchPanelMaxHeight(
+          screenHeight: 800,
+          keyboardInset: 300,
+          topSafeAreaInset: 24,
+        ),
+        464,
       );
     });
 
