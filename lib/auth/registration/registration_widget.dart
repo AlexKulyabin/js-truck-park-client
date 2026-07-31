@@ -473,6 +473,13 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                   _model.nameTextController.text == ''))
                           ? null
                           : () async {
+                              final freshDeviceId = await actions.getDeviceId();
+                              if (freshDeviceId.isNotEmpty) {
+                                FFAppState().deviceId = freshDeviceId;
+                              }
+                              final registrationDeviceId =
+                                  FFAppState().deviceId;
+
                               if (_model.photo != null &&
                                   (_model.photo?.bytes?.isNotEmpty ?? false)) {
                                 {
@@ -522,7 +529,7 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                     'full_name': _model.nameTextController.text,
                                     'avatar_url':
                                         _model.uploadedFileUrl_uploadData9f,
-                                    'last_device_id': FFAppState().deviceId,
+                                    'last_device_id': registrationDeviceId,
                                   },
                                   matchingRows: (rows) => rows.eqOrNull(
                                     'id',
@@ -533,7 +540,7 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                 await UsersTable().update(
                                   data: {
                                     'full_name': _model.nameTextController.text,
-                                    'last_device_id': FFAppState().deviceId,
+                                    'last_device_id': registrationDeviceId,
                                   },
                                   matchingRows: (rows) => rows.eqOrNull(
                                     'id',
@@ -547,11 +554,29 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                               }
 
                               if (FFAppState().tempReferralCode.isNotEmpty) {
+                                if (registrationDeviceId.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Не удалось определить устройство. '
+                                        'Повторите попытку.',
+                                        style: TextStyle(
+                                          color: FlutterFlowTheme.of(context)
+                                              .primaryText,
+                                        ),
+                                      ),
+                                      duration: Duration(milliseconds: 4000),
+                                      backgroundColor:
+                                          FlutterFlowTheme.of(context).accent2,
+                                    ),
+                                  );
+                                  return;
+                                }
                                 _model.apiResult8fn =
                                     await ProcessReferralCall.call(
                                   refCode: FFAppState().tempReferralCode,
                                   refereeId: currentUserUid,
-                                  deviceId: FFAppState().deviceId,
+                                  deviceId: registrationDeviceId,
                                   userToken: SupaFlow.client.auth.currentSession
                                           ?.accessToken ??
                                       currentJwtToken,

@@ -169,6 +169,9 @@ class _MyAppState extends State<MyApp> {
           links: widget.appLinks!.uriLinkStream,
           initialLink: widget.initialAppLink,
           openLocation: _router.go,
+          openReferralLink: (uri) {
+            unawaited(actions.captureChottuReferralUrl(uri.toString()));
+          },
           persistReferralCode: (referralCode) {
             FFAppState().update(() {
               FFAppState().tempReferralCode = referralCode;

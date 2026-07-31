@@ -13,17 +13,20 @@ class IncomingAppLinkCoordinator {
   IncomingAppLinkCoordinator({
     required Stream<Uri> links,
     required void Function(String location) openLocation,
+    required void Function(Uri uri) openReferralLink,
     required void Function(String referralCode) persistReferralCode,
     Future<Uri?>? initialLink,
     IncomingAppLinkErrorHandler? onError,
   })  : _links = links,
         _openLocation = openLocation,
+        _openReferralLink = openReferralLink,
         _persistReferralCode = persistReferralCode,
         _initialLink = initialLink,
         _onError = onError;
 
   final Stream<Uri> _links;
   final void Function(String location) _openLocation;
+  final void Function(Uri uri) _openReferralLink;
   final void Function(String referralCode) _persistReferralCode;
   final Future<Uri?>? _initialLink;
   final IncomingAppLinkErrorHandler? _onError;
@@ -74,6 +77,11 @@ class IncomingAppLinkCoordinator {
   }
 
   bool handle(Uri uri) {
+    if (isChottuReferralLink(uri)) {
+      _openReferralLink(uri);
+      return true;
+    }
+
     final link = resolveIncomingAppLink(uri);
     if (link == null) {
       return false;

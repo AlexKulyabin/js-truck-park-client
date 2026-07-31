@@ -21,6 +21,8 @@ import '/features/referrals/referral_links.dart';
 
 StreamSubscription<ResolvedLink>? _chottuLinkSubscription;
 Future<bool>? _referralRecoveryInFlight;
+Future<bool>? _referralLinkCaptureInFlight;
+const referralLinkCaptureReleaseMarker = 'referral-link-capture-v2';
 
 Future listenChottuLink() async {
   if (_chottuLinkSubscription != null) {
@@ -28,18 +30,82 @@ Future listenChottuLink() async {
   }
 
   _chottuLinkSubscription = ChottuLink.onLinkReceivedWithMeta.listen((link) {
-    _persistReferralCode(
-      referralCodeFromUrls([
-        link.link,
-        link.shortLink,
-        link.shortLinkRaw,
-      ]),
-    );
+    unawaited(_captureResolvedChottuLink(link));
   });
 }
 
+/// Resolves a Chottu URL observed by the independent platform-link channel.
+///
+/// This is a fallback for cold starts where the native Chottu event can be
+/// emitted before Dart attaches its event-stream listener.
+Future<bool> captureChottuReferralUrl(String url) async {
+  final inFlight = _referralLinkCaptureInFlight;
+  if (inFlight != null) {
+    return inFlight;
+  }
+
+  final capture = _captureChottuReferralUrl(url);
+  _referralLinkCaptureInFlight = capture;
+  try {
+    return await capture;
+  } finally {
+    if (identical(_referralLinkCaptureInFlight, capture)) {
+      _referralLinkCaptureInFlight = null;
+    }
+  }
+}
+
+Future<bool> _captureChottuReferralUrl(String url) async {
+  if (_persistReferralCode(referralCodeFromUrl(url))) {
+    return true;
+  }
+  if (!isValidReferralShortLink(url)) {
+    return false;
+  }
+
+  try {
+    final resolved = await _resolveShortUrl(url);
+    return _persistReferralCode(
+      referralCodeFromUrls([
+        resolved?.link,
+        resolved?.shortLink,
+        resolved?.shortLinkRaw,
+      ]),
+    );
+  } catch (error) {
+    debugPrint(
+      'Chottu URL capture failed '
+      '[$referralLinkCaptureReleaseMarker]: ${error.runtimeType}',
+    );
+    return false;
+  }
+}
+
+Future<bool> _captureResolvedChottuLink(ResolvedLink link) async {
+  final values = [link.link, link.shortLink, link.shortLinkRaw];
+  if (_persistReferralCode(referralCodeFromUrls(values))) {
+    return true;
+  }
+
+  for (final value in values) {
+    if (isValidReferralShortLink(value)) {
+      return captureChottuReferralUrl(value!);
+    }
+  }
+  return false;
+}
+
 Future<bool> recoverChottuReferral() async {
-  if (!Platform.isAndroid || FFAppState().tempReferralCode.isNotEmpty) {
+  final pendingCapture = _referralLinkCaptureInFlight;
+  if (pendingCapture != null && await pendingCapture) {
+    return true;
+  }
+
+  if (!shouldAttemptDeferredReferralRecovery(
+    isAndroid: Platform.isAndroid,
+    isIOS: Platform.isIOS,
+    hasReferralCode: FFAppState().tempReferralCode.isNotEmpty,
+  )) {
     return FFAppState().tempReferralCode.isNotEmpty;
   }
 

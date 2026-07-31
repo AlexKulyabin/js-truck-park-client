@@ -3,6 +3,9 @@ import '../deep_links/domain/deep_link_contract.dart';
 const referralHostingDomain = productionHostingDomain;
 const referralHostingRelayPath = productionHostingRelayPath;
 const referralRoute = 'splash';
+const referralLinkFallbackReleaseMarker = 'referral-link-fallback-v1';
+
+bool isUsableReferralCode(String? value) => value?.trim().isNotEmpty == true;
 
 /// Builds the destination stored inside a Chottu short link.
 ///
@@ -19,6 +22,14 @@ Uri buildReferralDestinationUri(String referralCode) {
       'ref': referralCode.trim(),
     },
   );
+}
+
+bool isValidReferralShortLink(String? value) {
+  final uri = Uri.tryParse(value?.trim() ?? '');
+  return uri != null &&
+      uri.scheme == 'https' &&
+      uri.host == productionChottuLinkDomain &&
+      uri.pathSegments.isNotEmpty;
 }
 
 /// Extracts a pending referral code from a resolved Chottu or hosting URL.

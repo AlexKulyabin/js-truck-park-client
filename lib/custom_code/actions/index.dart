@@ -7,6 +7,7 @@ export 'fetch_premium_expiration_date.dart' show fetchPremiumExpirationDate;
 export 'get_smart_subscription_prices.dart' show getSmartSubscriptionPrices;
 export 'purchase_smart_package.dart' show purchaseSmartPackage;
 export 'init_chottu_link.dart' show initChottuLink;
-export 'listen_chottu_link.dart' show listenChottuLink, recoverChottuReferral;
+export 'listen_chottu_link.dart'
+    show listenChottuLink, captureChottuReferralUrl, recoverChottuReferral;
 export 'create_referral_link.dart' show createReferralLink;
 export 'wait_for_referral_code.dart' show waitForReferralCode;

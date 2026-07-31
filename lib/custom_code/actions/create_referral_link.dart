@@ -21,17 +21,30 @@ Future<String> createReferralLink(String referralCode) async {
   final completer = Completer<String>();
 
   try {
+    if (!isUsableReferralCode(referralCode)) {
+      return 'ERROR [$referralLinkFallbackReleaseMarker]: '
+          'missing referral code';
+    }
     final parameters = CLDynamicLinkParameters(
       link: buildReferralDestinationUri(referralCode),
       domain: productionChottuLinkDomain,
       androidBehaviour: CLDynamicLinkBehaviour.app,
-      iosBehaviour: CLDynamicLinkBehaviour.app,
+      // Chottu's app fallback can remain blank in embedded iOS browsers.
+      // Browser mode reaches our relay, which opens the app or the store.
+      iosBehaviour: CLDynamicLinkBehaviour.browser,
     );
 
     ChottuLink.createDynamicLink(
       parameters: parameters,
       onSuccess: (link) {
-        if (!completer.isCompleted) completer.complete(link);
+        if (!completer.isCompleted) {
+          completer.complete(
+            isValidReferralShortLink(link)
+                ? link
+                : 'ERROR [$referralLinkFallbackReleaseMarker]: '
+                    'invalid ChottuLink response',
+          );
+        }
       },
       onError: (error) {
         if (!completer.isCompleted) {

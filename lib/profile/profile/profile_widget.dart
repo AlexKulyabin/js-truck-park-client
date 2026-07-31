@@ -3,6 +3,7 @@ import '/backend/supabase/supabase.dart';
 import '/core/config/app_config.dart';
 import '/features/profile/application/profile_controller.dart';
 import '/features/profile/data/user_profile_service.dart';
+import '/features/referrals/referral_links.dart';
 import '/features/settings/presentation/theme_mode_toggle.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -1013,11 +1014,33 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                   userId: currentUserUid,
                                 );
                                 _shouldSetState = true;
+                                if (!isUsableReferralCode(
+                                    _model.currentUserReferralCode)) {
+                                  if (context.mounted) {
+                                    showSnackbar(
+                                      context,
+                                      'Could not load your invite code. Please try again.',
+                                    );
+                                  }
+                                  if (_shouldSetState) safeSetState(() {});
+                                  return;
+                                }
                                 _model.referralLink =
                                     await actions.createReferralLink(
                                   _model.currentUserReferralCode!,
                                 );
                                 _shouldSetState = true;
+                                if (!isValidReferralShortLink(
+                                    _model.referralLink)) {
+                                  if (context.mounted) {
+                                    showSnackbar(
+                                      context,
+                                      'Could not create invite link. Please try again.',
+                                    );
+                                  }
+                                  if (_shouldSetState) safeSetState(() {});
+                                  return;
+                                }
                                 await showDialog(
                                   barrierColor:
                                       FlutterFlowTheme.of(context).overlay,

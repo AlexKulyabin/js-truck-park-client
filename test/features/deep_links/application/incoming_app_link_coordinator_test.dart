@@ -12,6 +12,7 @@ void main() {
     final coordinator = IncomingAppLinkCoordinator(
       links: links.stream,
       openLocation: locations.add,
+      openReferralLink: (_) {},
       persistReferralCode: referralCodes.add,
     );
     addTearDown(coordinator.dispose);
@@ -28,13 +29,16 @@ void main() {
     expect(referralCodes, ['REF-1']);
   });
 
-  test('ignores Chottu and foreign links', () async {
+  test('hands Chottu links to the referral owner and ignores foreign links',
+      () async {
     final links = StreamController<Uri>();
     addTearDown(links.close);
     final locations = <String>[];
+    final referralLinks = <Uri>[];
     final coordinator = IncomingAppLinkCoordinator(
       links: links.stream,
       openLocation: locations.add,
+      openReferralLink: referralLinks.add,
       persistReferralCode: (_) {},
     );
     addTearDown(coordinator.dispose);
@@ -47,6 +51,9 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(locations, isEmpty);
+    expect(referralLinks, [
+      Uri.parse('https://js-truck-park.chottu.link/referral'),
+    ]);
   });
 
   test('opens a cold-start initial link', () async {
@@ -58,6 +65,7 @@ void main() {
       links: links.stream,
       initialLink: initialLink.future,
       openLocation: locations.add,
+      openReferralLink: (_) {},
       persistReferralCode: (_) {},
     );
     addTearDown(coordinator.dispose);
@@ -77,6 +85,31 @@ void main() {
     );
   });
 
+  test('hands a cold-start Chottu link to the referral owner', () async {
+    final links = StreamController<Uri>();
+    addTearDown(links.close);
+    final initialLink = Completer<Uri?>();
+    final referralLinks = <Uri>[];
+    final coordinator = IncomingAppLinkCoordinator(
+      links: links.stream,
+      initialLink: initialLink.future,
+      openLocation: (_) {},
+      openReferralLink: referralLinks.add,
+      persistReferralCode: (_) {},
+    );
+    addTearDown(coordinator.dispose);
+
+    coordinator.start();
+    initialLink.complete(
+      Uri.parse('https://js-truck-park.chottu.link/cold-start'),
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    expect(referralLinks, [
+      Uri.parse('https://js-truck-park.chottu.link/cold-start'),
+    ]);
+  });
+
   test('does not open the same initial and stream link twice', () async {
     final links = StreamController<Uri>();
     addTearDown(links.close);
@@ -86,6 +119,7 @@ void main() {
       links: links.stream,
       initialLink: initialLink.future,
       openLocation: locations.add,
+      openReferralLink: (_) {},
       persistReferralCode: (_) {},
     );
     addTearDown(coordinator.dispose);

@@ -83,10 +83,11 @@ void main() {
 
   group('link ownership', () {
     test('leaves Chottu links to the ChottuLink SDK', () {
+      final uri = Uri.parse('https://js-truck-park.chottu.link/referral-path');
+
+      expect(isChottuReferralLink(uri), isTrue);
       expect(
-        resolveIncomingAppLink(
-          Uri.parse('https://js-truck-park.chottu.link/referral-path'),
-        ),
+        resolveIncomingAppLink(uri),
         isNull,
       );
     });

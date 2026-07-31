@@ -25,7 +25,7 @@ const _allowedParameters = <String, Set<String>>{
 /// Chottu HTTPS links intentionally return null because the ChottuLink SDK is
 /// their single owner and resolves their deferred destination separately.
 IncomingAppLink? resolveIncomingAppLink(Uri uri) {
-  if (_isChottuLink(uri) || !_isLegacyHostingLink(uri)) {
+  if (isChottuReferralLink(uri) || !_isLegacyHostingLink(uri)) {
     return null;
   }
 
@@ -51,7 +51,7 @@ IncomingAppLink? resolveIncomingAppLink(Uri uri) {
   );
 }
 
-bool _isChottuLink(Uri uri) =>
+bool isChottuReferralLink(Uri uri) =>
     uri.scheme == 'https' && uri.host == productionChottuLinkDomain;
 
 bool _isLegacyHostingLink(Uri uri) {

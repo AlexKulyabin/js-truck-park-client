@@ -2,6 +2,13 @@ import 'referral_links.dart';
 
 const deferredReferralReleaseMarker = 'referral-deferred-recovery-v3';
 
+bool shouldAttemptDeferredReferralRecovery({
+  required bool isAndroid,
+  required bool isIOS,
+  required bool hasReferralCode,
+}) =>
+    (isAndroid || isIOS) && !hasReferralCode;
+
 class DeferredReferralAttribution {
   const DeferredReferralAttribution({
     required this.isAttributed,

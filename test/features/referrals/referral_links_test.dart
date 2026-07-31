@@ -3,6 +3,12 @@ import 'package:j_s_truck_park/features/referrals/referral_links.dart';
 
 void main() {
   group('referral hosting destination', () {
+    test('requires a non-empty referral code', () {
+      expect(isUsableReferralCode(' CODE-123 '), isTrue);
+      expect(isUsableReferralCode('  '), isFalse);
+      expect(isUsableReferralCode(null), isFalse);
+    });
+
     test('uses the existing hosting relay and the splash route', () {
       final uri = buildReferralDestinationUri('CODE-123');
 
@@ -60,6 +66,26 @@ void main() {
         ]),
         'DEFERRED',
       );
+    });
+  });
+
+  group('referral short-link validation', () {
+    test('accepts a generated Chottu short link', () {
+      expect(
+        isValidReferralShortLink(
+          'https://js-truck-park.chottu.link/referral-path',
+        ),
+        isTrue,
+      );
+    });
+
+    test('rejects errors, the bare domain and foreign links', () {
+      expect(isValidReferralShortLink('ERROR: request failed'), isFalse);
+      expect(
+        isValidReferralShortLink('https://js-truck-park.chottu.link'),
+        isFalse,
+      );
+      expect(isValidReferralShortLink('https://example.com/referral'), isFalse);
     });
   });
 }

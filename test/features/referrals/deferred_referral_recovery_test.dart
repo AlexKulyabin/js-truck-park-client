@@ -2,6 +2,41 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:j_s_truck_park/features/referrals/deferred_referral_recovery.dart';
 
 void main() {
+  test('attempts recovery on Android and iOS only when no code exists', () {
+    expect(
+      shouldAttemptDeferredReferralRecovery(
+        isAndroid: true,
+        isIOS: false,
+        hasReferralCode: false,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldAttemptDeferredReferralRecovery(
+        isAndroid: false,
+        isIOS: true,
+        hasReferralCode: false,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldAttemptDeferredReferralRecovery(
+        isAndroid: false,
+        isIOS: true,
+        hasReferralCode: true,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldAttemptDeferredReferralRecovery(
+        isAndroid: false,
+        isIOS: false,
+        hasReferralCode: false,
+      ),
+      isFalse,
+    );
+  });
+
   test('retries attribution with the bounded recovery schedule', () async {
     var reads = 0;
     final pauses = <Duration>[];
