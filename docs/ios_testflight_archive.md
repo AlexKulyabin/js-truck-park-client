@@ -69,18 +69,156 @@ Validation reports that `ChottuLinkSDK.framework` does not include its matching
 crashes inside that binary framework cannot be fully symbolicated. Treat an SDK
 upgrade or vendor-provided dSYM as a separate dependency stage.
 
+## Build 51 follow-up
+
+Build 50 did not pass the iOS deferred-install referral acceptance test. The
+click opened the production App Store listing, but installing build 50 from
+TestFlight and registering a fresh account did not apply referral eligibility.
+The release client skipped deferred-attribution recovery on iOS because the
+recovery entry point was restricted to Android.
+
+Build `1.0.16 (51)` contains two focused fixes:
+
+- run the existing bounded Chottu attribution recovery on iOS as well as
+  Android;
+- refresh visible reviews and complaints after their create operation succeeds.
+
+No Supabase contract, policy or production data change is part of build 51.
+
+Local release verification completed on 2026-07-31:
+
+- unsigned release compilation: successful;
+- signed archive: `build/ios/archive/Runner.xcarchive`;
+- App Store IPA export: `build/ios/ipa/JS Truck Park.ipa`;
+- archive version/build: `1.0.16 (51)`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful.
+
+Xcode uploaded build 51 to App Store Connect on 2026-07-31 using the signed-in
+team account. App Store Connect accepted the package and started processing it.
+The only upload warning was the already documented missing
+`ChottuLinkSDK.framework` dSYM. Group assignment remains an explicit TestFlight
+step after processing completes.
+
 ## TestFlight checklist
 
-After App Store Connect finishes processing build 50:
+After App Store Connect finishes processing build 51:
 
 1. Add the build to the internal `Dev` group.
 2. Install it through TestFlight on a compatible physical iPhone.
 3. Open a fresh Chottu referral link with the app terminated and while it is
    running.
-4. Repeat the deferred-install referral flow with a fresh account.
+4. Confirm an installed-app referral reaches registration with a fresh account.
 5. Verify parking and shared-photo links.
 6. Verify map rendering, review creation, photo upload and subscription loading.
 7. Do not submit the build to App Review until the closed-test checklist passes.
+
+Chottu's current troubleshooting guide states that deferred deep linking does
+not work with TestFlight builds. TestFlight can verify link delivery and the
+normal user flows, but it cannot be used to accept the post-install referral
+discount. Use a local Xcode installation or a live App Store build for that
+specific test.
+
+## Build 52 follow-up
+
+The Telegram blank-page report and Android Flutter launcher icon were diagnosed
+after build 51 had already been uploaded. The local build-52 source changes:
+
+- route the Chottu iOS browser path through the Hosting relay;
+- reject invalid Chottu creation responses before opening the share dialog;
+- replace the default Android Flutter mipmaps with the JS Truck Park icon.
+
+Build 52 has not been archived or uploaded. The Hosting relay's prepared public
+store fallback commit `2b2572a` must be deployed separately with explicit
+production-write approval before this iOS browser fallback is released to
+production users.
+
+## Build 53 upload
+
+Build `1.0.16 (53)` includes the build-52 changes plus the focused referral
+capture fallback for Chottu URLs observed before the Chottu SDK event arrives.
+It also preserves the immediate review and complaint refresh behavior.
+
+Local and upload verification completed on 2026-07-31:
+
+- signed archive version/build: `1.0.16 (53)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.16-53.ipa`;
+- IPA SHA-256:
+  `38f1d4c5465c2f5fefb9e37918e0ddf2c1a2214ab728e4b168fe433d1bb51f7e`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict archive and exported-app code-signature verification: successful;
+- App Store Connect upload: successful and processing started;
+- App Review submission: not performed.
+
+The upload produced the same non-blocking missing
+`ChottuLinkSDK.framework` dSYM warning documented for builds 50 and 51. Assign
+build 53 to the internal `Dev` group only after App Store Connect processing
+completes.
+
+## Build 54 local candidate
+
+Build `1.0.16 (54)` refreshes the parking details summary after a successful
+review submission. The visible review count, photo count and parking gallery
+now update together with the review list without closing the bottom sheet.
+
+Local verification completed on 2026-07-31:
+
+- signed archive version/build: `1.0.16 (54)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.16-54.ipa`;
+- IPA SHA-256:
+  `efe4aab29ada4e2be488a0e260f98e96a3b8c09c0aee8abac47c1d3eeea15c8a`;
+- Apple Distribution team: `8XNBY3768H`;
+- bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- App Store Connect upload: successful and processing started;
+- App Review submission: not performed.
+
+The build-54 upload produced the same non-blocking missing
+`ChottuLinkSDK.framework` dSYM warning as the previous TestFlight uploads.
+Assign build 54 to the internal `Dev` group after processing completes.
+
+## Build 55 accepted candidate
+
+Build `1.0.16 (55)` refreshes and validates the platform device identifier at
+registration time and waits for an active Chottu short-link resolution before
+attempting referral processing. Android now uses the app-scoped Android ID
+instead of the shared firmware build label; iOS continues to use IDFV.
+
+This is a client-only change. No production Supabase write was performed while
+diagnosing or preparing the candidate.
+
+Local verification completed on 2026-07-31:
+
+- signed archive version/build: `1.0.16 (55)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.16-55.ipa`;
+- IPA SHA-256:
+  `fe456db94ca214dda5ce7e04113d3c7c13bad69c0fce336d91528b9f61596602`;
+- Apple Distribution team: `8XNBY3768H`;
+- bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict archive and exported-app code-signature verification: successful;
+- App Store Connect upload: successful and processing started;
+- App Review submission: not performed.
+
+The upload produced the same non-blocking missing
+`ChottuLinkSDK.framework` dSYM warning as builds 50, 51, 53 and 54. Build 55
+finished processing and was made available to the internal `Dev` group.
+
+Physical-device acceptance testing completed successfully before production
+submission preparation: the iOS UI updates were visible immediately, the
+referral link opened the installed TestFlight application, and a fresh user
+received the referral discount. Build 55 is the production candidate. The
+Firebase Hosting relay was separately deployed on 2026-08-01 with the public
+App Store and Google Play destinations.
 
 ## Rollback
 

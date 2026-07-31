@@ -64,12 +64,13 @@ if [[ ! -f "$output_dir/app-release.aab" ]]; then
   echo "Flutter did not produce the expected app-release.aab." >&2
   exit 1
 fi
-cp "$output_dir/app-release.aab" "$artifact"
+mv "$output_dir/app-release.aab" "$artifact"
 
 tmp_dir="$(mktemp -d)"
 unzip -q "$artifact" \
   'base/lib/arm64-v8a/libapp.so' \
   'base/manifest/AndroidManifest.xml' \
+  'base/res/mipmap-xxxhdpi-v4/ic_launcher.png' \
   -d "$tmp_dir"
 
 compiled_strings="$tmp_dir/libapp.strings"
@@ -78,9 +79,14 @@ strings "$tmp_dir/base/lib/arm64-v8a/libapp.so" > "$compiled_strings"
 for marker in \
   'profile-invite-action' \
   'public-parking-details-photo-gallery' \
+  'public-parking-reviews-count' \
+  'public-parking-photos-count' \
   'public-parking-details-scroll-view' \
   'deep-link-cold-start-v1' \
-  'referral-deferred-recovery-v3'; do
+  'referral-deferred-recovery-v3' \
+  'referral-link-fallback-v1' \
+  'referral-link-capture-v2' \
+  'referral-device-identity-v1'; do
   if ! grep -Fq "$marker" "$compiled_strings"; then
     echo "Release marker missing from AAB: $marker" >&2
     exit 1
@@ -111,6 +117,14 @@ if ! grep -Fq "versionName" <<<"$manifest_dump" ||
   exit 1
 fi
 
+launcher_icon="$tmp_dir/base/res/mipmap-xxxhdpi-v4/ic_launcher.png"
+launcher_icon_size="$(stat -f '%z' "$launcher_icon")"
+if (( launcher_icon_size < 10000 )); then
+  echo "AAB launcher icon matches the small Flutter placeholder profile." >&2
+  exit 1
+fi
+launcher_icon_sha="$(shasum -a 256 "$launcher_icon" | awk '{print $1}')"
+
 signing_dump="$(LC_ALL=C keytool -printcert -jarfile "$artifact")"
 actual_upload_sha256="$(sed -n 's/^[[:space:]]*SHA256: //p' <<<"$signing_dump" | head -1)"
 if [[ "$actual_upload_sha256" != "$expected_upload_sha256" ]]; then
@@ -127,8 +141,9 @@ git_commit=$git_sha
 git_branch=$git_branch
 sha256=$artifact_sha
 upload_certificate_sha256=$actual_upload_sha256
+launcher_icon_sha256=$launcher_icon_sha
 built_at_utc=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-release_markers=profile-invite-action,public-parking-details-photo-gallery,public-parking-details-scroll-view,deep-link-cold-start-v1,referral-deferred-recovery-v3
+release_markers=profile-invite-action,public-parking-details-photo-gallery,public-parking-reviews-count,public-parking-photos-count,public-parking-details-scroll-view,deep-link-cold-start-v1,referral-deferred-recovery-v3,referral-link-fallback-v1,referral-link-capture-v2,referral-device-identity-v1
 EOF
 
 printf 'AAB: %s\n' "$artifact"

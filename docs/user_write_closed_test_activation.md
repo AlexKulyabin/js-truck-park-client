@@ -97,9 +97,13 @@ Do not promote the tested artifact beyond the closed-test track if:
 ## iOS prerequisite status
 
 Completed on 2026-07-31. Associated Domains and the App Store provisioning
-profile are active, and `1.0.16 (50)` was uploaded to App Store Connect. The
-remaining iOS work is the physical-device TestFlight acceptance checklist in
-`docs/ios_testflight_archive.md`.
+profile are active. Build `1.0.16 (50)` was uploaded to App Store Connect but
+did not pass the iOS referral acceptance test. Builds 51 through 54 addressed
+the iOS attribution recovery, immediate feedback refresh, store fallback,
+launcher icon and visible review/photo counters. Build `1.0.16 (55)` fixes the
+platform device identity and installed-link registration race; it was uploaded
+to App Store Connect and passed physical-device referral, discount and UI
+acceptance testing. See `docs/ios_testflight_archive.md`.
 
 ## Rollback
 
