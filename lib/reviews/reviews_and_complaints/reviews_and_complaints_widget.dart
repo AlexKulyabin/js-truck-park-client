@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '/auth/supabase_auth/auth_util.dart';
 import '/features/reviews/application/user_reviews_controller.dart';
+import '/features/reviews/application/user_feedback_mutation_events.dart';
 import '/features/reviews/data/supabase_user_reviews_repository.dart';
 import '/features/reviews/domain/user_complaint_summary.dart';
 import '/features/reviews/domain/user_reviews_repository.dart';
@@ -36,6 +37,7 @@ class _ReviewsAndComplaintsWidgetState
     extends State<ReviewsAndComplaintsWidget> {
   late ReviewsAndComplaintsModel _model;
   late final UserReviewsController _controller;
+  StreamSubscription<UserFeedbackMutation>? _feedbackMutationSubscription;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -47,6 +49,9 @@ class _ReviewsAndComplaintsWidgetState
       repository: widget.repository ?? SupabaseUserReviewsRepository(),
       userId: widget.userId ?? currentUserUid,
     )..addListener(_onStateChanged);
+    _feedbackMutationSubscription = UserFeedbackMutationEvents.stream.listen(
+      _onFeedbackMutation,
+    );
     unawaited(_controller.loadReviews());
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
@@ -54,6 +59,7 @@ class _ReviewsAndComplaintsWidgetState
 
   @override
   void dispose() {
+    unawaited(_feedbackMutationSubscription?.cancel());
     _controller
       ..removeListener(_onStateChanged)
       ..dispose();
@@ -65,6 +71,19 @@ class _ReviewsAndComplaintsWidgetState
   void _onStateChanged() {
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  void _onFeedbackMutation(UserFeedbackMutation mutation) {
+    switch (mutation) {
+      case UserFeedbackMutation.reviewCreated:
+        if (_controller.state.reviews.phase != UserReviewsLoadPhase.idle) {
+          unawaited(_controller.loadReviews());
+        }
+      case UserFeedbackMutation.complaintCreated:
+        if (_controller.state.complaints.phase != UserReviewsLoadPhase.idle) {
+          unawaited(_controller.loadComplaints());
+        }
     }
   }
 

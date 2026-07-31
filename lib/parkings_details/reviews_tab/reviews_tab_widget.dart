@@ -3,6 +3,7 @@ import '/core/config/app_config.dart';
 import '/features/parking_details/application/parking_details_controller.dart';
 import '/features/parking_details/domain/parking_details.dart';
 import '/features/parking_details/presentation/parking_review_card.dart';
+import '/features/reviews/application/user_feedback_mutation_events.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -40,6 +41,7 @@ class ReviewsTabWidget extends StatefulWidget {
 
 class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
   late ReviewsTabModel _model;
+  StreamSubscription<UserFeedbackMutation>? _feedbackMutationSubscription;
 
   @override
   void setState(VoidCallback callback) {
@@ -52,6 +54,14 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
     super.initState();
     _model = createModel(context, () => ReviewsTabModel());
     widget.detailsController.addListener(_onReviewsStateChanged);
+    _feedbackMutationSubscription = UserFeedbackMutationEvents.stream.listen(
+      (mutation) {
+        if (mutation == UserFeedbackMutation.reviewCreated) {
+          unawaited(widget.detailsController.loadReviews());
+          unawaited(widget.detailsController.refreshDetails());
+        }
+      },
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -69,6 +79,7 @@ class _ReviewsTabWidgetState extends State<ReviewsTabWidget> {
 
   @override
   void dispose() {
+    unawaited(_feedbackMutationSubscription?.cancel());
     widget.detailsController.removeListener(_onReviewsStateChanged);
     _model.maybeDispose();
 

@@ -82,6 +82,43 @@ void main() {
     controller.dispose();
   });
 
+  test('refreshes details without replacing the loaded state', () async {
+    final refresh = Completer<ParkingDetails?>();
+    final repository = _FakeRepository()
+      ..details = const ParkingDetails(
+        id: 'parking-1',
+        isFavorited: false,
+        reviewsCount: 1,
+        photosCount: 0,
+      );
+    final controller = ParkingDetailsController(
+      repository: repository,
+      parkingId: 'parking-1',
+    );
+
+    await controller.loadDetails();
+    repository.detailLoads.add(refresh);
+    final refreshFuture = controller.refreshDetails();
+
+    expect(controller.state.detailsPhase, ParkingDetailsLoadPhase.loaded);
+    expect(controller.state.details?.reviewsCount, 1);
+
+    refresh.complete(
+      const ParkingDetails(
+        id: 'parking-1',
+        isFavorited: false,
+        reviewsCount: 2,
+        photosCount: 1,
+      ),
+    );
+    await refreshFuture;
+
+    expect(controller.state.detailsPhase, ParkingDetailsLoadPhase.loaded);
+    expect(controller.state.details?.reviewsCount, 2);
+    expect(controller.state.details?.photosCount, 1);
+    controller.dispose();
+  });
+
   test('publishes only typed redacted failure categories', () async {
     final repository = _FakeRepository()
       ..detailsError = StateError('raw details')

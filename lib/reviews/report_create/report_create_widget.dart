@@ -2,6 +2,7 @@ import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/core/config/app_config.dart';
 import '/features/reports/data/reports_service.dart';
+import '/features/reviews/application/user_feedback_mutation_events.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -704,7 +705,10 @@ class _ReportCreateWidgetState extends State<ReportCreateWidget> {
                               if (!context.mounted) {
                                 return;
                               }
-                              Navigator.pop(context);
+                              UserFeedbackMutationEvents.publish(
+                                UserFeedbackMutation.complaintCreated,
+                              );
+                              Navigator.pop(context, true);
                             } catch (_) {
                               if (!context.mounted) {
                                 return;

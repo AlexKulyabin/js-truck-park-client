@@ -84,6 +84,28 @@ class ParkingDetailsController extends ChangeNotifier {
     }
   }
 
+  Future<void> refreshDetails() async {
+    final generation = ++_detailsGeneration;
+
+    try {
+      final details = await _repository.fetchDetails(_parkingId);
+      if (_disposed || generation != _detailsGeneration) {
+        return;
+      }
+      _publish(
+        ParkingDetailsState(
+          detailsPhase: ParkingDetailsLoadPhase.loaded,
+          details: details,
+          reviewsPhase: _state.reviewsPhase,
+          reviews: _state.reviews,
+          reviewsFailureKind: _state.reviewsFailureKind,
+        ),
+      );
+    } catch (_) {
+      // Keep the already rendered details when a background refresh fails.
+    }
+  }
+
   Future<void> loadReviews() async {
     final generation = ++_reviewsGeneration;
     _publish(

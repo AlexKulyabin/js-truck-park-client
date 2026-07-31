@@ -8,6 +8,7 @@ import 'package:j_s_truck_park/app_state.dart';
 import 'package:j_s_truck_park/features/parking_details/domain/parking_details.dart';
 import 'package:j_s_truck_park/features/parking_details/domain/parking_favorite_repository.dart';
 import 'package:j_s_truck_park/features/parking_details/domain/parking_details_repository.dart';
+import 'package:j_s_truck_park/features/reviews/application/user_feedback_mutation_events.dart';
 import 'package:j_s_truck_park/flutter_flow/internationalization.dart';
 import 'package:j_s_truck_park/parkings_details/parkings_details/parkings_details_widget.dart';
 import 'package:provider/provider.dart';
@@ -302,6 +303,95 @@ void main() {
     expect(repository.detailsParkingIds, ['parking-1']);
     expect(find.byKey(ParkingsDetailsWidget.loadingKey), findsNothing);
     expect(find.byKey(ParkingsDetailsWidget.dragHandleKey), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('refreshes visible reviews after a successful review mutation',
+      (tester) async {
+    final repository = _FakeRepository()
+      ..details = const ParkingDetails(
+        id: 'parking-1',
+        isFavorited: false,
+        address: 'Fresh review parking',
+        reviewsCount: 0,
+        photosCount: 0,
+        stars1: 0,
+        stars2: 0,
+        stars3: 0,
+        stars4: 0,
+        stars5: 0,
+      );
+
+    await tester.pumpWidget(_buildSubject(repository));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Reviews'));
+    await tester.tap(find.text('Reviews'));
+    await tester.pumpAndSettle();
+
+    expect(repository.reviewsParkingIds, ['parking-1']);
+    expect(find.text('A newly submitted review'), findsNothing);
+
+    repository.reviews = [
+      ParkingReview(
+        id: 2,
+        parkingId: 'parking-1',
+        createdAt: DateTime(2026, 7, 31),
+        userId: 'user-1',
+        authorName: 'Test Driver',
+        comment: 'A newly submitted review',
+        averageScore: 5.0,
+      ),
+    ];
+    repository.details = const ParkingDetails(
+      id: 'parking-1',
+      isFavorited: false,
+      address: 'Fresh review parking',
+      reviewsCount: 1,
+      photosCount: 1,
+      photos: [
+        ParkingDetailsPhoto(url: 'https://example.test/new-review-photo.jpg'),
+      ],
+      stars1: 0,
+      stars2: 0,
+      stars3: 0,
+      stars4: 0,
+      stars5: 1,
+    );
+    UserFeedbackMutationEvents.publish(
+      UserFeedbackMutation.reviewCreated,
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.reviewsParkingIds, ['parking-1', 'parking-1']);
+    expect(repository.detailsParkingIds, ['parking-1', 'parking-1']);
+    expect(find.text('A newly submitted review'), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(ParkingsDetailsWidget.reviewsCountKey),
+          )
+          .data,
+      '1',
+    );
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(ParkingsDetailsWidget.photosCountKey),
+          )
+          .data,
+      '1',
+    );
+
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is NetworkImage &&
+            (widget.image as NetworkImage).url ==
+                'https://example.test/new-review-photo.jpg',
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 

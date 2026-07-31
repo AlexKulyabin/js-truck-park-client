@@ -52,6 +52,8 @@ class ParkingsDetailsWidget extends StatefulWidget {
   static const photoGalleryKey = Key('public-parking-details-photo-gallery');
   static const favoriteButtonKey = Key('public-parking-favorite-button');
   static const favoriteUpdatingKey = Key('public-parking-favorite-updating');
+  static const reviewsCountKey = Key('public-parking-reviews-count');
+  static const photosCountKey = Key('public-parking-photos-count');
 
   @override
   State<ParkingsDetailsWidget> createState() => _ParkingsDetailsWidgetState();
@@ -835,6 +837,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                               EdgeInsetsDirectional.fromSTEB(
                                                   10.0, 2.0, 10.0, 2.0),
                                           child: Text(
+                                            key: ParkingsDetailsWidget
+                                                .reviewsCountKey,
                                             valueOrDefault<String>(
                                               details.reviewsCount?.toString(),
                                               '0',
@@ -945,6 +949,8 @@ class _ParkingsDetailsWidgetState extends State<ParkingsDetailsWidget> {
                                               EdgeInsetsDirectional.fromSTEB(
                                                   10.0, 2.0, 10.0, 2.0),
                                           child: Text(
+                                            key: ParkingsDetailsWidget
+                                                .photosCountKey,
                                             valueOrDefault<String>(
                                               details.photosCount?.toString(),
                                               '0',

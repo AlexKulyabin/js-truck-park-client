@@ -2,6 +2,7 @@ import '/auth/supabase_auth/auth_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/core/config/app_config.dart';
 import '/features/review_submission/data/review_submission_service.dart';
+import '/features/reviews/application/user_feedback_mutation_events.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -3334,7 +3335,10 @@ class _ReviewCreateWidgetState extends State<ReviewCreateWidget> {
                             if (!context.mounted) {
                               return;
                             }
-                            Navigator.pop(context);
+                            UserFeedbackMutationEvents.publish(
+                              UserFeedbackMutation.reviewCreated,
+                            );
+                            Navigator.pop(context, true);
                           } catch (_) {
                             if (!context.mounted) {
                               return;
