@@ -94,11 +94,12 @@ Do not promote the tested artifact beyond the closed-test track if:
 - current hosted RLS or Storage behavior differs from the documented owner
   contract.
 
-## Deferred iOS prerequisite
+## iOS prerequisite status
 
-Android testing may proceed now. Before the next iOS/TestFlight archive, finish
-the Associated Domains and provisioning-profile steps recorded in
-`docs/deep_link_platform_integration.md`.
+Completed on 2026-07-31. Associated Domains and the App Store provisioning
+profile are active, and `1.0.16 (50)` was uploaded to App Store Connect. The
+remaining iOS work is the physical-device TestFlight acceptance checklist in
+`docs/ios_testflight_archive.md`.
 
 ## Rollback
 
