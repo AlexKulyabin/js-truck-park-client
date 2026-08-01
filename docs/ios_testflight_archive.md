@@ -220,6 +220,34 @@ received the referral discount. Build 55 is the production candidate. The
 Firebase Hosting relay was separately deployed on 2026-08-01 with the public
 App Store and Google Play destinations.
 
+## Build 56 production follow-up
+
+The App Store published version `1.0.16` does not expose its internal build
+number publicly. A fresh production install created a valid iOS profile and
+device UUID, but no `referred_by_id`, so the referral was not applied before
+subscription pricing. To remove ambiguity between the multiple uploaded
+`1.0.16` builds, the complete accepted build-55 source was repackaged as the
+new App Store version `1.0.17 (56)` without functional or backend changes.
+
+Local and upload verification completed on 2026-08-01:
+
+- signed archive version/build: `1.0.17 (56)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.17-56.ipa`;
+- IPA SHA-256:
+  `542c277db4d42814af3bbec968ab74e7f7fc595a41d1614533c40f34330e918d`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- protected referral and UI release markers: present;
+- App Store Connect upload: successful and processing started;
+- App Review submission: pending App Store Connect authentication.
+
+The upload produced the same non-blocking missing
+`ChottuLinkSDK.framework` dSYM warning as the earlier builds. No production
+Supabase schema, policy or data change was performed.
+
 ## Rollback
 
 Revert this infrastructure commit if iOS dependency resolution regresses. The

@@ -108,3 +108,10 @@ The matching iOS candidate was uploaded to App Store Connect and passed the
 physical-device referral and UI acceptance test. On 2026-08-01 the separate
 Firebase Hosting relay was deployed and externally verified to use only the
 published App Store and Google Play destinations.
+
+Because the public App Store page for `1.0.16` does not expose which internal
+build Apple released, the same accepted source was assigned the unambiguous
+version `1.0.17 (56)`. The signed IPA is
+`build/ios/ipa/JS-Truck-Park-1.0.17-56.ipa` with SHA-256
+`542c277db4d42814af3bbec968ab74e7f7fc595a41d1614533c40f34330e918d`.
+Its App Store Connect upload succeeded on 2026-08-01.
