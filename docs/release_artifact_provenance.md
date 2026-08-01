@@ -115,3 +115,5 @@ version `1.0.17 (56)`. The signed IPA is
 `build/ios/ipa/JS-Truck-Park-1.0.17-56.ipa` with SHA-256
 `542c277db4d42814af3bbec968ab74e7f7fc595a41d1614533c40f34330e918d`.
 Its App Store Connect upload succeeded on 2026-08-01.
+App Review submission `b52da530-d722-4fce-b343-b8d19b44c908` was sent on
+2026-08-01 at 14:19 and entered the `Waiting for Review` state.

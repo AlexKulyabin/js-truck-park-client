@@ -242,7 +242,9 @@ Local and upload verification completed on 2026-08-01:
 - strict code-signature verification: successful;
 - protected referral and UI release markers: present;
 - App Store Connect upload: successful and processing started;
-- App Review submission: pending App Store Connect authentication.
+- App Review submission:
+  `b52da530-d722-4fce-b343-b8d19b44c908`, sent on 2026-08-01 at 14:19;
+- App Review status: `Waiting for Review`.
 
 The upload produced the same non-blocking missing
 `ChottuLinkSDK.framework` dSYM warning as the earlier builds. No production
