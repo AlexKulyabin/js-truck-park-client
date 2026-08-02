@@ -250,6 +250,29 @@ The upload produced the same non-blocking missing
 `ChottuLinkSDK.framework` dSYM warning as the earlier builds. No production
 Supabase schema, policy or data change was performed.
 
+## Build 58 iOS attribution startup
+
+The corrected Chottu link was retested after selecting `Open in iOS App`.
+Android completed the referral flow, while the iOS install did not receive a
+deferred callback. Chottu documents iOS install matching as probabilistic and
+emits no callback below its confidence threshold. Build 58 starts the SDK
+before Supabase, preferences, localization and the other asynchronous startup
+services, while retaining the native payload buffer until Dart state is ready.
+
+Local verification completed on 2026-08-02:
+
+- signed archive version/build: `1.0.18 (58)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.18-58.ipa`;
+- IPA SHA-256:
+  `7abe70b78ae2890fee91f5521707050986e142cbef5356c36ded9a43fffc7349`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- iOS app-routing and early-initialization release markers: present;
+- App Store Connect upload: pending.
+
 ## Rollback
 
 Revert this infrastructure commit if iOS dependency resolution regresses. The

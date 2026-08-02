@@ -141,3 +141,21 @@ localization and other asynchronous services. The listener remains attached
 after persisted app state is ready; the native plugin buffers an earlier
 resolved payload until then. This maximizes the first-launch attribution window
 without changing referral eligibility or backend behavior.
+
+Local release verification completed on 2026-08-02:
+
+- Android AAB:
+  `build/app/outputs/bundle/release/JS-Truck-Park-1.0.18-58.aab`;
+- AAB SHA-256:
+  `25c3d2749a80baa374fd3283675995fec7b058402ce69901aeb2feab1f2c1c73`;
+- iOS IPA: `build/ios/ipa/JS-Truck-Park-1.0.18-58.ipa`;
+- IPA SHA-256:
+  `7abe70b78ae2890fee91f5521707050986e142cbef5356c36ded9a43fffc7349`;
+- signed version/build: `1.0.18 (58)`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- app-routing and early-initialization release markers: present;
+- format, analyze and 370 Flutter tests: completed successfully;
+- App Store Connect upload: pending.
