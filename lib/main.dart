@@ -32,6 +32,19 @@ void main() async {
   GoRouter.optionURLReflectsImperativeAPIs = true;
   usePathUrlStrategy();
 
+  var chottuLinkInitialized = false;
+  if (AppConfig.current.enableDeepLinks) {
+    try {
+      await actions.initChottuLink();
+      chottuLinkInitialized = true;
+    } catch (error) {
+      debugPrint(
+        'Chottu Link early initialization failed '
+        '[referral-ios-early-init-v1]: ${error.runtimeType}',
+      );
+    }
+  }
+
   AppLinks? appLinks;
   Future<Uri?>? initialAppLink;
   if (AppConfig.current.enableDeepLinks) {
@@ -53,13 +66,15 @@ void main() async {
   final appState = FFAppState(); // Initialize FFAppState
   await appState.initializePersistedState();
 
-  if (AppConfig.current.enableDeepLinks) {
+  if (chottuLinkInitialized) {
     try {
-      await actions.initChottuLink();
       await actions.listenChottuLink();
       unawaited(actions.recoverChottuReferral());
     } catch (error) {
-      debugPrint('Chottu Link initialization failed: $error');
+      debugPrint(
+        'Chottu Link listener initialization failed '
+        '[referral-ios-early-init-v1]: ${error.runtimeType}',
+      );
     }
   }
 

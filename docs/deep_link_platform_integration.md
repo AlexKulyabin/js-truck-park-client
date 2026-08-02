@@ -221,6 +221,14 @@ the matching `Open in iOS App` setting in Chottu; newly generated links receive
 it from the client. The destination URL remains the Hosting relay, and Android
 behavior is unchanged. No Supabase contract or production data is modified.
 
+The corrected-link retest confirmed the complete Android referral flow, but
+the iOS install was not matched. Chottu documents that iOS deferred matching is
+probabilistic and emits no callback below its confidence threshold. Build 58
+also moves SDK initialization to the first asynchronous operation after Flutter
+binding setup, ahead of Supabase, preferences and localization. The native
+plugin buffers a resolved payload until the Dart listener is attached after
+persisted state initialization.
+
 ## Closed-test checklist
 
 Use a newly generated referral link for every deferred-install run.

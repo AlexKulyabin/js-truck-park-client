@@ -46,6 +46,8 @@ Previous bundles are preserved under `build/release-archive/`.
   both platforms so deferred-install attribution remains owned by Chottu.
 - `referral-link-capture-v2`: Chottu links observed by the independent platform
   channel are resolved through Chottu as a cold-start delivery fallback.
+- `referral-ios-early-init-v1`: Chottu starts iOS install attribution before
+  Supabase, preferences, localization and other asynchronous app services.
 - `referral-device-identity-v1`: referral registration refreshes and validates
   a platform-specific app-scoped device identifier instead of using an Android
   firmware build label.
@@ -131,3 +133,11 @@ destination, but an uninstalled iPhone now follows Chottu's App Store fallback
 without handing ownership to the browser relay first. Existing links must also
 be changed to `Open in iOS App`; the client change controls newly generated
 links. No Supabase contract or production data is changed.
+
+The corrected-link production retest confirmed Android referral processing but
+did not produce an iOS deferred callback. Build 58 therefore starts Chottu
+immediately after Flutter binding initialization, before Supabase, preferences,
+localization and other asynchronous services. The listener remains attached
+after persisted app state is ready; the native plugin buffers an earlier
+resolved payload until then. This maximizes the first-launch attribution window
+without changing referral eligibility or backend behavior.
