@@ -206,6 +206,21 @@ Physical-device testing of build 55 confirmed the complete installed-app iOS
 flow: the referral link opened the application, a fresh user was created, and
 the referral discount was applied. This is the accepted production candidate.
 
+## Build 57 iOS deferred-install routing
+
+The first live App Store deferred-install test of `1.0.17 (56)` produced a
+Chottu click but no referral relation or referral stats for the fresh iOS
+profile. Read-only inspection excluded device reuse. The generated link's
+Chottu settings showed `Open in Browser` on iOS, while Android used `Open in
+Android App`. The browser workaround introduced in build 52 therefore handed
+the uninstalled flow to the Hosting relay before Chottu could own the App Store
+fallback and recover install attribution.
+
+Build 57 restores `CLDynamicLinkBehaviour.app` on iOS. Existing links require
+the matching `Open in iOS App` setting in Chottu; newly generated links receive
+it from the client. The destination URL remains the Hosting relay, and Android
+behavior is unchanged. No Supabase contract or production data is modified.
+
 ## Closed-test checklist
 
 Use a newly generated referral link for every deferred-install run.

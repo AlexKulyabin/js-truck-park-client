@@ -42,8 +42,8 @@ Previous bundles are preserved under `build/release-archive/`.
 - `referral-deferred-recovery-v3`: native SDK readiness, Android backup
   exclusions and the bounded deferred-attribution recovery are present in the
   release client;
-- `referral-link-fallback-v1`: new referral links use the validated iOS browser
-  fallback instead of relying on Chottu's blank embedded-browser response.
+- `referral-link-app-routing-v2`: new referral links use Chottu app routing on
+  both platforms so deferred-install attribution remains owned by Chottu.
 - `referral-link-capture-v2`: Chottu links observed by the independent platform
   channel are resolved through Chottu as a cold-start delivery fallback.
 - `referral-device-identity-v1`: referral registration refreshes and validates
@@ -117,3 +117,17 @@ version `1.0.17 (56)`. The signed IPA is
 Its App Store Connect upload succeeded on 2026-08-01.
 App Review submission `b52da530-d722-4fce-b343-b8d19b44c908` was sent on
 2026-08-01 at 14:19 and entered the `Waiting for Review` state.
+
+## Build 57 iOS deferred-install routing
+
+Production testing of `1.0.17 (56)` showed that Chottu recorded the referral
+click, while the fresh iOS profile had no referral relation or referral stats.
+Read-only inspection excluded prior use of the new iOS device identifier. The
+Chottu link editor then confirmed that generated links selected `Open in
+Browser` for iOS and `Open in Android App` for Android.
+
+Build 57 restores Chottu app routing on iOS. The Hosting URL remains the link's
+destination, but an uninstalled iPhone now follows Chottu's App Store fallback
+without handing ownership to the browser relay first. Existing links must also
+be changed to `Open in iOS App`; the client change controls newly generated
+links. No Supabase contract or production data is changed.

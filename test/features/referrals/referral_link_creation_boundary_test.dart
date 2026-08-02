@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('uses the hosted iOS fallback and preserves Android attribution', () {
+  test('uses native app routing for Android and iOS attribution', () {
     final source = File(
       'lib/custom_code/actions/create_referral_link.dart',
     ).readAsStringSync();
@@ -14,7 +14,7 @@ void main() {
     );
     expect(
       source,
-      contains('iosBehaviour: CLDynamicLinkBehaviour.browser'),
+      contains('iosBehaviour: CLDynamicLinkBehaviour.app'),
     );
     expect(source, isNot(contains('linkName:')));
     expect(source, contains('isUsableReferralCode(referralCode)'));

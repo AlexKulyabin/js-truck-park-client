@@ -3,7 +3,7 @@ import '../deep_links/domain/deep_link_contract.dart';
 const referralHostingDomain = productionHostingDomain;
 const referralHostingRelayPath = productionHostingRelayPath;
 const referralRoute = 'splash';
-const referralLinkFallbackReleaseMarker = 'referral-link-fallback-v1';
+const referralLinkRoutingReleaseMarker = 'referral-link-app-routing-v2';
 
 bool isUsableReferralCode(String? value) => value?.trim().isNotEmpty == true;
 
