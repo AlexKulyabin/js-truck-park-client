@@ -31,6 +31,7 @@ class ValidateSmsCodeWidget extends StatefulWidget {
 
 class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
   late ValidateSmsCodeModel _model;
+  bool _isVerifying = false;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -54,6 +55,54 @@ class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _verifyCode(String code) async {
+    if (_isVerifying || code.length != 6) {
+      return;
+    }
+    _isVerifying = true;
+    _model.isInvalidCode = false;
+    _model.isNewCodeSent = false;
+    safeSetState(() {});
+
+    try {
+      _model.verifyIsSuccess = await actions.verifyOtp(
+        FFAppState().phoneNumber,
+        code,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (_model.verifyIsSuccess == true) {
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if (!mounted) {
+          return;
+        }
+        _model.currentUser =
+            await UserProfileService().getPublicProfileByUserId(
+          userId: currentUserUid,
+        );
+        if (!mounted) {
+          return;
+        }
+        FFAppState().isGuest = false;
+        safeSetState(() {});
+        if (_model.currentUser?.hasCompletedProfile == true) {
+          context.goNamed(HomePageWidget.routeName);
+        } else {
+          context.goNamed(RegistrationWidget.routeName);
+        }
+      } else {
+        _model.isInvalidCode = true;
+        safeSetState(() {});
+      }
+    } finally {
+      _isVerifying = false;
+      if (mounted) {
+        safeSetState(() {});
+      }
+    }
   }
 
   @override
@@ -250,8 +299,12 @@ class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
                         controller: _model.pinCodeController,
                         onChanged: (_) async {
                           _model.pinCode = _model.pinCodeController!.text;
+                          if (_model.pinCode!.length < 6) {
+                            _model.isInvalidCode = false;
+                          }
                           safeSetState(() {});
                         },
+                        onCompleted: _verifyCode,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         validator: _model.pinCodeControllerValidator
                             .asValidator(context),
@@ -493,41 +546,17 @@ class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
                       ),
                     ),
                     FFButtonWidget(
-                      onPressed: ((_model.pinCodeController!.text == null ||
+                      onPressed: (_isVerifying ||
+                              (_model.pinCodeController!.text == null ||
                                   _model.pinCodeController!.text == '') ||
                               ((String var1) {
                                 return var1.length != 6;
                               }(_model.pinCode!)))
                           ? null
                           : () async {
-                              _model.verifyIsSuccess = await actions.verifyOtp(
-                                FFAppState().phoneNumber,
+                              await _verifyCode(
                                 _model.pinCodeController!.text,
                               );
-                              if (_model.verifyIsSuccess == true) {
-                                await Future.delayed(
-                                  Duration(
-                                    milliseconds: 1000,
-                                  ),
-                                );
-                                _model.currentUser = await UserProfileService()
-                                    .getPublicProfileByUserId(
-                                  userId: currentUserUid,
-                                );
-                                FFAppState().isGuest = false;
-                                safeSetState(() {});
-                                if (_model.currentUser?.hasCompletedProfile ==
-                                    true) {
-                                  context.goNamed(HomePageWidget.routeName);
-                                } else {
-                                  context.goNamed(RegistrationWidget.routeName);
-                                }
-                              } else {
-                                _model.isInvalidCode = true;
-                                safeSetState(() {});
-                              }
-
-                              safeSetState(() {});
                             },
                       text: FFLocalizations.of(context).getText(
                         '2ufdmsou' /* Next */,
