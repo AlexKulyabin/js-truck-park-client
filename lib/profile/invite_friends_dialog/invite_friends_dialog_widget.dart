@@ -1,6 +1,7 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,10 +15,12 @@ export 'invite_friends_dialog_model.dart';
 class InviteFriendsDialogWidget extends StatefulWidget {
   const InviteFriendsDialogWidget({
     super.key,
-    required this.ref,
+    this.ref,
+    this.linkLoader,
   });
 
   final String? ref;
+  final Future<String> Function()? linkLoader;
 
   @override
   State<InviteFriendsDialogWidget> createState() =>
@@ -26,6 +29,11 @@ class InviteFriendsDialogWidget extends StatefulWidget {
 
 class _InviteFriendsDialogWidgetState extends State<InviteFriendsDialogWidget> {
   late InviteFriendsDialogModel _model;
+  String? _ref;
+  bool _isLoading = false;
+  bool _hasError = false;
+
+  bool get _hasLink => _ref?.trim().isNotEmpty ?? false;
 
   @override
   void setState(VoidCallback callback) {
@@ -37,8 +45,50 @@ class _InviteFriendsDialogWidgetState extends State<InviteFriendsDialogWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => InviteFriendsDialogModel());
+    _ref = widget.ref;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_hasLink) {
+        safeSetState(() {});
+        return;
+      }
+      unawaited(_loadLink());
+    });
+  }
+
+  Future<void> _loadLink() async {
+    if (_isLoading) {
+      return;
+    }
+    final loader = widget.linkLoader;
+    if (loader == null) {
+      safeSetState(() => _hasError = true);
+      return;
+    }
+
+    safeSetState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+    try {
+      final link = (await loader()).trim();
+      if (link.isEmpty) {
+        throw StateError('Invite link is empty');
+      }
+      if (!mounted) {
+        return;
+      }
+      safeSetState(() => _ref = link);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      safeSetState(() => _hasError = true);
+    } finally {
+      if (mounted) {
+        safeSetState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -124,24 +174,31 @@ class _InviteFriendsDialogWidgetState extends State<InviteFriendsDialogWidget> {
                   focusColor: Colors.transparent,
                   hoverColor: Colors.transparent,
                   highlightColor: Colors.transparent,
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: widget!.ref!));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          FFLocalizations.of(context).getVariableText(
-                            enText: 'Link copied',
-                            ruText: 'Ссылка скопирована',
-                          ),
-                          style: TextStyle(
-                            color: FlutterFlowTheme.of(context).primaryText,
-                          ),
-                        ),
-                        duration: Duration(milliseconds: 4000),
-                        backgroundColor: FlutterFlowTheme.of(context).secondary,
-                      ),
-                    );
-                  },
+                  onTap: _hasLink
+                      ? () async {
+                          await Clipboard.setData(ClipboardData(text: _ref!));
+                          if (!context.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                FFLocalizations.of(context).getVariableText(
+                                  enText: 'Link copied',
+                                  ruText: 'Ссылка скопирована',
+                                ),
+                                style: TextStyle(
+                                  color:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                ),
+                              ),
+                              duration: Duration(milliseconds: 4000),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).secondary,
+                            ),
+                          );
+                        }
+                      : null,
                   child: Container(
                     width: double.infinity,
                     height: 56.0,
@@ -155,51 +212,98 @@ class _InviteFriendsDialogWidgetState extends State<InviteFriendsDialogWidget> {
                     child: Padding(
                       padding:
                           EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 8.0, 0.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              valueOrDefault<String>(
-                                widget!.ref,
-                                'Link',
-                              ),
-                              style: FlutterFlowTheme.of(context)
-                                  .bodyLarge
-                                  .override(
-                                    font: GoogleFonts.roboto(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .bodyLarge
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyLarge
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .bodyLarge
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyLarge
-                                        .fontStyle,
+                      child: _isLoading
+                          ? Center(
+                              child: SizedBox(
+                                width: 24.0,
+                                height: 24.0,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    FlutterFlowTheme.of(context).primary,
                                   ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
-                            child: SvgPicture.asset(
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? 'assets/images/copy-dark.svg'
-                                  : 'assets/images/copy-light.svg',
-                              width: 20.0,
-                              height: 20.0,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ],
-                      ),
+                                ),
+                              ),
+                            )
+                          : _hasError
+                              ? Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        FFLocalizations.of(context)
+                                            .getVariableText(
+                                          enText:
+                                              'Could not create the link. Try again.',
+                                          ruText:
+                                              'Не удалось создать ссылку. Повторите попытку.',
+                                        ),
+                                        style: FlutterFlowTheme.of(context)
+                                            .bodyMedium,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: FFLocalizations.of(context)
+                                          .getVariableText(
+                                        enText: 'Try again',
+                                        ruText: 'Повторить',
+                                      ),
+                                      onPressed: _loadLink,
+                                      icon: Icon(
+                                        Icons.refresh_rounded,
+                                        color: FlutterFlowTheme.of(context)
+                                            .primary,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        valueOrDefault<String>(_ref, 'Link'),
+                                        style: FlutterFlowTheme.of(context)
+                                            .bodyLarge
+                                            .override(
+                                              font: GoogleFonts.roboto(
+                                                fontWeight:
+                                                    FlutterFlowTheme.of(context)
+                                                        .bodyLarge
+                                                        .fontWeight,
+                                                fontStyle:
+                                                    FlutterFlowTheme.of(context)
+                                                        .bodyLarge
+                                                        .fontStyle,
+                                              ),
+                                              letterSpacing: 0.0,
+                                              fontWeight:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyLarge
+                                                      .fontWeight,
+                                              fontStyle:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyLarge
+                                                      .fontStyle,
+                                            ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: SvgPicture.asset(
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? 'assets/images/copy-dark.svg'
+                                            : 'assets/images/copy-light.svg',
+                                        width: 20.0,
+                                        height: 20.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                     ),
                   ),
                 ),
@@ -250,13 +354,19 @@ class _InviteFriendsDialogWidgetState extends State<InviteFriendsDialogWidget> {
                   Expanded(
                     child: Builder(
                       builder: (context) => FFButtonWidget(
-                        onPressed: () async {
-                          await Share.share(
-                            widget!.ref!,
-                            sharePositionOrigin: getWidgetBoundingBox(context),
-                          );
-                          Navigator.pop(context);
-                        },
+                        onPressed: _hasLink
+                            ? () async {
+                                await Share.share(
+                                  _ref!,
+                                  sharePositionOrigin:
+                                      getWidgetBoundingBox(context),
+                                );
+                                if (!context.mounted) {
+                                  return;
+                                }
+                                Navigator.pop(context);
+                              }
+                            : null,
                         text: FFLocalizations.of(context).getText(
                           'j5yv5qwi' /* Share */,
                         ),

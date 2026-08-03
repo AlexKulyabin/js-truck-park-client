@@ -979,7 +979,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                     .state.showInviteAction) {
                                   return;
                                 }
-                                var _shouldSetState = false;
                                 if (FFAppState().isGuest == true) {
                                   await showDialog(
                                     barrierColor:
@@ -1008,39 +1007,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                   );
                                   return;
                                 }
-                                _model.currentUserReferralCode =
-                                    await UserProfileService()
-                                        .getReferralCodeByUserId(
-                                  userId: currentUserUid,
-                                );
-                                _shouldSetState = true;
-                                if (!isUsableReferralCode(
-                                    _model.currentUserReferralCode)) {
-                                  if (context.mounted) {
-                                    showSnackbar(
-                                      context,
-                                      'Could not load your invite code. Please try again.',
-                                    );
-                                  }
-                                  if (_shouldSetState) safeSetState(() {});
-                                  return;
-                                }
-                                _model.referralLink =
-                                    await actions.createReferralLink(
-                                  _model.currentUserReferralCode!,
-                                );
-                                _shouldSetState = true;
-                                if (!isValidReferralShortLink(
-                                    _model.referralLink)) {
-                                  if (context.mounted) {
-                                    showSnackbar(
-                                      context,
-                                      'Could not create invite link. Please try again.',
-                                    );
-                                  }
-                                  if (_shouldSetState) safeSetState(() {});
-                                  return;
-                                }
                                 await showDialog(
                                   barrierColor:
                                       FlutterFlowTheme.of(context).overlay,
@@ -1060,14 +1026,35 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                               ?.unfocus();
                                         },
                                         child: InviteFriendsDialogWidget(
-                                          ref: _model.referralLink!,
+                                          linkLoader: () async {
+                                            final referralCode =
+                                                await UserProfileService()
+                                                    .getReferralCodeByUserId(
+                                              userId: currentUserUid,
+                                            );
+                                            if (!isUsableReferralCode(
+                                                referralCode)) {
+                                              throw StateError(
+                                                'Invite code is unavailable',
+                                              );
+                                            }
+                                            final referralLink = await actions
+                                                .createReferralLink(
+                                              referralCode!,
+                                            );
+                                            if (!isValidReferralShortLink(
+                                                referralLink)) {
+                                              throw StateError(
+                                                'Invite link is invalid',
+                                              );
+                                            }
+                                            return referralLink;
+                                          },
                                         ),
                                       ),
                                     );
                                   },
                                 );
-
-                                if (_shouldSetState) safeSetState(() {});
                               },
                               child: Container(
                                 width: double.infinity,
