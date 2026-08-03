@@ -185,6 +185,10 @@ Local release verification completed on 2026-08-03:
 - Android upload certificate and iOS code signature: verified;
 - release, deep-link and referral startup markers: present;
 - format, analyze and 372 Flutter tests: completed successfully;
-- Google Play and App Store Connect upload: pending.
+- Google Play production release `59 (1.0.19)` was submitted for review at
+  100% rollout on 2026-08-03;
+- App Store Connect accepted build `1.0.19 (59)`, made it available to the
+  internal `Dev` group, and accepted public version `1.0.19` for App Review
+  with status `WAITING_FOR_REVIEW` on 2026-08-03.
 
 No Supabase contract, schema, policy or production data change was performed.

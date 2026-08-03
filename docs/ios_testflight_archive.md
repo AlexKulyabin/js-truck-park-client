@@ -291,7 +291,10 @@ Local verification completed on 2026-08-03:
   `applinks:js-truck-park.chottu.link`;
 - strict code-signature verification: successful;
 - iOS app-routing, deep-link and referral startup markers: present;
-- App Store Connect upload: pending.
+- App Store Connect upload: successful;
+- TestFlight internal `Dev` group: available;
+- public App Store version `1.0.19`: submitted with status
+  `WAITING_FOR_REVIEW` on 2026-08-03.
 
 No production Supabase write was performed.
 
