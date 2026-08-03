@@ -315,8 +315,12 @@ Local verification completed on 2026-08-03:
 - signed Associated Domains entitlement:
   `applinks:js-truck-park.chottu.link`;
 - strict code-signature verification: successful;
-- App Store Connect upload: pending an authenticated App Store Connect session
-  or App Store Connect API issuer id.
+- App Store Connect upload: successful, delivery UUID
+  `e54c6a22-7ad9-4188-880b-12810c2b2724`;
+- build `60` export compliance: `usesNonExemptEncryption=false`;
+- public App Store version `1.0.19` was removed from review by the developer,
+  then updated to version `1.0.20`, assigned build `60`, and submitted for
+  App Review with status `WAITING_FOR_REVIEW` on 2026-08-03.
 
 No production Supabase write was performed.
 
