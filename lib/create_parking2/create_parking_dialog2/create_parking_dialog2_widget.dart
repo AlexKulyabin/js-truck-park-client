@@ -138,8 +138,6 @@ class _CreateParkingDialog2WidgetState
                     child: FFButtonWidget(
                       onPressed: () async {
                         Navigator.pop(context, true);
-
-                        context.pushNamed(CreateParkingWidget.routeName);
                       },
                       text: FFLocalizations.of(context).getText(
                         'lghtf3gy' /* Cancel */,

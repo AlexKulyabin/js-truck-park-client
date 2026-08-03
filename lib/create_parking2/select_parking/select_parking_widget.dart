@@ -112,10 +112,13 @@ class _SelectParkingWidgetState extends State<SelectParkingWidget> {
     required double latitude,
     required double longitude,
   }) async {
-    FFAppState().tempAddress = await _reverseGeocodingService.resolveAddress(
+    final resolvedAddress = await _reverseGeocodingService.resolveAddress(
       latitude: latitude,
       longitude: longitude,
     );
+    FFAppState().tempAddress = resolvedAddress.trim().isNotEmpty
+        ? resolvedAddress
+        : '${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}';
     if (mounted) {
       safeSetState(() {});
     }

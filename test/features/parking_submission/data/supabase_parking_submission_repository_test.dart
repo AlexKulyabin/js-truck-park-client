@@ -123,8 +123,8 @@ void main() {
       () async {
     final dataSource = _FakeDataSource()
       ..uploadUrls.addAll([
-        'https://cdn.example/parkings/parking-1/0',
-        'https://cdn.example/parkings/parking-1/1',
+        'https://cdn.example/parkings/parking-1/0/1784896200000000.jpg',
+        'https://cdn.example/parkings/parking-1/1/1784896200000000.jpg',
       ]);
     final repository = SupabaseParkingSubmissionRepository(
       dataSource: dataSource,
@@ -141,8 +141,8 @@ void main() {
       const ParkingSubmissionResult(
         parkingId: 'parking-1',
         photoUrls: [
-          'https://cdn.example/parkings/parking-1/0',
-          'https://cdn.example/parkings/parking-1/1',
+          'https://cdn.example/parkings/parking-1/0/1784896200000000.jpg',
+          'https://cdn.example/parkings/parking-1/1/1784896200000000.jpg',
         ],
       ),
     );
@@ -151,17 +151,17 @@ void main() {
       SupabaseParkingSubmissionRepository.parkingPhotoBucket,
     ]);
     expect(dataSource.uploadCalls.map((call) => call.storagePath), [
-      'parkings/parking-1/0',
-      'parkings/parking-1/1',
+      'parkings/parking-1/0/1784896200000000.jpg',
+      'parkings/parking-1/1/1784896200000000.jpg',
     ]);
     expect(dataSource.photoPayloads, [
       {
-        'url': 'https://cdn.example/parkings/parking-1/0',
+        'url': 'https://cdn.example/parkings/parking-1/0/1784896200000000.jpg',
         'parking_id': 'parking-1',
         'user_id': 'user-1',
       },
       {
-        'url': 'https://cdn.example/parkings/parking-1/1',
+        'url': 'https://cdn.example/parkings/parking-1/1/1784896200000000.jpg',
         'parking_id': 'parking-1',
         'user_id': 'user-1',
       },

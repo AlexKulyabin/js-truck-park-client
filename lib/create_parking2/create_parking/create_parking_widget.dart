@@ -93,10 +93,27 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
   }
 
   Future<void> _submitParking() async {
+    final draft = _buildSubmissionDraft();
+    if (!draft.isValid) {
+      _showSubmissionMessage(
+        enText: 'Select the parking location on the map and try again.',
+        ruText: 'Выберите место парковки на карте и попробуйте снова.',
+      );
+      return;
+    }
     final outcome = await _parkingSubmissionController.submit(
-      _buildSubmissionDraft(),
+      draft,
     );
     if (outcome != ParkingSubmissionOutcome.submitted) {
+      final failureKind = _parkingSubmissionController.state.failureKind;
+      _showSubmissionMessage(
+        enText: failureKind == ParkingSubmissionFailureKind.unauthenticated
+            ? 'Sign in and try again.'
+            : 'Could not add the parking. Please try again.',
+        ruText: failureKind == ParkingSubmissionFailureKind.unauthenticated
+            ? 'Войдите в аккаунт и попробуйте снова.'
+            : 'Не удалось добавить парковку. Попробуйте снова.',
+      );
       return;
     }
     if (!mounted) {
@@ -124,6 +141,27 @@ class _CreateParkingWidgetState extends State<CreateParkingWidget> {
     );
 
     safeSetState(() {});
+  }
+
+  void _showSubmissionMessage({
+    required String enText,
+    required String ruText,
+  }) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            FFLocalizations.of(context).getVariableText(
+              enText: enText,
+              ruText: ruText,
+            ),
+          ),
+        ),
+      );
   }
 
   @override

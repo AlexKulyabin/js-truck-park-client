@@ -145,8 +145,12 @@ void main() {
     );
 
     expect(
-      photo.storagePath(parkingId: 'parking-123', index: 2),
-      'parkings/parking-123/2',
+      photo.storagePath(
+        parkingId: 'parking-123',
+        index: 2,
+        timestampMicros: 123456,
+      ),
+      'parkings/parking-123/2/123456.jpg',
     );
   });
 }

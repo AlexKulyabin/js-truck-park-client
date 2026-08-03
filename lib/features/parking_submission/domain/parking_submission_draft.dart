@@ -80,8 +80,16 @@ class ParkingSubmissionPhoto {
   String storagePath({
     required String parkingId,
     required int index,
-  }) =>
-      'parkings/$parkingId/$index';
+    required int timestampMicros,
+  }) {
+    final sourceName = originalFilename ?? name;
+    final extensionSeparator = sourceName.lastIndexOf('.');
+    final extension =
+        extensionSeparator >= 0 && extensionSeparator < sourceName.length - 1
+            ? sourceName.substring(extensionSeparator + 1).toLowerCase()
+            : 'jpg';
+    return 'parkings/$parkingId/$index/$timestampMicros.$extension';
+  }
 
   @override
   bool operator ==(Object other) =>

@@ -116,6 +116,7 @@ class SupabaseParkingSubmissionRepository
           storagePath: photo.storagePath(
             parkingId: parkingId,
             index: index,
+            timestampMicros: _clock().microsecondsSinceEpoch,
           ),
         );
         photoUrls.add(url);
