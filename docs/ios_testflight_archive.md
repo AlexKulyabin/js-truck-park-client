@@ -298,6 +298,28 @@ Local verification completed on 2026-08-03:
 
 No production Supabase write was performed.
 
+## Build 60 profile reviews loading fix
+
+Build 60 contains the profile reviews/complaints loading fix. The data mapper
+accepts Supabase timestamp strings for user review rows, and the profile list
+now has a bounded loading timeout with a retryable failure state.
+
+Local verification completed on 2026-08-03:
+
+- signed archive version/build: `1.0.20 (60)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.20-60.ipa`;
+- IPA SHA-256:
+  `1ede0478ed1b79ea609298f1c13259df0c585811f8dc5b0b1fe319c0b4236368`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- App Store Connect upload: pending an authenticated App Store Connect session
+  or App Store Connect API issuer id.
+
+No production Supabase write was performed.
+
 ## Rollback
 
 Revert this infrastructure commit if iOS dependency resolution regresses. The

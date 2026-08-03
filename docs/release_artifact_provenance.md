@@ -192,3 +192,32 @@ Local release verification completed on 2026-08-03:
   with status `WAITING_FOR_REVIEW` on 2026-08-03.
 
 No Supabase contract, schema, policy or production data change was performed.
+
+## Build 60 profile reviews loading fix
+
+Build 60 fixes the profile reviews/complaints screen so malformed or differently
+typed Supabase timestamp payloads cannot leave the UI in an infinite loading
+state. The screen now reports a retryable failure instead of spinning forever,
+while valid review and report rows continue to render normally.
+
+Local release verification completed on 2026-08-03:
+
+- Android AAB:
+  `build/app/outputs/bundle/release/JS-Truck-Park-1.0.20-60.aab`;
+- AAB SHA-256:
+  `535b5052ef6e3fb5a9fc5bcdf5b224c451dff0a71c47e961093e9aad890ead5b`;
+- iOS IPA: `build/ios/ipa/JS-Truck-Park-1.0.20-60.ipa`;
+- IPA SHA-256:
+  `1ede0478ed1b79ea609298f1c13259df0c585811f8dc5b0b1fe319c0b4236368`;
+- signed version/build: `1.0.20 (60)`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict iOS code-signature verification: successful;
+- format, analyze and 374 Flutter tests: completed successfully;
+- Google Play production release `60 (1.0.20)` was submitted for review at
+  100% rollout on 2026-08-03;
+- App Store Connect upload: pending an authenticated App Store Connect session
+  or App Store Connect API issuer id.
+
+No Supabase contract, schema, policy or production data change was performed.
