@@ -159,3 +159,32 @@ Local release verification completed on 2026-08-02:
 - app-routing and early-initialization release markers: present;
 - format, analyze and 370 Flutter tests: completed successfully;
 - App Store Connect upload: pending.
+
+## Build 59 parking and interaction fixes
+
+Build 59 restores parking submission from the home `+` action and the requests
+screen, including visible validation and failure feedback. Photo uploads keep
+the production storage path shape with a unique timestamped filename. The SMS
+confirmation screen now verifies immediately after the sixth digit, while the
+profile invite dialog opens before referral-link generation and displays a
+loading indicator with an explicit retry state.
+
+Local release verification completed on 2026-08-03:
+
+- Android AAB:
+  `build/app/outputs/bundle/release/JS-Truck-Park-1.0.19-59.aab`;
+- AAB SHA-256:
+  `1f3b8f807134b9dc7ca8c82256a57f1f382020c04a1d73c9b71d78f8cf4234d0`;
+- iOS IPA: `build/ios/ipa/JS-Truck-Park-1.0.19-59.ipa`;
+- IPA SHA-256:
+  `f90baa9d4fda32d26e6e4550547df7035553757bd966797028e422c2d821aac5`;
+- signed version/build: `1.0.19 (59)`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- Android upload certificate and iOS code signature: verified;
+- release, deep-link and referral startup markers: present;
+- format, analyze and 372 Flutter tests: completed successfully;
+- Google Play and App Store Connect upload: pending.
+
+No Supabase contract, schema, policy or production data change was performed.

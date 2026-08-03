@@ -273,6 +273,28 @@ Local verification completed on 2026-08-02:
 - iOS app-routing and early-initialization release markers: present;
 - App Store Connect upload: pending.
 
+## Build 59 interaction fixes
+
+Build 59 packages the restored parking submission flow, automatic verification
+of complete six-digit SMS codes, and an immediately visible profile invite
+dialog with link-generation progress and retry feedback.
+
+Local verification completed on 2026-08-03:
+
+- signed archive version/build: `1.0.19 (59)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.19-59.ipa`;
+- IPA SHA-256:
+  `f90baa9d4fda32d26e6e4550547df7035553757bd966797028e422c2d821aac5`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- iOS app-routing, deep-link and referral startup markers: present;
+- App Store Connect upload: pending.
+
+No production Supabase write was performed.
+
 ## Rollback
 
 Revert this infrastructure commit if iOS dependency resolution regresses. The
