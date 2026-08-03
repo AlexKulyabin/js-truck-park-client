@@ -136,4 +136,23 @@ void main() {
 
     controller.dispose();
   });
+
+  test('turns a stalled reviews request into a retryable failure', () async {
+    final repository = _FakeRepository();
+    final controller = UserReviewsController(
+      repository: repository,
+      userId: 'user-1',
+      loadTimeout: const Duration(milliseconds: 1),
+    );
+
+    await controller.loadReviews();
+
+    expect(controller.state.reviews.phase, UserReviewsLoadPhase.failure);
+    expect(
+      controller.state.reviews.failureKind,
+      UserReviewsFailureKind.unavailable,
+    );
+
+    controller.dispose();
+  });
 }

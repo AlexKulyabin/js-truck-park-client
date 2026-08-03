@@ -107,6 +107,39 @@ void main() {
     );
   });
 
+  test('accepts Supabase ISO timestamp strings for owned feedback', () async {
+    final createdAt = DateTime.utc(2026, 7, 24, 12, 30);
+    final reportDate = DateTime.utc(2026, 7, 25, 9, 15);
+    final dataSource = _FakeDataSource()
+      ..reviewRows = [
+        {
+          'id': 7,
+          'user_id': 'user-1',
+          'parking_address': 'Test parking',
+          'created_at': createdAt.toIso8601String(),
+          'average_score': 4,
+          'comment': 'Good stop',
+          'review_photos': [],
+        },
+      ]
+      ..complaintRows = [
+        {
+          'report_id': 11,
+          'reporter_id': 'user-1',
+          'parking_address': 'Unsafe parking',
+          'report_date': reportDate.toIso8601String(),
+          'parking_photos': [],
+        },
+      ];
+    final repository = SupabaseUserReviewsRepository(dataSource: dataSource);
+
+    final reviews = await repository.fetchOwnedReviews('user-1');
+    final complaints = await repository.fetchOwnedComplaints('user-1');
+
+    expect(reviews.single.createdAt, createdAt.toLocal());
+    expect(complaints.single.reportDate, reportDate.toLocal());
+  });
+
   test('does not perform unfiltered queries without an authenticated user',
       () async {
     final dataSource = _FakeDataSource();

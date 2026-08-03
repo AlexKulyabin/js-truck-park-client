@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../domain/user_complaint_summary.dart';
@@ -59,11 +61,14 @@ class UserReviewsController extends ChangeNotifier {
   UserReviewsController({
     required UserReviewsRepository repository,
     required String userId,
+    Duration loadTimeout = const Duration(seconds: 15),
   })  : _repository = repository,
-        _userId = userId;
+        _userId = userId,
+        _loadTimeout = loadTimeout;
 
   final UserReviewsRepository _repository;
   final String _userId;
+  final Duration _loadTimeout;
 
   UserReviewsState _state = const UserReviewsState.initial();
   int _reviewsGeneration = 0;
@@ -106,7 +111,8 @@ class UserReviewsController extends ChangeNotifier {
     );
 
     try {
-      final reviews = await _repository.fetchOwnedReviews(_userId);
+      final reviews =
+          await _repository.fetchOwnedReviews(_userId).timeout(_loadTimeout);
       if (_disposed || generation != _reviewsGeneration) {
         return;
       }
@@ -140,7 +146,8 @@ class UserReviewsController extends ChangeNotifier {
     );
 
     try {
-      final complaints = await _repository.fetchOwnedComplaints(_userId);
+      final complaints =
+          await _repository.fetchOwnedComplaints(_userId).timeout(_loadTimeout);
       if (_disposed || generation != _complaintsGeneration) {
         return;
       }

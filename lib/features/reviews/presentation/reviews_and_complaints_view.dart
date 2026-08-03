@@ -237,7 +237,11 @@ class ReviewsAndComplaintsView extends StatelessWidget {
       return _loading(context, key: reviewsLoadingKey);
     }
     if (reviews.phase == UserReviewsLoadPhase.failure) {
-      return _retryingLoading(context, key: reviewsFailureKey);
+      return _failure(
+        context,
+        key: reviewsFailureKey,
+        assetPath: 'assets/images/star.fill.svg',
+      );
     }
     if (reviews.items.isEmpty) {
       return _empty(
@@ -275,7 +279,11 @@ class ReviewsAndComplaintsView extends StatelessWidget {
       return _loading(context, key: complaintsLoadingKey);
     }
     if (complaints.phase == UserReviewsLoadPhase.failure) {
-      return _retryingLoading(context, key: complaintsFailureKey);
+      return _failure(
+        context,
+        key: complaintsFailureKey,
+        assetPath: 'assets/images/danger.svg',
+      );
     }
     if (complaints.items.isEmpty) {
       return _empty(
@@ -308,7 +316,11 @@ class ReviewsAndComplaintsView extends StatelessWidget {
     );
   }
 
-  Widget _retryingLoading(BuildContext context, {required Key key}) {
+  Widget _failure(
+    BuildContext context, {
+    required Key key,
+    required String assetPath,
+  }) {
     return InkWell(
       key: key,
       splashColor: Colors.transparent,
@@ -316,7 +328,44 @@ class ReviewsAndComplaintsView extends StatelessWidget {
       hoverColor: Colors.transparent,
       highlightColor: Colors.transparent,
       onTap: onRetry,
-      child: _loading(context),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(0.0),
+              child: SvgPicture.asset(
+                assetPath,
+                width: 96.0,
+                height: 96.0,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Text(
+              FFLocalizations.of(context).getVariableText(
+                enText: 'Could not load the list. Tap to try again',
+                ruText: 'Не удалось загрузить список. Нажмите, чтобы повторить',
+              ),
+              textAlign: TextAlign.center,
+              style: FlutterFlowTheme.of(context).labelLarge.override(
+                    font: GoogleFonts.roboto(
+                      fontWeight:
+                          FlutterFlowTheme.of(context).labelLarge.fontWeight,
+                      fontStyle:
+                          FlutterFlowTheme.of(context).labelLarge.fontStyle,
+                    ),
+                    letterSpacing: 0.0,
+                    fontWeight:
+                        FlutterFlowTheme.of(context).labelLarge.fontWeight,
+                    fontStyle:
+                        FlutterFlowTheme.of(context).labelLarge.fontStyle,
+                  ),
+            ),
+          ].divide(const SizedBox(height: 16.0)),
+        ),
+      ),
     );
   }
 

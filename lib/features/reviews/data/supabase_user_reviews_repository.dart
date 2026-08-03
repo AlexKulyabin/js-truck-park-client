@@ -171,8 +171,14 @@ class SupabaseUserReviewsRepository implements UserReviewsRepository {
   }
 
   DateTime? _asDateTime(Object? value) {
-    if (value == null || value is DateTime) {
-      return value as DateTime?;
+    if (value == null) {
+      return null;
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is String) {
+      return DateTime.tryParse(value)?.toLocal();
     }
     throw const UserReviewsReadException(UserReviewsFailureKind.invalidData);
   }
