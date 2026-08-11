@@ -46,7 +46,7 @@ The adjacent `.build-info` file must report:
 - `build_number=43`;
 - the expected Google Play upload certificate;
 - `deep-link-cold-start-v1` in `release_markers`;
-- `referral-deferred-recovery-v3` in `release_markers`.
+- `referral-deferred-recovery-v4` in `release_markers`.
 
 Do not upload an AAB when any of these values is absent.
 

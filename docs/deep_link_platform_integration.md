@@ -206,6 +206,27 @@ Physical-device testing of build 55 confirmed the complete installed-app iOS
 flow: the referral link opened the application, a fresh user was created, and
 the referral discount was applied. This is the accepted production candidate.
 
+## Build 61 iOS referral recovery fallback
+
+The live App Store deferred-install flow can still be reported as organic when
+Chottu cannot match the pre-install click to the first iOS launch. Build 61
+keeps the automatic SDK path as the primary behavior but no longer treats the
+first cached organic result as the end of the bounded recovery window. It
+performs one additional read and allows 6.5 seconds in total for a later
+attributed result.
+
+Registration now exposes an optional invite-link action. The recipient can
+explicitly paste the Chottu short URL they received; the app resolves it
+through the existing Chottu SDK boundary, persists only the referral code and
+shows a confirmed state before registration is completed. Clipboard contents
+are read only after the user taps the paste icon. Invalid links remain in the
+sheet with localized feedback.
+
+The existing `process_referral` API and Supabase eligibility rules are
+unchanged. A transport failure no longer silently navigates to Home while a
+pending referral exists; registration stays visible and offers a retry. No
+Supabase schema, policy or production data change is included.
+
 ## Build 57 iOS deferred-install routing
 
 The first live App Store deferred-install test of `1.0.17 (56)` produced a

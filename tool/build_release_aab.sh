@@ -83,7 +83,8 @@ for marker in \
   'public-parking-photos-count' \
   'public-parking-details-scroll-view' \
   'deep-link-cold-start-v1' \
-  'referral-deferred-recovery-v3' \
+  'referral-deferred-recovery-v4' \
+  'referral-manual-link-fallback-v1' \
   'referral-link-app-routing-v2' \
   'referral-link-capture-v2' \
   'referral-ios-early-init-v1' \
@@ -144,7 +145,7 @@ sha256=$artifact_sha
 upload_certificate_sha256=$actual_upload_sha256
 launcher_icon_sha256=$launcher_icon_sha
 built_at_utc=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-release_markers=profile-invite-action,public-parking-details-photo-gallery,public-parking-reviews-count,public-parking-photos-count,public-parking-details-scroll-view,deep-link-cold-start-v1,referral-deferred-recovery-v3,referral-link-app-routing-v2,referral-link-capture-v2,referral-ios-early-init-v1,referral-device-identity-v1
+release_markers=profile-invite-action,public-parking-details-photo-gallery,public-parking-reviews-count,public-parking-photos-count,public-parking-details-scroll-view,deep-link-cold-start-v1,referral-deferred-recovery-v4,referral-manual-link-fallback-v1,referral-link-app-routing-v2,referral-link-capture-v2,referral-ios-early-init-v1,referral-device-identity-v1
 EOF
 
 printf 'AAB: %s\n' "$artifact"

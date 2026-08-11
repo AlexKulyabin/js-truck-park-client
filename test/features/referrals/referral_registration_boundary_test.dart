@@ -46,6 +46,28 @@ void main() {
     );
   });
 
+  test('offers an explicit invite-link fallback before registration', () {
+    final registrationSource = File(
+      'lib/auth/registration/registration_widget.dart',
+    ).readAsStringSync();
+    final sheetSource = File(
+      'lib/auth/registration/referral_link_input_sheet.dart',
+    ).readAsStringSync();
+
+    expect(registrationSource, contains('ReferralLinkInputSheet('));
+    expect(
+      registrationSource,
+      contains('captureLink: actions.captureChottuReferralUrl'),
+    );
+    expect(registrationSource, contains("'referralApplyFailed'"));
+    expect(sheetSource, contains('Icons.content_paste'));
+    expect(sheetSource, contains('await widget.captureLink(value)'));
+    expect(
+      sheetSource.indexOf('Clipboard.getData'),
+      greaterThan(sheetSource.indexOf('Future<void> _paste()')),
+    );
+  });
+
   test('waits for an in-flight short-link capture before recovery', () {
     final source = File(
       'lib/custom_code/actions/listen_chottu_link.dart',

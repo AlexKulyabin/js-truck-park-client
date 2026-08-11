@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'referral_link_input_sheet.dart';
 import 'registration_model.dart';
 export 'registration_model.dart';
 
@@ -49,6 +50,20 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _showReferralLinkInputSheet() async {
+    final captured = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => const ReferralLinkInputSheet(
+        captureLink: actions.captureChottuReferralUrl,
+      ),
+    );
+    if (captured == true && mounted) {
+      safeSetState(() {});
+    }
   }
 
   @override
@@ -461,6 +476,35 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                         ],
                       ),
                     ),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton.icon(
+                        onPressed: _showReferralLinkInputSheet,
+                        icon: Icon(
+                          FFAppState().tempReferralCode.isEmpty
+                              ? Icons.link
+                              : Icons.check_circle_outline,
+                          size: 20.0,
+                        ),
+                        label: Text(
+                          FFLocalizations.of(context).getText(
+                            FFAppState().tempReferralCode.isEmpty
+                                ? 'addReferralLink'
+                                : 'referralLinkSaved',
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: FlutterFlowTheme.of(context).primary,
+                          padding: EdgeInsetsDirectional.fromSTEB(
+                              0.0, 8.0, 8.0, 8.0),
+                          textStyle:
+                              FlutterFlowTheme.of(context).labelLarge.override(
+                                    font: GoogleFonts.roboto(),
+                                    letterSpacing: 0.0,
+                                  ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 Column(
@@ -582,7 +626,7 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                       currentJwtToken,
                                 );
 
-                                if ((_model.apiResult8fn?.succeeded ?? true)) {
+                                if ((_model.apiResult8fn?.succeeded ?? false)) {
                                   if (functions.isReferralApiSuccess(
                                           _model.apiResult8fn?.jsonBody) !=
                                       true) {
@@ -609,6 +653,24 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                                     FFAppState().tempReferralCode = '';
                                     safeSetState(() {});
                                   }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        FFLocalizations.of(context).getText(
+                                          'referralApplyFailed',
+                                        ),
+                                        style: TextStyle(
+                                          color: FlutterFlowTheme.of(context)
+                                              .primaryText,
+                                        ),
+                                      ),
+                                      duration: Duration(milliseconds: 4000),
+                                      backgroundColor:
+                                          FlutterFlowTheme.of(context).accent2,
+                                    ),
+                                  );
+                                  return;
                                 }
                               }
 

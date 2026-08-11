@@ -1,6 +1,6 @@
 import 'referral_links.dart';
 
-const deferredReferralReleaseMarker = 'referral-deferred-recovery-v3';
+const deferredReferralReleaseMarker = 'referral-deferred-recovery-v4';
 
 bool shouldAttemptDeferredReferralRecovery({
   required bool isAndroid,
@@ -61,6 +61,7 @@ class DeferredReferralRecovery {
     Duration(milliseconds: 500),
     Duration(seconds: 1),
     Duration(seconds: 2),
+    Duration(seconds: 3),
   ];
 
   final DeferredAttributionReader _readAttribution;
@@ -87,10 +88,6 @@ class DeferredReferralRecovery {
       ]);
       if (directCode != null) {
         return directCode;
-      }
-
-      if (!attribution.isAttributed && !attribution.matchFound) {
-        return null;
       }
 
       final shortUrl = _firstNonEmpty([

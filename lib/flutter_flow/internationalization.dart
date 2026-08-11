@@ -255,6 +255,38 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'en': 'Name ',
       'ru': 'Имя',
     },
+    'addReferralLink': {
+      'en': 'Add invite link',
+      'ru': 'Добавить пригласительную ссылку',
+    },
+    'referralLinkLabel': {
+      'en': 'Invite link',
+      'ru': 'Пригласительная ссылка',
+    },
+    'pasteReferralLink': {
+      'en': 'Paste link',
+      'ru': 'Вставить ссылку',
+    },
+    'applyReferralLink': {
+      'en': 'Apply',
+      'ru': 'Применить',
+    },
+    'referralLinkRequired': {
+      'en': 'Paste the invite link',
+      'ru': 'Вставьте пригласительную ссылку',
+    },
+    'invalidReferralLink': {
+      'en': 'The invite link is invalid',
+      'ru': 'Неверная пригласительная ссылка',
+    },
+    'referralLinkSaved': {
+      'en': 'Invite link saved',
+      'ru': 'Пригласительная ссылка сохранена',
+    },
+    'referralApplyFailed': {
+      'en': 'Could not apply the invite. Try again',
+      'ru': 'Не удалось применить приглашение. Повторите попытку',
+    },
     'tmbsyxys': {
       'en': 'Done',
       'ru': 'Готово',

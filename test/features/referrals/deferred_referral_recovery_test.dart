@@ -43,7 +43,7 @@ void main() {
     final recovery = DeferredReferralRecovery(
       readAttribution: () async {
         reads += 1;
-        if (reads < 4) {
+        if (reads < 5) {
           return null;
         }
         return const DeferredReferralAttribution(
@@ -58,19 +58,28 @@ void main() {
     );
 
     expect(await recovery.recover(), 'RETRY-CODE');
-    expect(reads, 4);
+    expect(reads, 5);
     expect(pauses, const [
       Duration(milliseconds: 500),
       Duration(seconds: 1),
       Duration(seconds: 2),
+      Duration(seconds: 3),
     ]);
   });
 
-  test('stops when completed attribution is organic', () async {
+  test('keeps checking after an early organic attribution result', () async {
     var reads = 0;
     final recovery = DeferredReferralRecovery(
       readAttribution: () async {
         reads += 1;
+        if (reads == 3) {
+          return const DeferredReferralAttribution(
+            isAttributed: true,
+            matchFound: true,
+            destinationUrl:
+                'https://js-truck-park.web.app/deeplink.html?route=splash&ref=LATE-CODE',
+          );
+        }
         return const DeferredReferralAttribution(
           isAttributed: false,
           matchFound: false,
@@ -80,8 +89,8 @@ void main() {
       pause: (_) async {},
     );
 
-    expect(await recovery.recover(), isNull);
-    expect(reads, 1);
+    expect(await recovery.recover(), 'LATE-CODE');
+    expect(reads, 3);
   });
 
   test('resolves the attributed short link when destination is absent',
@@ -119,6 +128,6 @@ void main() {
     );
 
     expect(await recovery.recover(), isNull);
-    expect(reads, 4);
+    expect(reads, 5);
   });
 }

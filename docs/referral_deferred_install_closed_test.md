@@ -45,6 +45,19 @@ The Supabase row-level checkpoints below remain useful for future diagnostics;
 they were not independently captured as acceptance evidence after the
 successful user-visible run.
 
+## iOS probabilistic fallback
+
+Build `1.0.21 (61)` adds a deterministic user-controlled fallback for an iOS
+install that Chottu reports as organic. On the registration screen, tap
+`Add invite link`, paste the original Chottu URL and confirm that the control
+changes to `Invite link saved` before completing registration. The URL is
+resolved through Chottu and the existing `process_referral` contract remains
+the only backend write boundary.
+
+This fallback is optional for genuinely organic registrations. It does not
+read the clipboard automatically and does not change the referral eligibility
+rules.
+
 ## Preconditions
 
 1. Upload build `1.0.8 (42)` to the intended Google Play test track and confirm
@@ -96,6 +109,7 @@ The adjacent `.build-info` file must report:
 - `version=1.0.8`;
 - `build_number=42`;
 - the expected Google Play upload certificate;
-- `referral-deferred-recovery-v3` in `release_markers`.
+- `referral-deferred-recovery-v4` in `release_markers`;
+- `referral-manual-link-fallback-v1` in `release_markers`.
 
 Do not upload an AAB when any of these values is absent.

@@ -39,9 +39,12 @@ Previous bundles are preserved under `build/release-archive/`.
   present;
 - `deep-link-cold-start-v1`: parking and shared-photo initial links are
   captured before asynchronous application startup;
-- `referral-deferred-recovery-v3`: native SDK readiness, Android backup
+- `referral-deferred-recovery-v4`: native SDK readiness, Android backup
   exclusions and the bounded deferred-attribution recovery are present in the
-  release client;
+  release client; an early iOS organic result no longer ends the retry window.
+- `referral-manual-link-fallback-v1`: registration exposes an explicit,
+  validated invite-link input when iOS deferred matching does not return a
+  referral code.
 - `referral-link-app-routing-v2`: new referral links use Chottu app routing on
   both platforms so deferred-install attribution remains owned by Chottu.
 - `referral-link-capture-v2`: Chottu links observed by the independent platform
