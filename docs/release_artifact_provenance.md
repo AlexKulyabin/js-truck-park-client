@@ -228,3 +228,33 @@ Local release verification completed on 2026-08-03:
   App Review with status `WAITING_FOR_REVIEW` on 2026-08-03.
 
 No Supabase contract, schema, policy or production data change was performed.
+
+## Build 61 iOS referral recovery fallback
+
+Build 61 keeps automatic Chottu attribution as the primary path, extends the
+bounded recovery across an early organic result and adds an explicit validated
+invite-link input to registration. A failed `process_referral` transport call
+now keeps registration visible for a retry instead of silently navigating to
+Home.
+
+Local release verification completed on 2026-08-11:
+
+- Android AAB:
+  `build/app/outputs/bundle/release/JS-Truck-Park-1.0.21-61.aab`;
+- AAB SHA-256:
+  `772de31966c39c40b18c4917ccd0908b211685302b20a5b3751a0eeeba490352`;
+- Google Play upload certificate: verified;
+- Android launcher icon and protected release markers: verified;
+- iOS IPA: `build/ios/ipa/JS-Truck-Park-1.0.21-61.ipa`;
+- IPA SHA-256:
+  `9f2398d97348b6571877443ca381a439e4113eeb98ff379a3ed5f44d22bcb59b`;
+- signed version/build: `1.0.21 (61)`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict iOS code-signature verification: successful;
+- `referral-deferred-recovery-v4` and
+  `referral-manual-link-fallback-v1`: present in both release binaries;
+- Flutter verification: formatting completed, targeted analysis has no issues,
+  and all `377` tests passed;
+- no production Supabase write was performed.

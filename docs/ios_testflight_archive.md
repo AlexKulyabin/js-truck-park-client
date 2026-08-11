@@ -324,6 +324,32 @@ Local verification completed on 2026-08-03:
 
 No production Supabase write was performed.
 
+## Build 61 referral fallback
+
+Build 61 extends the first-launch attribution retry window across an early
+organic result and adds the explicit invite-link input used when probabilistic
+iOS matching does not return a referral code. The input resolves the original
+Chottu URL through the existing SDK boundary and does not read the clipboard
+without a user action.
+
+Local verification completed on 2026-08-11:
+
+- signed archive version/build: `1.0.21 (61)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.21-61.ipa`;
+- IPA SHA-256:
+  `9f2398d97348b6571877443ca381a439e4113eeb98ff379a3ed5f44d22bcb59b`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- referral recovery and manual fallback release markers: present;
+- Flutter verification: formatting completed, targeted analysis has no issues,
+  and all `377` tests passed;
+- App Store Connect upload: pending.
+
+No production Supabase write was performed.
+
 ## Rollback
 
 Revert this infrastructure commit if iOS dependency resolution regresses. The
