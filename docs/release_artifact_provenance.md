@@ -258,3 +258,31 @@ Local release verification completed on 2026-08-11:
 - Flutter verification: formatting completed, targeted analysis has no issues,
   and all `377` tests passed;
 - no production Supabase write was performed.
+
+## Build 62 iOS SMS OTP hardening
+
+Build 62 is an iOS TestFlight artifact for the bounded SMS authentication
+hardening stage. It uses shared E.164 normalization for send and verify,
+prevents false navigation or resend success after provider failure, and
+redacts phone numbers and raw provider errors from client logs. Referral,
+Chottu, RevenueCat and Supabase contracts are unchanged.
+
+Local release verification completed on 2026-08-12:
+
+- iOS IPA: `build/ios/ipa/JS-Truck-Park-1.0.22-62.ipa`;
+- IPA SHA-256:
+  `5ad52c646b5167f170bb4c9f2e6d62c24d3b62cb3064cf8a4d169edebc3d54fd`;
+- signed version/build: `1.0.22 (62)`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- Apple Distribution team: `8XNBY3768H`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict iOS code-signature verification: successful;
+- Apple validation and the single App Store Connect upload succeeded with no
+  errors; delivery UUID `a8b2888c-75b2-4438-8afc-e34cf4366051`;
+- App Store Connect processing: `VALID`, export compliance set to
+  `usesNonExemptEncryption=false`, and build 62 is available to the internal
+  TestFlight group `Dev`;
+- format and all `383` Flutter tests passed; the full analyzer retains `1763`
+  pre-existing FlutterFlow warnings and infos with no compile errors;
+- no production Supabase write was performed.

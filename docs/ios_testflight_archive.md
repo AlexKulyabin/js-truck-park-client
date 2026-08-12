@@ -350,6 +350,37 @@ Local verification completed on 2026-08-11:
 
 No production Supabase write was performed.
 
+## Build 62 SMS OTP hardening
+
+Build 62 normalizes phone numbers to E.164 for both SMS send and verification,
+stops navigation when an OTP request fails, handles resend failures and avoids
+logging phone numbers or raw authentication-provider errors. Referral, Chottu,
+RevenueCat and Supabase contracts remain unchanged.
+
+Local verification completed on 2026-08-12:
+
+- signed archive version/build: `1.0.22 (62)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.22-62.ipa`;
+- IPA SHA-256:
+  `5ad52c646b5167f170bb4c9f2e6d62c24d3b62cb3064cf8a4d169edebc3d54fd`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- Apple validation: successful with no errors;
+- App Store Connect upload: successful, delivery UUID
+  `a8b2888c-75b2-4438-8afc-e34cf4366051`;
+- exactly one upload command was issued for build 62;
+- App Store Connect processing: `VALID`, with no errors or warnings;
+- export compliance: `usesNonExemptEncryption=false`;
+- internal TestFlight group `Dev`: build 62 available;
+- Flutter verification: formatting and all `383` tests passed; the full
+  analyzer retains `1763` pre-existing FlutterFlow warnings and infos with no
+  compile errors.
+
+No production Supabase write was performed.
+
 ## Rollback
 
 Revert this infrastructure commit if iOS dependency resolution regresses. The
