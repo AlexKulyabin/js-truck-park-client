@@ -23,6 +23,7 @@ class EnterPhoneNumberWidget extends StatefulWidget {
 
 class _EnterPhoneNumberWidgetState extends State<EnterPhoneNumberWidget> {
   late EnterPhoneNumberModel _model;
+  bool _isSendingOtp = false;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -43,6 +44,46 @@ class _EnterPhoneNumberWidgetState extends State<EnterPhoneNumberWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _requestOtp() async {
+    if (_isSendingOtp) {
+      return;
+    }
+    _isSendingOtp = true;
+    safeSetState(() {});
+
+    try {
+      final phoneNumber = _model.textController.text;
+      final isSent = await actions.sendOtp(phoneNumber);
+      if (!mounted) {
+        return;
+      }
+      if (!isSent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              FFLocalizations.of(context).getVariableText(
+                enText:
+                    'Could not send the SMS. Check the number and try again.',
+                ruText:
+                    'Не удалось отправить SMS. Проверьте номер и повторите.',
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+
+      FFAppState().phoneNumber = phoneNumber;
+      safeSetState(() {});
+      context.pushNamed(ValidateSmsCodeWidget.routeName);
+    } finally {
+      _isSendingOtp = false;
+      if (mounted) {
+        safeSetState(() {});
+      }
+    }
   }
 
   @override
@@ -482,20 +523,13 @@ class _EnterPhoneNumberWidgetState extends State<EnterPhoneNumberWidget> {
                       ),
                     ),
                     FFButtonWidget(
-                      onPressed: ((_model.checkboxValue == false) ||
+                      onPressed: (_isSendingOtp ||
+                              (_model.checkboxValue == false) ||
                               (_model.textController.text == null ||
                                   _model.textController.text == ''))
                           ? null
                           : () async {
-                              await actions.sendOtp(
-                                _model.textController.text,
-                              );
-                              FFAppState().phoneNumber =
-                                  _model.textController.text;
-                              safeSetState(() {});
-
-                              context
-                                  .pushNamed(ValidateSmsCodeWidget.routeName);
+                              await _requestOtp();
                             },
                       text: FFLocalizations.of(context).getText(
                         'wml08ijk' /* Next */,

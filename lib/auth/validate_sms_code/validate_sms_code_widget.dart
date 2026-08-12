@@ -32,6 +32,7 @@ class ValidateSmsCodeWidget extends StatefulWidget {
 class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
   late ValidateSmsCodeModel _model;
   bool _isVerifying = false;
+  bool _isResending = false;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -99,6 +100,49 @@ class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
       }
     } finally {
       _isVerifying = false;
+      if (mounted) {
+        safeSetState(() {});
+      }
+    }
+  }
+
+  Future<void> _resendCode() async {
+    if (_isResending) {
+      return;
+    }
+    _isResending = true;
+    safeSetState(() {});
+
+    try {
+      final isSent = await actions.sendOtp(FFAppState().phoneNumber);
+      if (!mounted) {
+        return;
+      }
+      if (!isSent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              FFLocalizations.of(context).getVariableText(
+                enText: 'Could not resend the SMS. Please try again later.',
+                ruText: 'Не удалось повторно отправить SMS. Попробуйте позже.',
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+
+      _model.canResend = false;
+      _model.isInvalidCode = false;
+      _model.isNewCodeSent = true;
+      safeSetState(() {});
+      _model.timerController.onResetTimer();
+      _model.timerController.onStartTimer();
+      safeSetState(() {
+        _model.pinCodeController?.clear();
+      });
+    } finally {
+      _isResending = false;
       if (mounted) {
         safeSetState(() {});
       }
@@ -494,21 +538,7 @@ class _ValidateSmsCodeWidgetState extends State<ValidateSmsCodeWidget> {
                               focusColor: Colors.transparent,
                               hoverColor: Colors.transparent,
                               highlightColor: Colors.transparent,
-                              onTap: () async {
-                                await actions.sendOtp(
-                                  FFAppState().phoneNumber,
-                                );
-                                _model.canResend = false;
-                                _model.isInvalidCode = false;
-                                _model.isNewCodeSent = true;
-                                safeSetState(() {});
-                                _model.timerController.onResetTimer();
-
-                                _model.timerController.onStartTimer();
-                                safeSetState(() {
-                                  _model.pinCodeController?.clear();
-                                });
-                              },
+                              onTap: _isResending ? null : _resendCode,
                               child: Container(
                                 decoration: BoxDecoration(),
                                 child: Padding(

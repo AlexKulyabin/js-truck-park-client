@@ -11,17 +11,16 @@ import 'package:flutter/material.dart';
 // DO NOT REMOVE OR MODIFY THE CODE ABOVE!
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '/features/auth/domain/phone_number.dart';
 
 Future<bool> verifyOtp(String rawPhoneNumber, String otpCode) async {
-  try {
-    // 1. Очистка и приведение к формату с плюсом(временно убираем +)
-    String cleanNumber = rawPhoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
-    if (cleanNumber.startsWith('8') && cleanNumber.length == 11) {
-      cleanNumber = '7' + cleanNumber.substring(1);
-    }
-    final String formattedPhone = cleanNumber;
+  final formattedPhone = normalizePhoneNumberToE164(rawPhoneNumber);
+  if (formattedPhone == null) {
+    debugPrint('OTP verification failed: invalid_phone_format');
+    return false;
+  }
 
-    // 2. Верификация (ИСПОЛЬЗУЕМ ВЕРНЫЙ РЕГИСТР: verifyOTP)
+  try {
     final res = await Supabase.instance.client.auth.verifyOTP(
       phone: formattedPhone,
       token: otpCode,
@@ -29,12 +28,18 @@ Future<bool> verifyOtp(String rawPhoneNumber, String otpCode) async {
     );
 
     if (res.session != null) {
-      return true; // УСПЕХ: сессия создана
+      return true;
     }
 
     return false;
-  } catch (e) {
-    print('Ошибка верификации (Verify): $e');
+  } on AuthException catch (error) {
+    debugPrint(
+      'OTP verification failed: status=${error.statusCode ?? 'unknown'}, '
+      'code=${error.code ?? 'unknown'}',
+    );
+    return false;
+  } catch (_) {
+    debugPrint('OTP verification failed: client_error');
     return false;
   }
 }

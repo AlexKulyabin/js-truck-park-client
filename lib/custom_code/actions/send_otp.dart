@@ -11,31 +11,29 @@ import 'package:flutter/material.dart';
 // DO NOT REMOVE OR MODIFY THE CODE ABOVE!
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '/features/auth/domain/phone_number.dart';
 
 Future<bool> sendOtp(String rawPhoneNumber) async {
+  final formattedPhone = normalizePhoneNumberToE164(rawPhoneNumber);
+  if (formattedPhone == null) {
+    debugPrint('OTP send failed: invalid_phone_format');
+    return false;
+  }
+
   try {
-    // 1. Очистка: оставляем только цифры
-    String cleanNumber = rawPhoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
-
-    // 2. Логика замены 8 на 7 для СНГ
-    if (cleanNumber.startsWith('8') && cleanNumber.length == 11) {
-      cleanNumber = '7' + cleanNumber.substring(1);
-    }
-
-    // 3. Формат E.164 (с плюсом)
-    // Реальный Twilio Verify требует +, чтобы точно знать код страны
-    // Временно убираем +
-    final String formattedPhone = cleanNumber;
-
-    print('Попытка реальной отправки на: $formattedPhone');
-
     await Supabase.instance.client.auth.signInWithOtp(
       phone: formattedPhone,
     );
 
     return true;
-  } catch (e) {
-    print('Ошибка Supabase Auth (Send): $e');
+  } on AuthException catch (error) {
+    debugPrint(
+      'OTP send failed: status=${error.statusCode ?? 'unknown'}, '
+      'code=${error.code ?? 'unknown'}',
+    );
+    return false;
+  } catch (_) {
+    debugPrint('OTP send failed: client_error');
     return false;
   }
 }
