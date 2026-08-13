@@ -259,13 +259,21 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'en': 'Add invite link',
       'ru': 'Добавить пригласительную ссылку',
     },
+    'inviteLinkSheetTitle': {
+      'en': 'Invite link',
+      'ru': 'Пригласительная ссылка',
+    },
+    'inviteLinkSheetDescription': {
+      'en': 'Paste the full link sent to you by a friend.',
+      'ru': 'Вставьте полную ссылку, которую вам отправил друг.',
+    },
     'referralLinkLabel': {
       'en': 'Invite link',
       'ru': 'Пригласительная ссылка',
     },
     'pasteReferralLink': {
-      'en': 'Paste link',
-      'ru': 'Вставить ссылку',
+      'en': 'Paste from clipboard',
+      'ru': 'Вставить из буфера обмена',
     },
     'applyReferralLink': {
       'en': 'Apply',
@@ -282,6 +290,38 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
     'referralLinkSaved': {
       'en': 'Invite link saved',
       'ru': 'Пригласительная ссылка сохранена',
+    },
+    'haveReferralLink': {
+      'en': 'Have an invite link?',
+      'ru': 'Есть пригласительная ссылка?',
+    },
+    'referralDiscountHint': {
+      'en': 'Paste it to receive a subscription discount.',
+      'ru': 'Вставьте её, чтобы получить скидку на подписку.',
+    },
+    'referralLinkFound': {
+      'en': 'Invite link found',
+      'ru': 'Пригласительная ссылка найдена',
+    },
+    'referralAutomaticDetectedHint': {
+      'en': 'It will be verified when you finish registration.',
+      'ru': 'Она будет проверена после завершения регистрации.',
+    },
+    'referralLinkAdded': {
+      'en': 'Invite link added',
+      'ru': 'Пригласительная ссылка добавлена',
+    },
+    'referralManualPendingHint': {
+      'en': 'Your discount will be verified after registration.',
+      'ru': 'Скидка будет проверена после регистрации.',
+    },
+    'pasteReferralLinkAction': {
+      'en': 'Paste invite link',
+      'ru': 'Вставить пригласительную ссылку',
+    },
+    'changeReferralLink': {
+      'en': 'Change link',
+      'ru': 'Изменить ссылку',
     },
     'referralApplyFailed': {
       'en': 'Could not apply the invite. Try again',

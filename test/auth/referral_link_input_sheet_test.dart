@@ -24,9 +24,13 @@ void main() {
     await tester.pumpWidget(_buildSubject((_) async => false));
     await tester.pump();
 
-    expect(find.text('Add invite link'), findsOneWidget);
-    expect(find.text('Invite link'), findsOneWidget);
-    expect(find.byIcon(Icons.content_paste), findsOneWidget);
+    expect(find.text('Invite link'), findsNWidgets(2));
+    expect(
+      find.text('Paste the full link sent to you by a friend.'),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.content_paste_rounded), findsOneWidget);
+    expect(find.text('Paste from clipboard'), findsOneWidget);
     expect(find.text('Apply'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

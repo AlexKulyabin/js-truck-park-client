@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'referral_invite_card.dart';
 import 'referral_link_input_sheet.dart';
 import 'registration_model.dart';
 export 'registration_model.dart';
@@ -31,6 +32,7 @@ class RegistrationWidget extends StatefulWidget {
 
 class _RegistrationWidgetState extends State<RegistrationWidget> {
   late RegistrationModel _model;
+  bool _referralLinkAddedManually = false;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -62,8 +64,17 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
       ),
     );
     if (captured == true && mounted) {
-      safeSetState(() {});
+      safeSetState(() => _referralLinkAddedManually = true);
     }
+  }
+
+  ReferralInviteStatus get _referralInviteStatus {
+    if (FFAppState().tempReferralCode.isEmpty) {
+      return ReferralInviteStatus.empty;
+    }
+    return _referralLinkAddedManually
+        ? ReferralInviteStatus.addedManually
+        : ReferralInviteStatus.detectedAutomatically;
   }
 
   @override
@@ -476,33 +487,12 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
                         ],
                       ),
                     ),
-                    Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: TextButton.icon(
+                    Padding(
+                      padding:
+                          EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
+                      child: ReferralInviteCard(
+                        status: _referralInviteStatus,
                         onPressed: _showReferralLinkInputSheet,
-                        icon: Icon(
-                          FFAppState().tempReferralCode.isEmpty
-                              ? Icons.link
-                              : Icons.check_circle_outline,
-                          size: 20.0,
-                        ),
-                        label: Text(
-                          FFLocalizations.of(context).getText(
-                            FFAppState().tempReferralCode.isEmpty
-                                ? 'addReferralLink'
-                                : 'referralLinkSaved',
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: FlutterFlowTheme.of(context).primary,
-                          padding: EdgeInsetsDirectional.fromSTEB(
-                              0.0, 8.0, 8.0, 8.0),
-                          textStyle:
-                              FlutterFlowTheme.of(context).labelLarge.override(
-                                    font: GoogleFonts.roboto(),
-                                    letterSpacing: 0.0,
-                                  ),
-                        ),
                       ),
                     ),
                   ],

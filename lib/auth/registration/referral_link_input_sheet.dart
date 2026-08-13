@@ -117,7 +117,7 @@ class _ReferralLinkInputSheetState extends State<ReferralLinkInputSheet> {
                     Expanded(
                       child: Text(
                         FFLocalizations.of(context).getText(
-                          'addReferralLink',
+                          'inviteLinkSheetTitle',
                         ),
                         style: theme.titleMedium.override(
                           font: GoogleFonts.roboto(
@@ -138,7 +138,17 @@ class _ReferralLinkInputSheetState extends State<ReferralLinkInputSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                Text(
+                  FFLocalizations.of(context).getText(
+                    'inviteLinkSheetDescription',
+                  ),
+                  style: theme.bodyMedium.override(
+                    font: GoogleFonts.roboto(),
+                    color: theme.secondaryText,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _controller,
                   focusNode: _focusNode,
@@ -167,12 +177,27 @@ class _ReferralLinkInputSheetState extends State<ReferralLinkInputSheet> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    suffixIcon: IconButton(
-                      tooltip: FFLocalizations.of(context).getText(
-                        'pasteReferralLink',
-                      ),
-                      onPressed: _isSubmitting ? null : _paste,
-                      icon: const Icon(Icons.content_paste),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _isSubmitting ? null : _paste,
+                  icon: const Icon(Icons.content_paste_rounded, size: 19),
+                  label: Text(
+                    FFLocalizations.of(context).getText(
+                      'pasteReferralLink',
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.primary,
+                    minimumSize: const Size.fromHeight(44),
+                    side: BorderSide(color: theme.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: theme.labelLarge.override(
+                      font: GoogleFonts.roboto(fontWeight: FontWeight.w600),
+                      letterSpacing: 0,
                     ),
                   ),
                 ),
