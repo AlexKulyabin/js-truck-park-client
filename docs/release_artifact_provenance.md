@@ -316,7 +316,15 @@ Local release verification completed on 2026-08-13:
   `applinks:js-truck-park.chottu.link`;
 - `referral-invite-card-v1` and localized UI copy: present in the release;
 - Apple validation: successful with no errors;
-- no App Store Connect or Google Play upload was performed;
+- App Store Connect upload: successful, delivery UUID
+  `72ed342f-1381-431a-a648-d2c6a4db0abf`;
+- exactly one iOS upload command was issued; processing completed without
+  errors or warnings and build 63 is `VALID`;
+- App Store version ID: `b7969f26-e083-47d0-8ac5-4f62ad76cd25`;
+- App Review submission ID: `3c63a9f6-2211-4817-b874-dae50a80baf1`;
+- App Review state: `WAITING_FOR_REVIEW` on 2026-08-13, configured for
+  automatic release after approval;
+- no Google Play upload was performed;
 - format and all `386` Flutter tests passed; the full analyzer retains `1763`
   pre-existing FlutterFlow warnings and infos;
 - build-time maintenance warnings remain for the future Gradle/Kotlin tooling

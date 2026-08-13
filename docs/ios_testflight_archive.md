@@ -403,13 +403,29 @@ Local verification completed on 2026-08-13:
 - strict code-signature verification: successful;
 - `referral-invite-card-v1` and localized UI copy: present in the IPA;
 - Apple validation: successful with no errors;
-- App Store Connect upload: not performed;
+- App Store Connect upload: successful, delivery UUID
+  `72ed342f-1381-431a-a648-d2c6a4db0abf`;
+- exactly one upload command was issued for build 63;
+- App Store Connect processing: `COMPLETE`, with no errors or warnings;
+- App Store version ID: `b7969f26-e083-47d0-8ac5-4f62ad76cd25`;
+- build 63 processing state: `VALID` and
+  `usesNonExemptEncryption=false`;
+- metadata audit: one active iOS version, complete review contact and demo
+  credentials, complete English localization, age rating, privacy policy and
+  four `COMPLETE` screenshots;
+- App Review submission ID: `3c63a9f6-2211-4817-b874-dae50a80baf1`;
+- App Review status: `WAITING_FOR_REVIEW` on 2026-08-13;
+- release mode: automatic after approval (`AFTER_APPROVAL`);
+- submission used the current `reviewSubmissions` workflow. The deprecated
+  direct `appStoreVersionSubmissions` create operation returned `403` and did
+  not create a duplicate submission;
 - Flutter verification: formatting and all `386` tests passed; the full
   analyzer retains `1763` pre-existing FlutterFlow warnings and infos;
 - known build warning: the iOS launch image still uses the existing default
   placeholder and should be replaced in a separate visual-assets stage.
 
-No production Supabase write was performed.
+No production Supabase write was performed. No build 63 upload or release was
+performed for Google Play in this deployment.
 
 ## Rollback
 
