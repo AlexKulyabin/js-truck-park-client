@@ -286,3 +286,40 @@ Local release verification completed on 2026-08-12:
 - format and all `383` Flutter tests passed; the full analyzer retains `1763`
   pre-existing FlutterFlow warnings and infos with no compile errors;
 - no production Supabase write was performed.
+
+## Build 63 referral invite UI
+
+Build 63 packages the registration invite-card UI for both production
+platforms. It preserves automatic Chottu capture, the manual URL resolver,
+`process_referral`, referral eligibility and RevenueCat pricing.
+
+Local release verification completed on 2026-08-13:
+
+- Android AAB:
+  `build/app/outputs/bundle/release/JS-Truck-Park-1.0.23-63.aab`;
+- AAB SHA-256:
+  `b8c972451358d1b4027ab01041ce0e4eef034231b257470729d268631c0fb215`;
+- Android APK:
+  `build/app/outputs/flutter-apk/JS-Truck-Park-1.0.23-63.apk`;
+- APK SHA-256:
+  `abb42d4d7f0304be4dea8dd7bdbda20027f75b7fa4d3184a65bbaa690bd12474`;
+- Android package/version: `com.mycompany.jstrackpark`, `1.0.23 (63)`;
+- Google Play upload certificate SHA-1:
+  `55:6F:AE:29:2D:69:54:C5:2E:23:4E:0E:C2:CA:DC:68:7D:B2:B7:8F`;
+- iOS IPA: `build/ios/ipa/JS-Truck-Park-1.0.23-63.ipa`;
+- IPA SHA-256:
+  `21c4037bc2a7bb012c215fd1cb15d768e1787c85725f5e7ec9d670d155b1156f`;
+- iOS bundle/version: `com.mycompany.jstrackpark`, `1.0.23 (63)`;
+- Apple Distribution team: `8XNBY3768H`;
+- strict Android and iOS signature verification: successful;
+- signed iOS Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- `referral-invite-card-v1` and localized UI copy: present in the release;
+- Apple validation: successful with no errors;
+- no App Store Connect or Google Play upload was performed;
+- format and all `386` Flutter tests passed; the full analyzer retains `1763`
+  pre-existing FlutterFlow warnings and infos;
+- build-time maintenance warnings remain for the future Gradle/Kotlin tooling
+  migration and the existing iOS placeholder launch image.
+
+No Supabase contract, schema, policy or production data change was performed.

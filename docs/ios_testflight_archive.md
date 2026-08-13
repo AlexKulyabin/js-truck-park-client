@@ -381,6 +381,36 @@ Local verification completed on 2026-08-12:
 
 No production Supabase write was performed.
 
+## Build 63 referral invite UI
+
+Build 63 replaces the ambiguous registration text action with a localized
+invite card. The card distinguishes no link, automatic capture and manual
+capture without claiming that a discount is applied before server validation.
+The manual sheet explains that the complete link is required and exposes a
+visible clipboard action. Chottu, Hosting, Supabase and RevenueCat contracts
+remain unchanged.
+
+Local verification completed on 2026-08-13:
+
+- signed archive version/build: `1.0.23 (63)`;
+- App Store IPA: `build/ios/ipa/JS-Truck-Park-1.0.23-63.ipa`;
+- IPA SHA-256:
+  `21c4037bc2a7bb012c215fd1cb15d768e1787c85725f5e7ec9d670d155b1156f`;
+- Apple Distribution team: `8XNBY3768H`;
+- production bundle ID: `com.mycompany.jstrackpark`;
+- signed Associated Domains entitlement:
+  `applinks:js-truck-park.chottu.link`;
+- strict code-signature verification: successful;
+- `referral-invite-card-v1` and localized UI copy: present in the IPA;
+- Apple validation: successful with no errors;
+- App Store Connect upload: not performed;
+- Flutter verification: formatting and all `386` tests passed; the full
+  analyzer retains `1763` pre-existing FlutterFlow warnings and infos;
+- known build warning: the iOS launch image still uses the existing default
+  placeholder and should be replaced in a separate visual-assets stage.
+
+No production Supabase write was performed.
+
 ## Rollback
 
 Revert this infrastructure commit if iOS dependency resolution regresses. The
