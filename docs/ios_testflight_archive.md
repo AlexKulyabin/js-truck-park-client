@@ -423,6 +423,8 @@ Local verification completed on 2026-08-13:
   analyzer retains `1763` pre-existing FlutterFlow warnings and infos;
 - known build warning: the iOS launch image still uses the existing default
   placeholder and should be replaced in a separate visual-assets stage.
+- physical-device acceptance: the user confirmed on 2026-08-14 that build 63
+  works on both iOS and Android, with no regression reported.
 
 No production Supabase write was performed. No build 63 upload or release was
 performed for Google Play in this deployment.

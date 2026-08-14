@@ -329,5 +329,7 @@ Local release verification completed on 2026-08-13:
   pre-existing FlutterFlow warnings and infos;
 - build-time maintenance warnings remain for the future Gradle/Kotlin tooling
   migration and the existing iOS placeholder launch image.
+- physical-device acceptance: the user confirmed on 2026-08-14 that build 63
+  works on both iOS and Android, with no regression reported.
 
 No Supabase contract, schema, policy or production data change was performed.
